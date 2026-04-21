@@ -10,15 +10,9 @@ export default function Login({ onLogin }) {
   const handleLogin = async () => {
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      setError("Email ou mot de passe incorrect");
-    } else {
-      onLogin(data.user);
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setError("Email ou mot de passe incorrect"); }
+    else { onLogin(data.user); }
     setLoading(false);
   };
 
@@ -26,36 +20,117 @@ export default function Login({ onLogin }) {
     <div style={{
       minHeight: "100vh", background: "#08080F",
       display: "flex", alignItems: "center", justifyContent: "center",
-      fontFamily: "'DM Sans', sans-serif"
+      fontFamily: "'DM Sans', sans-serif", padding: 20,
+      backgroundImage: "radial-gradient(ellipse at 50% 0%, #C9A84C18 0%, transparent 60%)",
     }}>
-      <div style={{
-        background: "#12121A", border: "1px solid #2A2A3E",
-        borderRadius: 12, padding: 36, width: "100%", maxWidth: 400
-      }}>
-        <h1 style={{
-          fontFamily: "'Bebas Neue', sans-serif", fontSize: 32,
-          color: "#E8C547", letterSpacing: "0.1em", marginBottom: 6
-        }}>◈ STUDIO</h1>
-        <p style={{ color: "#8888AA", fontSize: 13, marginBottom: 28 }}>
-          Connectez-vous à votre espace
-        </p>
+      <div style={{ width: "100%", maxWidth: 420 }}>
 
-        <div style={{ marginBottom: 14 }}>
-          <label style={{ fontSize: 11, color: "#8888AA", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 5 }}>
-            Email
-          </label>
-          <input
-            type="email"
-            placeholder="votre@email.com"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            style={{
-              width: "100%", background: "#0E0E18", border: "1px solid #2A2A3E",
-              borderRadius: 6, padding: "10px 14px", color: "#F0EEE8",
-              fontSize: 13, outline: "none", boxSizing: "border-box"
-            }}
-          />
+        {/* Logo */}
+        <div style={{ textAlign: "center", marginBottom: 36 }}>
+          <img src="/logo.png" alt="Third-One Studio" style={{
+            height: 60, filter: "invert(1) brightness(0.9)",
+            marginBottom: 12
+          }}/>
+          <p style={{ color: "#555570", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase" }}>
+            Espace client
+          </p>
         </div>
 
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 11, color: "#8888AA", textTransform: "uppercase", l
+        {/* Card */}
+        <div style={{
+          background: "#0E0E18",
+          border: "1px solid #C9A84C33",
+          borderRadius: 14, padding: "36px 32px",
+          boxShadow: "0 0 60px #C9A84C08"
+        }}>
+          <h2 style={{
+            fontFamily: "'Bebas Neue', sans-serif",
+            fontSize: 22, color: "#F5F5F0",
+            letterSpacing: "0.08em", marginBottom: 24
+          }}>
+            Connexion
+          </h2>
+
+          {/* Email */}
+          <div style={{ marginBottom: 14 }}>
+            <label style={{
+              fontSize: 10, color: "#8888AA",
+              textTransform: "uppercase", letterSpacing: "0.1em",
+              display: "block", marginBottom: 6
+            }}>Email</label>
+            <input
+              type="email"
+              placeholder="votre@email.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              style={{
+                width: "100%", background: "#12121A",
+                border: "1px solid #2A2A3E", borderRadius: 7,
+                padding: "11px 14px", color: "#F5F5F0",
+                fontSize: 13, outline: "none", boxSizing: "border-box",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={e => e.target.style.borderColor = "#C9A84C"}
+              onBlur={e => e.target.style.borderColor = "#2A2A3E"}
+            />
+          </div>
+
+          {/* Password */}
+          <div style={{ marginBottom: 24 }}>
+            <label style={{
+              fontSize: 10, color: "#8888AA",
+              textTransform: "uppercase", letterSpacing: "0.1em",
+              display: "block", marginBottom: 6
+            }}>Mot de passe</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleLogin()}
+              style={{
+                width: "100%", background: "#12121A",
+                border: "1px solid #2A2A3E", borderRadius: 7,
+                padding: "11px 14px", color: "#F5F5F0",
+                fontSize: 13, outline: "none", boxSizing: "border-box",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={e => e.target.style.borderColor = "#C9A84C"}
+              onBlur={e => e.target.style.borderColor = "#2A2A3E"}
+            />
+          </div>
+
+          {error && (
+            <p style={{
+              color: "#FF6B6B", fontSize: 12,
+              marginBottom: 14, textAlign: "center"
+            }}>{error}</p>
+          )}
+
+          <button
+            onClick={handleLogin}
+            disabled={loading || !email || !password}
+            style={{
+              width: "100%",
+              background: loading ? "#2A2A3E" : "linear-gradient(135deg, #C9A84C, #E8C547)",
+              color: "#08080F", border: "none", borderRadius: 7,
+              padding: "12px 0", fontSize: 13, fontWeight: 700,
+              cursor: loading ? "not-allowed" : "pointer",
+              letterSpacing: "0.05em", textTransform: "uppercase",
+              transition: "all 0.2s"
+            }}
+          >
+            {loading ? "Connexion..." : "Se connecter"}
+          </button>
+        </div>
+
+        <p style={{
+          textAlign: "center", marginTop: 20,
+          fontSize: 11, color: "#3A3A5E"
+        }}>
+          © 2026 Third-One Studio · Tous droits réservés
+        </p>
+      </div>
+    </div>
+  );
+}

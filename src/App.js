@@ -1974,7 +1974,7 @@ export default function App() {
         {/* ── TOP BAR ── */}
         <div style={{background:"#0E0E18",borderBottom:"1px solid #2A2A3E",padding:"0 20px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <span style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#E8C547",letterSpacing:"0.1em"}}>◈ STUDIO</span>
+            <span style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#E8C547",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</span>
             <span style={{color:"#2A2A3E"}}>|</span>
             <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{appView==="prod"?"Back-office":"Espace client"}</span>
           </div>
