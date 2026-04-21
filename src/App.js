@@ -1937,8 +1937,21 @@ export default function App() {
   const[posts,setPosts]=useState(INIT_POSTS);
   const[notif,setNotif]=useState(null);
 
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      supabase.from("profiles").select("role").eq("id", user.id).single()
+        .then(({ data }) => {
+          setUserRole(data?.role || "client");
+        });
+    }
+  }, [user]);
+
   if (authLoading) return <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:28,letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</div>;
   if (!user) return <Login onLogin={setUser} />;
+
+  const isAdmin = userRole === "admin";
 
   const showNotif=msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); };
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
