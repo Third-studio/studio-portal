@@ -1991,10 +1991,12 @@ export default function App() {
             <span style={{color:"#2A2A3E"}}>|</span>
             <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{appView==="prod"?"Back-office":"Espace client"}</span>
           </div>
-          <div style={{display:"flex",gap:4,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
-            <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("prod")}>⚙ Production</button>
-            <button className={appView==="client"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("client")}>👤 Client</button>
-          </div>
+          {userRole === "admin" && (
+            <div style={{display:"flex",gap:4,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
+              <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("prod")}>⚙ Production</button>
+              <button className={appView==="client"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("client")}>👤 Client</button>
+            </div>
+          )}
         </div>
 
         {/* ── BODY ── */}
