@@ -1937,7 +1937,7 @@ export default function App() {
   const[posts,setPosts]=useState(INIT_POSTS);
   const[notif,setNotif]=useState(null);
 
-  const [userRole, setUserRole] = useState(null);
+  const [userRole, setUserRole] = useState(null); // eslint-disable-line
 
   useEffect(() => {
     if (user) {
