@@ -147,7 +147,7 @@ const FontLoader = () => (
 const STATUS_STEPS   = ["Brief","Storyboard","Tournage","Montage","Livraison"];
 const STATUS_INDEX   = { brief:0, storyboard:1, tournage:2, montage:3, livraison:4 };
 const SHOOT_TYPES    = ["Corporate","Événementiel","Interview","Clip / Fiction","Documentaire","Institutionnel"];
-const OPTION_EXP_H   = 72;
+// const OPTION_EXP_H   = 72;
 const TODAY          = new Date();
 const isoToday       = () => TODAY.toISOString().split("T")[0];
 const d = (n) => { const x=new Date(TODAY); x.setDate(x.getDate()+n); return x.toISOString().split("T")[0]; };
