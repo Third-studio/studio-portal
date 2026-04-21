@@ -1922,7 +1922,7 @@ export default function App() {
   }, []);
 
   // Global state
-  const[appView,setAppView]=useState("prod"); // "prod" | "client"
+  const[appView,setAppView]=useState(userRole==="admin"?"prod":"client"); // "prod" | "client"
   const[prodSection,setProdSection]=useState("projets");
   const[clientSection,setClientSection]=useState("projets");
 
