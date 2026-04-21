@@ -664,8 +664,8 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
     setModal({date:ds,statusA:A,statusB:B,bookingA,bookingB});
   };
 
-  const statusColors={free:"#4ECDC4",option:"#FF9F43",confirmed:"#FF6B6B"};
-  const teamColors={A:"#E8C547",B:"#4ECDC4"};
+  // const statusColors={free:"#4ECDC4",option:"#FF9F43",confirmed:"#FF6B6B"};
+  // const teamColors={A:"#E8C547",B:"#4ECDC4"};
 
   const alerts=bookings.filter(b=>b.status==="option"&&b.expiresAt&&new Date(b.expiresAt)-Date.now()<24*3600000&&new Date(b.expiresAt)>Date.now());
 
