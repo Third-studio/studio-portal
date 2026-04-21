@@ -261,7 +261,7 @@ const fmtS   = (s) => new Date(s+"T12:00:00").toLocaleDateString("fr-FR",{day:"n
 const calcH  = (s,e) => { if(!s||!e)return 0; const[sh,sm]=s.split(":").map(Number);const[eh,em]=e.split(":").map(Number);return Math.max(0,(eh*60+em-sh*60-sm)/60); };
 
 function Notif({msg,color="#4ECDC4",onDone}){
-  useEffect(()=>{const t=setTimeout(onDone,3000);return()=>clearTimeout(t);},[]);
+  useEffect(()=>{const t=setTimeout(onDone,3000);return()=>clearTimeout(t);});
   return <div className="notif"><span style={{color}}>✓</span> {msg}</div>;
 }
 function Lbl({children,style={}}){
