@@ -1927,15 +1927,84 @@ export default function App() {
   const[clientSection,setClientSection]=useState("projets");
 
   // Data
-  const[projects,setProjects]=useState(INIT_PROJECTS);
-  const[selectedProjectId,setSelectedProjectId]=useState(1);
+  const[projects,setProjects]=useState([]);
+  const[selectedProjectId,setSelectedProjectId]=useState(null);
   const[bookings,setBookings]=useState(INIT_BOOKINGS);
   const[sheets,setSheets]=useState(INIT_SHEETS);
   const[clients,setClients]=useState(INIT_CLIENTS);
   const[pricing,setPricing]=useState(DEFAULT_PRICING);
   const[estimates,setEstimates]=useState(INIT_ESTIMATES);
-  const[posts,setPosts]=useState(INIT_POSTS);
+  const[posts,setPosts]=useState([]);
   const[notif,setNotif]=useState(null);
+  const[dataLoading,setDataLoading]=useState(true);
+
+  useEffect(()=>{
+    if(!user) return;
+    const loadData = async () => {
+      setDataLoading(true);
+      const { data: projectsData } = await supabase
+        .from("projects")
+        .select("*, storyboards(*), messages(*), files(*)")
+        .order("created_at", { ascending: false });
+      if(projectsData && projectsData.length > 0) {
+        const formatted = projectsData.map(p => ({
+          id: p.id,
+          title: p.title,
+          clientId: p.client_id,
+          status: p.status || "brief",
+          progress: p.progress || 0,
+          createdAt: p.created_at?.split("T")[0],
+          brief: p.brief || {},
+          replayUrl: p.replay_url || "",
+          storyboards: (p.storyboards || []).map(s => ({
+            id: s.id,
+            title: s.title,
+            frames: s.frames || [],
+            validationStatus: s.validation_status || "pending",
+            createdAt: s.created_at?.split("T")[0],
+          })),
+          comments: (p.messages || []).map(m => ({
+            id: m.id,
+            author: m.author,
+            text: m.content,
+            date: m.created_at?.split("T")[0],
+            role: m.role,
+          })),
+          livrables: (p.files || []).map(f => ({
+            id: f.id,
+            name: f.name,
+            url: f.url,
+            category: f.category,
+            note: f.note,
+            date: f.created_at?.split("T")[0],
+          })),
+        }));
+        setProjects(formatted);
+        setSelectedProjectId(formatted[0]?.id || null);
+      }
+      const { data: postsData } = await supabase
+        .from("posts")
+        .select("*")
+        .order("scheduled_at", { ascending: true });
+      if(postsData) {
+        const formattedPosts = postsData.map(p => ({
+          id: p.id,
+          projectId: p.project_id,
+          network: p.network,
+          caption: p.caption || "",
+          assetName: p.asset_name || "",
+          scheduledAt: p.scheduled_at,
+          status: p.status || "draft",
+          comment: p.comment || "",
+          cmNote: p.cm_note || "",
+          createdAt: p.created_at?.split("T")[0],
+        }));
+        setPosts(formattedPosts);
+      }
+      setDataLoading(false);
+    };
+    loadData();
+  },[user]);
 
   const [userRole, setUserRole] = useState(null); // eslint-disable-line
 
