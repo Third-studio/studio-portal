@@ -2017,7 +2017,10 @@ export default function App() {
     }
   }, [user]);
 
-  if (authLoading) return <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:28,letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</div>;
+  if (authLoading || dataLoading) return <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+    <img src="/logo.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.8}}/>
+    <p style={{color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
+  </div>;
   if (!user) return <Login onLogin={setUser} />;
 
   // const isAdmin = userRole === "admin";
