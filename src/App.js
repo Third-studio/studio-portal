@@ -1399,12 +1399,7 @@ const POST_STATUSES = [
   { id:"published",label:"Publié",      color:"#E8C547", bg:"#E8C54722" },
 ];
 
-// const INIT_POSTS = [
-  { id:1, projectId:1, network:"instagram", caption:"🌙 La magie de la nuit martiniquaise, capturée dans chaque goutte. Découvrez la nouvelle Canne Bleue de chez Clément. #RhumClement #Martinique #Premium", assetId:null, assetName:"Extrait spot 30s", scheduledAt:"2026-04-25", status:"review", comment:"", cmNote:"Post de lancement, format Reels 15s", createdAt:"2026-04-18" },
-  { id:2, projectId:1, network:"facebook",  caption:"Notre nouveau spot pour Rhum Clément Canne Bleue est en ligne ! Une ode à l'artisanat martiniquais et à l'excellence. Regardez en plein écran. 🥃", assetId:null, assetName:"Spot 30s final", scheduledAt:"2026-04-25", status:"draft", comment:"", cmNote:"Même date que Insta, format paysage", createdAt:"2026-04-18" },
-  { id:3, projectId:2, network:"youtube",   caption:"Film institutionnel CTM 2025-2026 — Une Martinique qui avance, des projets qui transforment notre île. Découvrez les actions de la Collectivité Territoriale.", assetId:null, assetName:"Film institutionnel 4K", scheduledAt:"2026-05-02", status:"approved", comment:"Parfait, on valide pour le 2 mai.", cmNote:"Version longue YouTube + version courte Insta", createdAt:"2026-04-19" },
-  { id:4, projectId:2, network:"linkedin",  caption:"La CTM publie son bilan 2025-2026 : routes, écoles, hôpital, développement économique. Un engagement fort pour les citoyens martiniquais. Retrouvez le film complet en lien.", assetId:null, assetName:"Film institutionnel 4K", scheduledAt:"2026-05-02", status:"draft", comment:"", cmNote:"Format pro LinkedIn, ton institutionnel", createdAt:"2026-04-19" },
-];
+// INIT_POSTS removed
 
 // ── CM ADMIN VIEW ─────────────────────────────────────────────────────────────
 function CMModule({ posts, setPosts, projects, onNotif }) {
