@@ -211,7 +211,7 @@ const INIT_CLIENTS = [
   { id:4, name:"Mairie Fort-de-France",email:"mairie@fdf.mq",        discount:12, type:"Institutionnel", simulatorEnabled:false },
 ];
 
-const INIT_PROJECTS = [
+// const INIT_PROJECTS = [
   { id:1, title:"Spot 30s – Rhum Clément", clientId:1, status:"storyboard", progress:35, createdAt:"2026-04-10",
     brief:{objective:"Lancement Canne Bleue, ambiance premium nuit tropicale.",target:"25-40 ans CSP+",duration:"30 secondes",tone:"Premium, sensoriel",deliverables:"1 spot TV + version 15s réseaux"},
     replayUrl:"https://app.replay.io/",
@@ -1414,7 +1414,7 @@ const POST_STATUSES = [
   { id:"published",label:"Publié",      color:"#E8C547", bg:"#E8C54722" },
 ];
 
-const INIT_POSTS = [
+// const INIT_POSTS = [
   { id:1, projectId:1, network:"instagram", caption:"🌙 La magie de la nuit martiniquaise, capturée dans chaque goutte. Découvrez la nouvelle Canne Bleue de chez Clément. #RhumClement #Martinique #Premium", assetId:null, assetName:"Extrait spot 30s", scheduledAt:"2026-04-25", status:"review", comment:"", cmNote:"Post de lancement, format Reels 15s", createdAt:"2026-04-18" },
   { id:2, projectId:1, network:"facebook",  caption:"Notre nouveau spot pour Rhum Clément Canne Bleue est en ligne ! Une ode à l'artisanat martiniquais et à l'excellence. Regardez en plein écran. 🥃", assetId:null, assetName:"Spot 30s final", scheduledAt:"2026-04-25", status:"draft", comment:"", cmNote:"Même date que Insta, format paysage", createdAt:"2026-04-18" },
   { id:3, projectId:2, network:"youtube",   caption:"Film institutionnel CTM 2025-2026 — Une Martinique qui avance, des projets qui transforment notre île. Découvrez les actions de la Collectivité Territoriale.", assetId:null, assetName:"Film institutionnel 4K", scheduledAt:"2026-05-02", status:"approved", comment:"Parfait, on valide pour le 2 mai.", cmNote:"Version longue YouTube + version courte Insta", createdAt:"2026-04-19" },
