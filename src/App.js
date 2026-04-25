@@ -1904,6 +1904,131 @@ function CMClientPostMini({ post, netData, projects }) {
   );
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ADMIN DASHBOARD
+// ─────────────────────────────────────────────────────────────────────────────
+function AdminDashboard({ projects, clients, onSelectProject, onSectionChange }) {
+  const [sortBy, setSortBy] = useState("tournage");
+
+  const statusColor = s => ({brief:"#7B9CFF",storyboard:"#E8C547",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#8888AA");
+  const statusLabel = s => ({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
+
+  // Group projects by client
+  const grouped = {};
+  projects.forEach(p => {
+    const clientName = clients.find(c => c.id === p.clientId)?.name || p.client || "Client inconnu";
+    if (!grouped[clientName]) grouped[clientName] = [];
+    grouped[clientName].push(p);
+  });
+
+  // Sort projects
+  const sortProjects = (projs) => {
+    if (sortBy === "tournage") return [...projs].sort((a,b) => (a.createdAt||"").localeCompare(b.createdAt||""));
+    if (sortBy === "livraison") return [...projs].sort((a,b) => {
+      const order = ["brief","storyboard","tournage","montage","livraison"];
+      return order.indexOf(b.status) - order.indexOf(a.status);
+    });
+    if (sortBy === "statut") return [...projs].sort((a,b) => {
+      const order = ["brief","storyboard","tournage","montage","livraison"];
+      return order.indexOf(a.status) - order.indexOf(b.status);
+    });
+    return projs;
+  };
+
+  const totalProjects = projects.length;
+  const byStatus = s => projects.filter(p => p.status === s).length;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+      {/* Header */}
+      <div>
+        <h2 style={{ fontFamily:"'Bebas Neue'", fontSize:28, color:"#F0EEE8", letterSpacing:"0.04em" }}>TABLEAU DE BORD</h2>
+        <p style={{ fontFamily:"'DM Sans'", fontSize:12, color:"#8888AA", marginTop:2 }}>Vue d ensemble de tous vos projets et clients</p>
+      </div>
+
+      {/* Stats globales */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:8 }}>
+        {[
+          { label:"Total projets", value:totalProjects, color:"#F0EEE8" },
+          { label:"En brief", value:byStatus("brief"), color:"#7B9CFF" },
+          { label:"Storyboard", value:byStatus("storyboard"), color:"#E8C547" },
+          { label:"En tournage", value:byStatus("tournage"), color:"#FF9F43" },
+          { label:"Livrés", value:byStatus("livraison"), color:"#4ECDC4" },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ background:"#12121A", border:`1px solid ${color}33`, borderRadius:8, padding:"12px 14px" }}>
+            <p style={{ fontFamily:"'Bebas Neue'", fontSize:28, color, letterSpacing:"0.05em" }}>{value}</p>
+            <p style={{ fontFamily:"'DM Sans'", fontSize:10, color:"#8888AA", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Tri */}
+      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+        <span style={{ fontFamily:"'DM Sans'", fontSize:11, color:"#555570", textTransform:"uppercase", letterSpacing:"0.08em" }}>Trier par</span>
+        <div style={{ display:"flex", gap:4, background:"#0E0E18", padding:3, borderRadius:7, border:"1px solid #2A2A3E" }}>
+          {[
+            { key:"tournage", label:"📅 Date tournage" },
+            { key:"livraison", label:"🏁 Avancement" },
+            { key:"statut", label:"📊 Statut" },
+          ].map(s => (
+            <button key={s.key} className={sortBy===s.key?"tab active":"tab"} style={{ fontSize:11, padding:"4px 10px", whiteSpace:"nowrap" }} onClick={() => setSortBy(s.key)}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Projets groupés par client */}
+      {Object.entries(grouped).map(([clientName, clientProjects]) => (
+        <div key={clientName}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
+            <div style={{ width:32, height:32, borderRadius:"50%", background:"#E8C54722", border:"1px solid #E8C54744", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Bebas Neue'", fontSize:14, color:"#E8C547", flexShrink:0 }}>
+              {clientName[0]}
+            </div>
+            <div>
+              <h3 style={{ fontFamily:"'DM Sans'", fontSize:14, fontWeight:600, color:"#F0EEE8" }}>{clientName}</h3>
+              <p style={{ fontFamily:"'DM Sans'", fontSize:11, color:"#555570" }}>{clientProjects.length} projet{clientProjects.length>1?"s":""}</p>
+            </div>
+          </div>
+          <div style={{ display:"flex", flexDirection:"column", gap:6, paddingLeft:42 }}>
+            {sortProjects(clientProjects).map(p => (
+              <div key={p.id} onClick={() => { onSelectProject(p.id); onSectionChange("projets"); }}
+                style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 14px", background:"#12121A", borderRadius:8, border:"1px solid #2A2A3E", cursor:"pointer", transition:"all .15s" }}
+                onMouseEnter={e => e.currentTarget.style.borderColor="#3A3A5E"}
+                onMouseLeave={e => e.currentTarget.style.borderColor="#2A2A3E"}
+              >
+                <div style={{ width:8, height:8, borderRadius:"50%", background:statusColor(p.status), flexShrink:0 }}/>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <p style={{ fontFamily:"'DM Sans'", fontSize:13, fontWeight:500, color:"#F0EEE8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.title}</p>
+                  <p style={{ fontFamily:"'DM Sans'", fontSize:10, color:"#555570", marginTop:1 }}>Créé le {p.createdAt ? new Date(p.createdAt+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}) : "—"}</p>
+                </div>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <div style={{ width:80 }}>
+                    <div style={{ height:3, background:"#1A1A26", borderRadius:2, overflow:"hidden" }}>
+                      <div style={{ height:"100%", width:`${p.progress||0}%`, background:statusColor(p.status), borderRadius:2, transition:"width .5s" }}/>
+                    </div>
+                  </div>
+                  <span style={{ fontFamily:"'DM Sans'", fontSize:11, color:statusColor(p.status), background:statusColor(p.status)+"22", border:`1px solid ${statusColor(p.status)}44`, borderRadius:10, padding:"2px 8px", whiteSpace:"nowrap" }}>
+                    {statusLabel(p.status)}
+                  </span>
+                  <span style={{ color:"#555570", fontSize:12 }}>→</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {projects.length === 0 && (
+        <div style={{ textAlign:"center", padding:"40px 0", color:"#555570", fontFamily:"'DM Sans'", fontSize:13 }}>
+          Aucun projet pour l instant. Crée ton premier projet dans la section Projets.
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT APP
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1923,7 +2048,7 @@ export default function App() {
 
   // Global state
   const[appView,setAppView]=useState("client"); // "prod" | "client"
-  const[prodSection,setProdSection]=useState("projets");
+  const[prodSection,setProdSection]=useState("dashboard");
   const[clientSection,setClientSection]=useState("projets");
 
   // Data
@@ -2036,6 +2161,7 @@ export default function App() {
 
   // ── PROD NAV ────────────────────────────────────────────────────────────────
   const prodNav=[
+    {k:"dashboard",   l:"Dashboard",     icon:"📊"},
     {k:"projets",     l:"Projets",       icon:"📁"},
     {k:"calendrier",  l:"Calendrier",    icon:"📅"},
     {k:"organisation",l:"Organisation",  icon:"🗂️"},
@@ -2112,6 +2238,9 @@ export default function App() {
           <div style={{flex:1,overflowY:"auto",padding:"22px 24px"}}>
 
             {/* PROD SECTIONS */}
+            {appView==="prod"&&prodSection==="dashboard"&&(
+              <AdminDashboard projects={projects} clients={clients} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection}/>
+            )}
             {appView==="prod"&&prodSection==="projets"&&selProject&&(
               <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif}/>
             )}
