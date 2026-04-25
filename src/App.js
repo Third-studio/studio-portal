@@ -211,22 +211,7 @@ const INIT_CLIENTS = [
   { id:4, name:"Mairie Fort-de-France",email:"mairie@fdf.mq",        discount:12, type:"Institutionnel", simulatorEnabled:false },
 ];
 
-// const INIT_PROJECTS = [
-  { id:1, title:"Spot 30s – Rhum Clément", clientId:1, status:"storyboard", progress:35, createdAt:"2026-04-10",
-    brief:{objective:"Lancement Canne Bleue, ambiance premium nuit tropicale.",target:"25-40 ans CSP+",duration:"30 secondes",tone:"Premium, sensoriel",deliverables:"1 spot TV + version 15s réseaux"},
-    replayUrl:"https://app.replay.io/",
-    storyboards:[{id:1,title:"Version 1 – Nuit en distillerie",frames:[{id:1,desc:"Plan large : distillerie la nuit, lumières chaudes",visual:"🌙"},{id:2,desc:"Travelling avant vers les cuves en cuivre, reflets dorés",visual:"🥃"},{id:3,desc:"Mains expertes versant le rhum, gros plan sur couleur ambrée",visual:"✋"},{id:4,desc:"Verre en contre-jour, logo apparaît en fondu",visual:"✨"}],validationStatus:"pending",createdAt:"2026-04-12"}],
-    comments:[{id:1,author:"Marie D.",text:"Brief validé, on attend le storyboard !",date:"2026-04-11",role:"client"},{id:2,author:"Studio",text:"Bien reçu, on revient sous 48h.",date:"2026-04-11",role:"prod"}],
-    livrables:[],
-  },
-  { id:2, title:"Film institutionnel – CTM", clientId:2, status:"review", progress:70, createdAt:"2026-03-28",
-    brief:{objective:"Valoriser les actions 2025-2026 auprès des citoyens",target:"Grand public martiniquais",duration:"3-4 minutes",tone:"Institutionnel, chaleureux",deliverables:"Film 4K + version sous-titrée"},
-    replayUrl:"https://app.replay.io/",
-    storyboards:[{id:1,title:"Version finale approuvée",frames:[{id:1,desc:"Aérien : survol de la Martinique au lever du soleil",visual:"🌅"},{id:2,desc:"Interviews élus et citoyens",visual:"🎙️"},{id:3,desc:"Chantiers et réalisations",visual:"🏗️"},{id:4,desc:"Conclusion optimiste, enfants, nature",visual:"🌿"}],validationStatus:"approved",createdAt:"2026-04-02"}],
-    comments:[{id:1,author:"Jean-P.",text:"Le storyboard est excellent, on valide !",date:"2026-04-03",role:"client"},{id:2,author:"Studio",text:"Merci ! Tournage la semaine prochaine.",date:"2026-04-03",role:"prod"}],
-    livrables:[{id:1,name:"Rushes semaine 1 (15 Go)",url:"#",note:"Cam A+B",category:"rushes",date:"2026-04-16"},{id:2,name:"Session droits – Comédiens",url:"#",note:"3 talents",category:"droits",date:"2026-04-14"}],
-  },
-];
+// INIT_PROJECTS removed
 
 const INIT_BOOKINGS = [
   {id:1,date:d(3), team:"A",client:"Clément Distilleries",status:"confirmed",confirmType:"devis",  extras:["drone"],     note:"Tournage nuit distillerie",createdAt:d(-2),expiresAt:null},
