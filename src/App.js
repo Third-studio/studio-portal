@@ -476,16 +476,17 @@ function ProdLivrables({project,onUpdate,onNotif}){
   );
 }
 
-function ProdProjectView({project,onUpdate,onNotif}){
+function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
   const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."}];
   const[brief,setBrief]=useState({...project.brief});
+  const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||""});
   const addSB=sb=>{onUpdate({...project,storyboards:[...project.storyboards,sb]});setShowGen(false);onNotif("Storyboard généré !");};
   const updSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif("Statut mis à jour");};
   const addMsg=(text,role)=>{const c={id:Date.now(),author:role==="prod"?"Studio":"Client",text,date:new Date().toISOString().split("T")[0],role};onUpdate({...project,comments:[...project.comments,c]});};
-  const saveBrief=()=>{onUpdate({...project,brief,status:project.status==="brief"?"storyboard":project.status});onNotif("Brief sauvegardé !");};
-  const tabs=[{k:"brief",l:"Brief"},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"}];
+  const saveBrief=()=>{onUpdate({...project,brief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,status:project.status==="brief"?"storyboard":project.status});onNotif("Brief sauvegardé !");};
+  const tabs=[{k:"brief",l:"Brief"},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp">
@@ -499,15 +500,27 @@ function ProdProjectView({project,onUpdate,onNotif}){
         {tabs.map(t=><button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
       </div>
       {tab==="brief"&&(
-        <div className="card fadeUp" style={{padding:18}}>
-          <SH icon="📋" title="BRIEF CLIENT"/>
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
-            {briefFields.map(f=>(
-              <div key={f.k}><Lbl>{f.l}</Lbl>
-                <textarea className="input" rows={2} placeholder={f.p} value={brief[f.k]||""} onChange={e=>setBrief(p=>({...p,[f.k]:e.target.value}))}/>
+        <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div className="card" style={{padding:18}}>
+            <SH icon="📅" title="DATES & STATUT"/>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div><Lbl>Date de tournage prévue</Lbl><input type="date" className="input" value={statusMeta.shootDate} onChange={e=>setStatusMeta(p=>({...p,shootDate:e.target.value}))}/></div>
+                <div><Lbl>Date de livraison prévue</Lbl><input type="date" className="input" value={statusMeta.deliveryDate} onChange={e=>setStatusMeta(p=>({...p,deliveryDate:e.target.value}))}/></div>
               </div>
-            ))}
-            <button className="btn btn-primary" style={{alignSelf:"flex-end"}} onClick={saveBrief}>Enregistrer</button>
+              <div><Lbl>Note de statut (visible client)</Lbl><input className="input" placeholder="Ex: Montage en cours, livraison le 15 mai..." value={statusMeta.statusNote} onChange={e=>setStatusMeta(p=>({...p,statusNote:e.target.value}))}/></div>
+            </div>
+          </div>
+          <div className="card" style={{padding:18}}>
+            <SH icon="📋" title="BRIEF CLIENT"/>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              {briefFields.map(f=>(
+                <div key={f.k}><Lbl>{f.l}</Lbl>
+                  <textarea className="input" rows={2} placeholder={f.p} value={brief[f.k]||""} onChange={e=>setBrief(p=>({...p,[f.k]:e.target.value}))}/>
+                </div>
+              ))}
+              <button className="btn btn-primary" style={{alignSelf:"flex-end"}} onClick={saveBrief}>Enregistrer</button>
+            </div>
           </div>
         </div>
       )}
@@ -536,6 +549,8 @@ function ProdProjectView({project,onUpdate,onNotif}){
       )}
       {tab==="comments"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="prod"/></div>}
       {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
+      {tab==="equipe"&&<TeamSection project={project} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={onUpdateAssignments} onNotif={onNotif}/>}
+      {tab==="notes"&&<MeetingNotesSection project={project} meetingNotes={meetingNotes} onUpdateMeetingNotes={onUpdateMeetingNotes} onNotif={onNotif}/>}
     </div>
   );
 }
@@ -560,6 +575,12 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
       {tab==="suivi"&&(
         <div className="card fadeUp" style={{padding:18}}>
           <SH icon="📊" title="AVANCEMENT"/>
+          {(project.statusNote||project.deliveryDate)&&(
+            <div style={{background:"#E8C54710",border:"1px solid #E8C54720",borderRadius:8,padding:"10px 14px",marginBottom:12}}>
+              {project.statusNote&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:500}}>{project.statusNote}</p>}
+              {project.deliveryDate&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:project.statusNote?4:0}}>📅 Livraison prévue : {fmtD(project.deliveryDate)}</p>}
+            </div>
+          )}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {STATUS_STEPS.map((s,i)=>{const cur=STATUS_INDEX[project.status]??0,done=i<cur,act=i===cur;return(
               <div key={s} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:act?"#E8C54710":done?"#4ECDC410":"#0E0E18",border:`1px solid ${act?"#E8C54730":done?"#4ECDC430":"#2A2A3E"}`}}>
@@ -1888,11 +1909,12 @@ function CMClientPostMini({ post, netData, projects }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
-function AdminDashboard({ projects, clients, onSelectProject, onSectionChange }) {
+function AdminDashboard({ projects, clients, assignments, onSelectProject, onSectionChange }) {
   const [sortBy, setSortBy] = useState("tournage");
 
   const statusColor = s => ({brief:"#7B9CFF",storyboard:"#E8C547",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#8888AA");
   const statusLabel = s => ({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
+  const deliveryColor = date => { const diff=(new Date(date+"T12:00:00")-new Date())/86400000; return diff<0?"#FF6B6B":diff<=7?"#FF9F43":"#4ECDC4"; };
 
   // Group projects by client
   const grouped = {};
@@ -1983,8 +2005,18 @@ function AdminDashboard({ projects, clients, onSelectProject, onSectionChange })
                   <p style={{ fontFamily:"'DM Sans'", fontSize:13, fontWeight:500, color:"#F0EEE8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.title}</p>
                   <p style={{ fontFamily:"'DM Sans'", fontSize:10, color:"#555570", marginTop:1 }}>Créé le {p.createdAt ? new Date(p.createdAt+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}) : "—"}</p>
                 </div>
-                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <div style={{ width:80 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+                  {p.deliveryDate&&(
+                    <span style={{fontFamily:"'JetBrains Mono'",fontSize:9,color:deliveryColor(p.deliveryDate),background:deliveryColor(p.deliveryDate)+"18",border:`1px solid ${deliveryColor(p.deliveryDate)}30`,borderRadius:5,padding:"2px 6px",whiteSpace:"nowrap"}}>
+                      {(new Date(p.deliveryDate+"T12:00:00")-new Date())/86400000<0?"⚠ ":"📅 "}{fmtS(p.deliveryDate)}
+                    </span>
+                  )}
+                  {assignments.filter(a=>a.projectId===p.id).length>0&&(
+                    <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",whiteSpace:"nowrap"}}>
+                      👥 {assignments.filter(a=>a.projectId===p.id).length}
+                    </span>
+                  )}
+                  <div style={{ width:70 }}>
                     <div style={{ height:3, background:"#1A1A26", borderRadius:2, overflow:"hidden" }}>
                       <div style={{ height:"100%", width:`${p.progress||0}%`, background:statusColor(p.status), borderRadius:2, transition:"width .5s" }}/>
                     </div>
@@ -2003,6 +2035,386 @@ function AdminDashboard({ projects, clients, onSelectProject, onSectionChange })
       {projects.length === 0 && (
         <div style={{ textAlign:"center", padding:"40px 0", color:"#555570", fontFamily:"'DM Sans'", fontSize:13 }}>
           Aucun projet pour l instant. Crée ton premier projet dans la section Projets.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEAM SECTION (fiche projet — admin)
+// ─────────────────────────────────────────────────────────────────────────────
+function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNotif}){
+  const projectAssignments=assignments.filter(a=>a.projectId===project.id);
+  const assignedIds=projectAssignments.map(a=>a.memberId);
+  const[showAdd,setShowAdd]=useState(false);
+  const[selMember,setSelMember]=useState("");
+  const[roleOnProject,setRoleOnProject]=useState("");
+  const available=teamMembers.filter(m=>!assignedIds.includes(m.id));
+  const MEMBER_COLORS=["#E8C547","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF6B6B"];
+  const assign=()=>{
+    if(!selMember)return;
+    onUpdateAssignments(prev=>[...prev,{id:Date.now(),projectId:project.id,memberId:Number(selMember),roleOnProject}]);
+    onNotif("Membre assigné !");setShowAdd(false);setSelMember("");setRoleOnProject("");
+  };
+  const remove=id=>onUpdateAssignments(prev=>prev.filter(a=>a.id!==id));
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div className="card" style={{padding:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <SH icon="👥" title="ÉQUIPE ASSIGNÉE"/>
+          {(available.length>0||showAdd)&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(!showAdd)}>{showAdd?"✕":"+ Assigner"}</button>}
+        </div>
+        {showAdd&&(
+          <div style={{background:"#0E0E18",border:"1px solid #E8C54730",borderRadius:8,padding:12,marginBottom:12,display:"flex",flexDirection:"column",gap:8}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div><Lbl>Membre</Lbl><select className="input" value={selMember} onChange={e=>setSelMember(e.target.value)}><option value="">Choisir...</option>{available.map(m=><option key={m.id} value={m.id}>{m.nom} ({m.role})</option>)}</select></div>
+              <div><Lbl>Rôle sur ce projet</Lbl><input className="input" placeholder="Cadreur principal..." value={roleOnProject} onChange={e=>setRoleOnProject(e.target.value)}/></div>
+            </div>
+            <div style={{display:"flex",gap:7,justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={assign} disabled={!selMember}>Assigner</button></div>
+          </div>
+        )}
+        {projectAssignments.length===0?(
+          <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"16px 0"}}>
+            {teamMembers.length===0?"Créez des membres dans Planning → Gérer l'équipe.":"Aucun membre assigné à ce projet."}
+          </p>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {projectAssignments.map((a,idx)=>{
+              const member=teamMembers.find(m=>m.id===a.memberId);
+              if(!member)return null;
+              const col=member.color||MEMBER_COLORS[idx%MEMBER_COLORS.length];
+              return(
+                <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:"#0E0E18",borderRadius:7,border:"1px solid #2A2A3E"}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:13,color:col,flexShrink:0}}>{member.nom[0]}</div>
+                  <div style={{flex:1}}>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{member.nom}</p>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>{a.roleOnProject||member.role}</p>
+                  </div>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:10,color:member.team==="A"?"#E8C547":"#4ECDC4",background:member.team==="A"?"#E8C54718":"#4ECDC418",border:`1px solid ${member.team==="A"?"#E8C54730":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{member.team||"?"}</span>
+                  <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>remove(a.id)}>✕</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MEETING NOTES SECTION (fiche projet — admin)
+// ─────────────────────────────────────────────────────────────────────────────
+function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}){
+  const notes=meetingNotes.filter(n=>n.projectId===project.id);
+  const[showAdd,setShowAdd]=useState(false);
+  const[form,setForm]=useState({date:isoToday(),participants:"",content:"",decisions:""});
+  const sf=(k,v)=>setForm(p=>({...p,[k]:v}));
+  const add=()=>{
+    if(!form.content.trim())return;
+    onUpdateMeetingNotes(prev=>[...prev,{id:Date.now(),projectId:project.id,...form}]);
+    onNotif("Note ajoutée !");setForm({date:isoToday(),participants:"",content:"",decisions:""});setShowAdd(false);
+  };
+  const del=id=>onUpdateMeetingNotes(prev=>prev.filter(n=>n.id!==id));
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <h3 style={{fontFamily:"'Bebas Neue'",fontSize:17,color:"#F0EEE8",letterSpacing:"0.05em"}}>NOTES DE RÉUNION</h3>
+        <button className="btn btn-primary" style={{fontSize:11}} onClick={()=>setShowAdd(!showAdd)}>{showAdd?"✕ Fermer":"+ Nouvelle note"}</button>
+      </div>
+      {showAdd&&(
+        <div className="card fadeUp" style={{padding:16}}>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div><Lbl>Date</Lbl><input type="date" className="input" value={form.date} onChange={e=>sf("date",e.target.value)}/></div>
+              <div><Lbl>Participants</Lbl><input className="input" placeholder="Alice, Bob, Client..." value={form.participants} onChange={e=>sf("participants",e.target.value)}/></div>
+            </div>
+            <div><Lbl>Notes libres</Lbl><textarea className="input" rows={4} placeholder="Points abordés, contexte, discussions..." value={form.content} onChange={e=>sf("content",e.target.value)}/></div>
+            <div><Lbl>Décisions prises (une par ligne)</Lbl><textarea className="input" rows={3} placeholder={"Décision 1\nDécision 2..."} value={form.decisions} onChange={e=>sf("decisions",e.target.value)}/></div>
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={add}>Enregistrer</button></div>
+          </div>
+        </div>
+      )}
+      {notes.length===0&&!showAdd&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"20px 0"}}>Aucune note de réunion</p>}
+      {[...notes].sort((a,b)=>b.date.localeCompare(a.date)).map(note=>(
+        <div key={note.id} className="card fadeUp" style={{padding:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+            <div>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{fmtD(note.date)}</p>
+              {note.participants&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA",marginTop:2}}>👥 {note.participants}</p>}
+            </div>
+            <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>del(note.id)}>✕</button>
+          </div>
+          {note.content&&<div style={{background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:7,padding:12,marginBottom:8}}><p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{note.content}</p></div>}
+          {note.decisions&&(
+            <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:7,padding:10}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#4ECDC4",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>✓ Décisions</p>
+              {note.decisions.split("\n").filter(Boolean).map((dec,i)=>(
+                <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start",marginBottom:3}}>
+                  <span style={{color:"#4ECDC4",fontSize:11,marginTop:1,flexShrink:0}}>→</span>
+                  <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8"}}>{dec}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MODULE F — PLANNING ÉQUIPE
+// ─────────────────────────────────────────────────────────────────────────────
+function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlots,projects,bookings,onNotif}){
+  const[view,setView]=useState("planning");
+  const[weekStart,setWeekStart]=useState(()=>{
+    const d=new Date(TODAY);
+    const day=d.getDay();
+    const diff=day===0?-6:1-day;
+    d.setDate(d.getDate()+diff);
+    return new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  });
+  const[slotModal,setSlotModal]=useState(null);
+  const[editSlot,setEditSlot]=useState(null);
+  const[slotForm,setSlotForm]=useState({type:"tournage",projectId:"",startTime:"09:00",endTime:"17:00",note:""});
+  const[showAddMember,setShowAddMember]=useState(false);
+  const[memberForm,setMemberForm]=useState({nom:"",role:"cadreur",email:"",team:"A",color:"#E8C547"});
+
+  const SLOT_TYPES=[
+    {id:"tournage",  label:"Tournage",  color:"#E8C547"},
+    {id:"montage",   label:"Montage",   color:"#7B9CFF"},
+    {id:"reunion",   label:"Réunion",   color:"#FF9F43"},
+    {id:"post-prod", label:"Post-prod", color:"#B47FFF"},
+  ];
+  const MEMBER_ROLES=["cadreur","monteur","chef de projet","alternant","photographe"];
+  const MEMBER_COLORS=["#E8C547","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF6B6B"];
+
+  const weekDays=Array.from({length:7},(_,i)=>{
+    const d=new Date(weekStart);d.setDate(d.getDate()+i);
+    return d.toISOString().split("T")[0];
+  });
+  const prevWeek=()=>{const d=new Date(weekStart);d.setDate(d.getDate()-7);setWeekStart(new Date(d.getFullYear(),d.getMonth(),d.getDate()));};
+  const nextWeek=()=>{const d=new Date(weekStart);d.setDate(d.getDate()+7);setWeekStart(new Date(d.getFullYear(),d.getMonth(),d.getDate()));};
+
+  const slotsFor=(memberId,date)=>planningSlots.filter(s=>s.memberId===memberId&&s.date===date);
+  const typeColor=type=>SLOT_TYPES.find(t=>t.id===type)?.color||"#8888AA";
+  const projTitle=id=>id?(projects.find(p=>p.id===Number(id))?.title||"Projet inconnu"):"";
+  const bookingsFor=date=>bookings.filter(b=>b.date===date&&b.status==="confirmed");
+
+  const openSlot=(memberId,date)=>{
+    setEditSlot(null);
+    setSlotForm({type:"tournage",projectId:"",startTime:"09:00",endTime:"17:00",note:""});
+    setSlotModal({memberId,date});
+  };
+  const openEditSlot=(slot,e)=>{
+    e.stopPropagation();
+    setEditSlot(slot);
+    setSlotForm({type:slot.type,projectId:slot.projectId||"",startTime:slot.startTime||"09:00",endTime:slot.endTime||"17:00",note:slot.note||""});
+    setSlotModal({memberId:slot.memberId,date:slot.date});
+  };
+  const saveSlot=()=>{
+    if(!slotModal)return;
+    const base={memberId:slotModal.memberId,date:slotModal.date,type:slotForm.type,projectId:slotForm.projectId?Number(slotForm.projectId):null,startTime:slotForm.startTime,endTime:slotForm.endTime,note:slotForm.note};
+    if(editSlot){setPlanningSlots(prev=>prev.map(s=>s.id===editSlot.id?{...base,id:editSlot.id}:s));onNotif("Créneau modifié !");}
+    else{setPlanningSlots(prev=>[...prev,{...base,id:Date.now()}]);onNotif("Créneau ajouté !");}
+    setSlotModal(null);setEditSlot(null);
+  };
+  const deleteSlot=id=>{setPlanningSlots(prev=>prev.filter(s=>s.id!==id));onNotif("Créneau supprimé");setSlotModal(null);setEditSlot(null);};
+
+  const addMember=()=>{
+    if(!memberForm.nom.trim())return;
+    setTeamMembers(prev=>[...prev,{id:Date.now(),...memberForm}]);
+    onNotif("Membre ajouté !");
+    setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#E8C547"});
+    setShowAddMember(false);
+  };
+  const deleteMember=id=>setTeamMembers(prev=>prev.filter(m=>m.id!==id));
+
+  const weekLabel=`${new Date(weekDays[0]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} – ${new Date(weekDays[6]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}`;
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+        <div>
+          <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,color:"#F0EEE8",letterSpacing:"0.04em"}}>PLANNING ÉQUIPE</h2>
+          <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>
+            {view==="planning"?weekLabel:`${teamMembers.length} membre${teamMembers.length>1?"s":""} dans l'équipe`}
+          </p>
+        </div>
+        <div style={{display:"flex",gap:6,alignItems:"center"}}>
+          {view==="planning"&&(
+            <>
+              <button className="btn btn-ghost" style={{padding:"5px 11px"}} onClick={prevWeek}>←</button>
+              <button className="btn btn-ghost" style={{padding:"5px 11px"}} onClick={nextWeek}>→</button>
+            </>
+          )}
+          <div style={{display:"flex",gap:3,background:"#0E0E18",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
+            <button className={view==="planning"?"tab active":"tab"} style={{fontSize:11,padding:"4px 10px"}} onClick={()=>setView("planning")}>📆 Planning</button>
+            <button className={view==="equipe"?"tab active":"tab"} style={{fontSize:11,padding:"4px 10px"}} onClick={()=>setView("equipe")}>👥 Équipe</button>
+          </div>
+        </div>
+      </div>
+
+      {view==="planning"&&(
+        <>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+            {SLOT_TYPES.map(t=>(
+              <div key={t.id} style={{display:"flex",alignItems:"center",gap:5}}>
+                <div style={{width:10,height:10,borderRadius:2,background:t.color+"44",border:`1px solid ${t.color}66`}}/>
+                <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>{t.label}</span>
+              </div>
+            ))}
+            <div style={{display:"flex",alignItems:"center",gap:5}}>
+              <div style={{width:10,height:10,borderRadius:2,background:"#4ECDC444",border:"1px solid #4ECDC466"}}/>
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>Tournage confirmé</span>
+            </div>
+          </div>
+          {teamMembers.length===0?(
+            <div className="card" style={{padding:40,textAlign:"center"}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:14,color:"#555570"}}>Aucun membre configuré.</p>
+              <button className="btn btn-primary" style={{marginTop:12}} onClick={()=>setView("equipe")}>+ Ajouter des membres</button>
+            </div>
+          ):(
+            <div style={{overflowX:"auto",borderRadius:10,border:"1px solid #2A2A3E"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",minWidth:700,background:"#12121A"}}>
+                <thead>
+                  <tr>
+                    <th style={{width:130,padding:"10px 12px",textAlign:"left",fontFamily:"'DM Sans'",fontSize:10,color:"#555570",textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:"1px solid #2A2A3E",position:"sticky",left:0,background:"#0A0A12",zIndex:2}}>Membre</th>
+                    {weekDays.map(date=>{
+                      const isToday=date===isoToday();
+                      const dn=new Date(date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short"});
+                      const dd=new Date(date+"T12:00:00").getDate();
+                      const bks=bookingsFor(date);
+                      return(
+                        <th key={date} style={{padding:"8px 4px",textAlign:"center",fontFamily:"'DM Sans'",fontSize:11,color:isToday?"#E8C547":"#8888AA",borderBottom:"1px solid #2A2A3E",borderLeft:"1px solid #2A2A3E",background:isToday?"#E8C54710":"#0A0A12",minWidth:110}}>
+                          <div style={{textTransform:"capitalize",fontSize:10}}>{dn}</div>
+                          <div style={{fontFamily:"'Bebas Neue'",fontSize:18,letterSpacing:"0.05em"}}>{dd}</div>
+                          {bks.map(b=><div key={b.id} style={{background:"#4ECDC418",border:"1px solid #4ECDC440",borderRadius:3,padding:"1px 5px",margin:"2px auto",fontSize:9,color:"#4ECDC4",display:"inline-block",whiteSpace:"nowrap"}}>📅 Éq.{b.team}</div>)}
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {teamMembers.map(member=>{
+                    const col=member.color||"#E8C547";
+                    return(
+                      <tr key={member.id} style={{borderBottom:"1px solid #1A1A26"}}>
+                        <td style={{padding:"8px 10px",borderRight:"1px solid #2A2A3E",position:"sticky",left:0,background:"#12121A",zIndex:1,verticalAlign:"top"}}>
+                          <div style={{display:"flex",alignItems:"center",gap:7}}>
+                            <div style={{width:26,height:26,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:12,color:col,flexShrink:0}}>{member.nom[0]}</div>
+                            <div>
+                              <p style={{fontFamily:"'DM Sans'",fontSize:11,fontWeight:600,color:"#F0EEE8",whiteSpace:"nowrap"}}>{member.nom}</p>
+                              <p style={{fontFamily:"'DM Sans'",fontSize:9,color:"#555570"}}>{member.role}</p>
+                            </div>
+                          </div>
+                        </td>
+                        {weekDays.map(date=>{
+                          const daySlots=slotsFor(member.id,date);
+                          const isToday=date===isoToday();
+                          return(
+                            <td key={date} onClick={()=>openSlot(member.id,date)}
+                              style={{padding:"4px",verticalAlign:"top",borderLeft:"1px solid #1A1A26",background:isToday?"#E8C54706":"transparent",cursor:"pointer",minHeight:60,transition:"background .1s"}}
+                              onMouseEnter={e=>e.currentTarget.style.background=isToday?"#E8C54712":"#1A1A2A"}
+                              onMouseLeave={e=>e.currentTarget.style.background=isToday?"#E8C54706":"transparent"}
+                            >
+                              <div style={{display:"flex",flexDirection:"column",gap:2,minHeight:52}}>
+                                {daySlots.map(slot=>(
+                                  <div key={slot.id} onClick={e=>openEditSlot(slot,e)}
+                                    style={{background:typeColor(slot.type)+"22",border:`1px solid ${typeColor(slot.type)}44`,borderRadius:4,padding:"2px 5px",cursor:"pointer"}}>
+                                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:2}}>
+                                      <span style={{fontFamily:"'DM Sans'",fontSize:9,color:typeColor(slot.type),fontWeight:600,lineHeight:1.4,flex:1,wordBreak:"break-word"}}>
+                                        {slot.startTime&&slot.endTime?`${slot.startTime}–${slot.endTime} `:""}{slot.projectId?projTitle(slot.projectId):SLOT_TYPES.find(t=>t.id===slot.type)?.label||slot.type}
+                                      </span>
+                                      <button onClick={e=>{e.stopPropagation();deleteSlot(slot.id);}} style={{background:"none",border:"none",color:"#555570",cursor:"pointer",fontSize:9,lineHeight:1,padding:0,flexShrink:0,marginTop:1}}>✕</button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+
+      {view==="equipe"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <h3 style={{fontFamily:"'Bebas Neue'",fontSize:17,color:"#F0EEE8",letterSpacing:"0.05em"}}>MEMBRES DE L'ÉQUIPE</h3>
+            <button className="btn btn-primary" style={{fontSize:11}} onClick={()=>setShowAddMember(!showAddMember)}>{showAddMember?"✕ Fermer":"+ Ajouter"}</button>
+          </div>
+          {showAddMember&&(
+            <div className="card fadeUp" style={{padding:16}}>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div><Lbl>Nom *</Lbl><input className="input" placeholder="Prénom Nom" value={memberForm.nom} onChange={e=>setMemberForm(p=>({...p,nom:e.target.value}))}/></div>
+                  <div><Lbl>Email</Lbl><input className="input" placeholder="email@..." value={memberForm.email} onChange={e=>setMemberForm(p=>({...p,email:e.target.value}))}/></div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+                  <div><Lbl>Rôle</Lbl><select className="input" value={memberForm.role} onChange={e=>setMemberForm(p=>({...p,role:e.target.value}))}>{MEMBER_ROLES.map(r=><option key={r} value={r}>{r}</option>)}</select></div>
+                  <div><Lbl>Équipe</Lbl><select className="input" value={memberForm.team} onChange={e=>setMemberForm(p=>({...p,team:e.target.value}))}><option value="A">Équipe A</option><option value="B">Équipe B</option></select></div>
+                  <div><Lbl>Couleur</Lbl><div style={{display:"flex",gap:4,flexWrap:"wrap",marginTop:4}}>{MEMBER_COLORS.map(c=><button key={c} onClick={()=>setMemberForm(p=>({...p,color:c}))} style={{width:20,height:20,borderRadius:"50%",background:c,border:memberForm.color===c?"3px solid #F0EEE8":"2px solid transparent",cursor:"pointer"}}/>)}</div></div>
+                </div>
+                <div style={{display:"flex",gap:7,justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAddMember(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={addMember} disabled={!memberForm.nom.trim()}>Ajouter</button></div>
+              </div>
+            </div>
+          )}
+          {teamMembers.length===0?(
+            <div style={{textAlign:"center",padding:"30px 0",color:"#555570",fontFamily:"'DM Sans'",fontSize:13}}>Aucun membre. Ajoutez votre équipe.</div>
+          ):(
+            <div style={{display:"flex",flexDirection:"column",gap:6}}>
+              {teamMembers.map((m,idx)=>{
+                const col=m.color||MEMBER_COLORS[idx%MEMBER_COLORS.length];
+                return(
+                  <div key={m.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#12121A",borderRadius:8,border:"1px solid #2A2A3E"}}>
+                    <div style={{width:34,height:34,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:15,color:col,flexShrink:0}}>{m.nom[0]}</div>
+                    <div style={{flex:1}}>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{m.nom}</p>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>{m.role}{m.email?` · ${m.email}`:""}</p>
+                    </div>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:10,color:m.team==="A"?"#E8C547":"#4ECDC4",background:m.team==="A"?"#E8C54718":"#4ECDC418",border:`1px solid ${m.team==="A"?"#E8C54730":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{m.team}</span>
+                    <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>deleteMember(m.id)}>✕</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {slotModal&&(
+        <div className="modal-overlay" onClick={()=>{setSlotModal(null);setEditSlot(null);}}>
+          <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:18,color:"#F0EEE8",letterSpacing:"0.05em"}}>{editSlot?"MODIFIER LE CRÉNEAU":"NOUVEAU CRÉNEAU"}</h3>
+              <button className="btn btn-ghost" style={{padding:"4px 10px"}} onClick={()=>{setSlotModal(null);setEditSlot(null);}}>✕</button>
+            </div>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginBottom:14}}>
+              {teamMembers.find(m=>m.id===slotModal.memberId)?.nom} · {fmtD(slotModal.date)}
+            </p>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div><Lbl>Type</Lbl><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{SLOT_TYPES.map(t=><button key={t.id} onClick={()=>setSlotForm(p=>({...p,type:t.id}))} style={{padding:"5px 12px",borderRadius:6,border:`2px solid ${slotForm.type===t.id?t.color:"#2A2A3E"}`,background:slotForm.type===t.id?t.color+"22":"#0E0E18",cursor:"pointer",fontFamily:"'DM Sans'",fontSize:12,color:slotForm.type===t.id?t.color:"#8888AA",transition:"all .15s"}}>{t.label}</button>)}</div></div>
+              <div><Lbl>Projet (optionnel)</Lbl><select className="input" value={slotForm.projectId} onChange={e=>setSlotForm(p=>({...p,projectId:e.target.value}))}><option value="">— Aucun —</option>{projects.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div><Lbl>Début</Lbl><input type="time" className="input" value={slotForm.startTime} onChange={e=>setSlotForm(p=>({...p,startTime:e.target.value}))}/></div>
+                <div><Lbl>Fin</Lbl><input type="time" className="input" value={slotForm.endTime} onChange={e=>setSlotForm(p=>({...p,endTime:e.target.value}))}/></div>
+              </div>
+              <div><Lbl>Note</Lbl><input className="input" placeholder="Optionnel..." value={slotForm.note} onChange={e=>setSlotForm(p=>({...p,note:e.target.value}))}/></div>
+              <div style={{display:"flex",gap:8,justifyContent:"space-between",marginTop:4}}>
+                <div>{editSlot&&<button className="btn btn-red" style={{fontSize:11}} onClick={()=>deleteSlot(editSlot.id)}>Supprimer</button>}</div>
+                <div style={{display:"flex",gap:8}}><button className="btn btn-ghost" onClick={()=>{setSlotModal(null);setEditSlot(null);}}>Annuler</button><button className="btn btn-primary" onClick={saveSlot}>{editSlot?"Modifier":"Ajouter"}</button></div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -2040,6 +2452,10 @@ export default function App() {
   const[pricing,setPricing]=useState(DEFAULT_PRICING);
   const[estimates,setEstimates]=useState(INIT_ESTIMATES);
   const[posts,setPosts]=useState([]);
+  const[teamMembers,setTeamMembers]=useState([]);
+  const[assignments,setAssignments]=useState([]);
+  const[planningSlots,setPlanningSlots]=useState([]);
+  const[meetingNotes,setMeetingNotes]=useState([]);
   const[notif,setNotif]=useState(null);
   const[dataLoading,setDataLoading]=useState(true);
 
@@ -2061,6 +2477,9 @@ export default function App() {
           createdAt: p.created_at?.split("T")[0],
           brief: p.brief || {},
           replayUrl: p.replay_url || "",
+          deliveryDate: p.delivery_date || "",
+          shootDate: p.shoot_date || "",
+          statusNote: p.status_note || "",
           storyboards: (p.storyboards || []).map(s => ({
             id: s.id,
             title: s.title,
@@ -2106,6 +2525,18 @@ export default function App() {
         }));
         setPosts(formattedPosts);
       }
+      const { data: membersData } = await supabase.from("team_members").select("*").order("nom");
+      if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#E8C547"})));
+
+      const { data: assignData } = await supabase.from("project_assignments").select("*");
+      if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
+
+      const { data: slotsData } = await supabase.from("planning_slots").select("*").order("date");
+      if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
+
+      const { data: notesData } = await supabase.from("meeting_notes").select("*").order("date",{ascending:false});
+      if(notesData) setMeetingNotes(notesData.map(n=>({id:n.id,projectId:n.project_id,date:n.date,participants:n.participants||"",content:n.content||"",decisions:n.decisions||""})));
+
       setDataLoading(false);
     };
     loadData();
@@ -2145,6 +2576,7 @@ export default function App() {
     {k:"projets",     l:"Projets",       icon:"📁"},
     {k:"calendrier",  l:"Calendrier",    icon:"📅"},
     {k:"organisation",l:"Organisation",  icon:"🗂️"},
+    {k:"planning",    l:"Planning",      icon:"📆"},
     {k:"cm",          l:"Social Media",  icon:"📲"},
     {k:"tarifs",      l:"Tarifs",        icon:"💰"},
   ];
@@ -2206,7 +2638,7 @@ export default function App() {
                 ))}
                 {appView==="prod"&&(
                   <button style={{width:"100%",marginTop:6,background:"#E8C54710",border:"1px solid #E8C54725",borderRadius:6,color:"#E8C547",fontFamily:"'DM Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}}
-                    onClick={()=>{const np={id:Date.now(),title:"Nouveau projet",clientId:null,status:"brief",progress:0,createdAt:isoToday(),brief:{objective:"",target:"",duration:"",tone:"",deliverables:""},replayUrl:"",storyboards:[],comments:[],livrables:[]};setProjects(ps=>[...ps,np]);setSelectedProjectId(np.id);}}>
+                    onClick={()=>{const np={id:Date.now(),title:"Nouveau projet",clientId:null,status:"brief",progress:0,createdAt:isoToday(),brief:{objective:"",target:"",duration:"",tone:"",deliverables:""},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",storyboards:[],comments:[],livrables:[]};setProjects(ps=>[...ps,np]);setSelectedProjectId(np.id);}}>
                     + Nouveau projet
                   </button>
                 )}
@@ -2219,10 +2651,10 @@ export default function App() {
 
             {/* PROD SECTIONS */}
             {appView==="prod"&&prodSection==="dashboard"&&(
-              <AdminDashboard projects={projects} clients={clients} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection}/>
+              <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection}/>
             )}
             {appView==="prod"&&prodSection==="projets"&&selProject&&(
-              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif}/>
+              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes}/>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
               <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif}/>
@@ -2232,6 +2664,9 @@ export default function App() {
             )}
             {appView==="prod"&&prodSection==="tarifs"&&(
               <AdminPricingModule pricing={pricing} setPricing={setPricing} clients={clients} setClients={setClients} estimates={estimates} setEstimates={setEstimates}/>
+            )}
+            {appView==="prod"&&prodSection==="planning"&&(
+              <PlanningModule teamMembers={teamMembers} setTeamMembers={setTeamMembers} planningSlots={planningSlots} setPlanningSlots={setPlanningSlots} projects={projects} bookings={bookings} onNotif={showNotif}/>
             )}
             {appView==="prod"&&prodSection==="cm"&&(
               <CMModule posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
