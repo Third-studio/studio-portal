@@ -2542,13 +2542,15 @@ export default function App() {
     loadData();
   },[user]);
 
-  const [userRole, setUserRole] = useState(null); // eslint-disable-line
+  const [userRole, setUserRole] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     if (user) {
-      supabase.from("profiles").select("role").eq("id", user.id).single()
+      supabase.from("profiles").select("*").eq("id", user.id).single()
         .then(({ data }) => {
           setUserRole(data?.role || "client");
+          setUserProfile(data || null);
         });
     }
   }, [user]);
@@ -2565,8 +2567,14 @@ export default function App() {
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
   const selProject=projects.find(p=>p.id===selectedProjectId);
 
-  // Active client simulation (client 1 = Clément Distilleries, has simulator)
-  const activeClient=clients[0];
+  // Pour un client connecté : projets filtrés + profil actif depuis Supabase
+  const isClient = userRole === "client";
+  const clientProjects = isClient ? projects.filter(p => p.clientId === user.id) : projects;
+  const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
+
+  const activeClient = isClient && userProfile
+    ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
+    : clients[0];
 
   const statusColor=s=>({brief:"#7B9CFF",storyboard:"#E8C547",review:"#FF9F43",livraison:"#4ECDC4"}[s]||"#8888AA");
 
@@ -2599,7 +2607,9 @@ export default function App() {
           <div style={{display:"flex",alignItems:"center",gap:12}}>
             <span style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#E8C547",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</span>
             <span style={{color:"#2A2A3E"}}>|</span>
-            <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{appView==="prod"?"Back-office":"Espace client"}</span>
+            <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>
+              {appView==="prod"?"Back-office":`Espace client${activeClient?.name?` — ${activeClient.name}`:""}`}
+            </span>
           </div>
           {userRole === "admin" && (
             <div style={{display:"flex",gap:4,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
@@ -2626,7 +2636,7 @@ export default function App() {
             {((appView==="prod"&&prodSection==="projets")||(appView==="client"&&clientSection==="projets"))&&(
               <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid #1A1A26"}}>
                 <span style={{fontFamily:"'DM Sans'",fontSize:9,color:"#555570",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
-                {projects.map(p=>(
+                {(appView==="prod"?projects:clientProjects).map(p=>(
                   <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>setSelectedProjectId(p.id)}>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontWeight:500,color:"inherit",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{p.title}</p>
@@ -2673,8 +2683,8 @@ export default function App() {
             )}
 
             {/* CLIENT SECTIONS */}
-            {appView==="client"&&clientSection==="projets"&&selProject&&(
-              <ClientProjectView project={selProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing}/>
+            {appView==="client"&&clientSection==="projets"&&clientSelProject&&(
+              <ClientProjectView project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing}/>
             )}
             {appView==="client"&&clientSection==="calendrier"&&(
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -2686,7 +2696,7 @@ export default function App() {
               </div>
             )}
             {appView==="client"&&clientSection==="cm"&&(
-              <CMClientView posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
+              <CMClientView posts={posts} setPosts={setPosts} projects={clientProjects} onNotif={showNotif}/>
             )}
             {appView==="client"&&clientSection==="estimation"&&activeClient?.simulatorEnabled&&(
               <div style={{maxWidth:560}}>
