@@ -758,7 +758,7 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
-      {alerts.length>0&&(
+      {isAdmin&&alerts.length>0&&(
         <div style={{background:"#FF9F4318",border:"1px solid #FF9F4340",borderRadius:8,padding:"10px 14px",display:"flex",gap:10,alignItems:"flex-start"}}>
           <span style={{color:"#FF9F43",fontSize:16}}>⚠️</span>
           <div>
@@ -896,8 +896,9 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
               </div>
               {booking&&(
                 <div style={{paddingLeft:16}}>
-                  <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:500}}>{booking.client}</p>
-                  {booking.note&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>{booking.note}</p>}
+                  {isAdmin&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:500}}>{booking.client}</p>}
+                  {!isAdmin&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>Date réservée</p>}
+                  {isAdmin&&booking.note&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>{booking.note}</p>}
                   {booking.status==="option"&&booking.expiresAt&&(
                     <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#FF9F43",marginTop:4}}>Expire dans : {getCountdown(booking.expiresAt)}</p>
                   )}
