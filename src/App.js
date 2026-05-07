@@ -476,9 +476,10 @@ function ProdLivrables({project,onUpdate,onNotif}){
   );
 }
 
-function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes}){
+function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
+  const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
   const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."}];
   const[brief,setBrief]=useState({...project.brief});
   const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||""});
@@ -492,7 +493,10 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
       <div className="fadeUp">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
           <div><h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,color:"#F0EEE8",letterSpacing:"0.04em"}}>{project.title}</h2></div>
-          <span className={`tag tag-${project.status}`}>{project.status}</span>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
+            <span className={`tag tag-${project.status}`}>{project.status}</span>
+          </div>
         </div>
         <div style={{marginTop:12}}><Timeline status={project.status}/></div>
       </div>
@@ -2525,6 +2529,18 @@ export default function App() {
         }));
         setPosts(formattedPosts);
       }
+      const { data: profilesData } = await supabase.from("profiles").select("*").eq("role","client").order("nom");
+      if(profilesData && profilesData.length > 0) {
+        setClients(profilesData.map(p=>({
+          id: p.id,
+          name: p.nom || p.email || "Client",
+          email: p.email || "",
+          discount: p.discount || 0,
+          type: p.client_type || "PME",
+          simulatorEnabled: p.simulator_enabled || false,
+        })));
+      }
+
       const { data: membersData } = await supabase.from("team_members").select("*").order("nom");
       if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#E8C547"})));
 
@@ -2664,7 +2680,7 @@ export default function App() {
               <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection}/>
             )}
             {appView==="prod"&&prodSection==="projets"&&selProject&&(
-              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes}/>
+              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients}/>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
               <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif}/>
