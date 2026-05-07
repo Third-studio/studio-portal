@@ -81,6 +81,9 @@ const FontLoader = () => (
     .cal-day.confirmed-a { background:#E8C54712;border-color:#E8C54733; }
     .cal-day.confirmed-b { background:#4ECDC412;border-color:#4ECDC433; }
     .cal-day.confirmed-ab { background:#FF6B6B18;border-color:#FF6B6B44;cursor:not-allowed; }
+    .cal-day.partial-a  { background:linear-gradient(135deg,#E8C54712 50%,#0E0E18 50%);border-color:#E8C54733; }
+    .cal-day.partial-b  { background:linear-gradient(135deg,#4ECDC412 50%,#0E0E18 50%);border-color:#4ECDC433; }
+    .cal-day.partial-ab { background:linear-gradient(135deg,#E8C54712 50%,#4ECDC412 50%);border-color:#8888AA44; }
     .cal-day.selected { border-color:#E8C547 !important;background:#E8C54720 !important;box-shadow:0 0 0 2px #E8C54740; }
     .cal-day.today { box-shadow:inset 0 0 0 2px #E8C54766; }
 
@@ -233,11 +236,11 @@ const INIT_CLIENTS = [];
 // INIT_PROJECTS removed
 
 const INIT_BOOKINGS = [
-  {id:1,date:d(3), team:"A",client:"Clément Distilleries",status:"confirmed",confirmType:"devis",  extras:["drone"],     note:"Tournage nuit distillerie",createdAt:d(-2),expiresAt:null},
-  {id:2,date:d(5), team:"B",client:"CTM",                 status:"confirmed",confirmType:"acompte",extras:[],            note:"Interview élus",           createdAt:d(-5),expiresAt:null},
-  {id:3,date:d(7), team:"A",client:"Tropiques Atrium",    status:"option",   confirmType:null,     extras:["steadicam"], note:"",                         createdAt:d(-1),expiresAt:new Date(Date.now()+18*3600000).toISOString()},
-  {id:4,date:d(7), team:"B",client:"Nouveau client",      status:"option",   confirmType:null,     extras:[],            note:"",                         createdAt:d(0), expiresAt:new Date(Date.now()+47*3600000).toISOString()},
-  {id:5,date:d(3), team:"B",client:"Rhum J.M",            status:"confirmed",confirmType:"devis",  extras:[],            note:"",                         createdAt:d(-3),expiresAt:null},
+  {id:1,date:d(3), team:"A",client:"Clément Distilleries",status:"confirmed",confirmType:"devis",  extras:["drone"],     note:"Tournage nuit distillerie",createdAt:d(-2),expiresAt:null,startTime:"08:00",endTime:"12:00"},
+  {id:2,date:d(5), team:"B",client:"CTM",                 status:"confirmed",confirmType:"acompte",extras:[],            note:"Interview élus",           createdAt:d(-5),expiresAt:null,startTime:"08:00",endTime:"17:00"},
+  {id:3,date:d(7), team:"A",client:"Tropiques Atrium",    status:"option",   confirmType:null,     extras:["steadicam"], note:"",                         createdAt:d(-1),expiresAt:new Date(Date.now()+18*3600000).toISOString(),startTime:"13:00",endTime:"17:00"},
+  {id:4,date:d(7), team:"B",client:"Nouveau client",      status:"option",   confirmType:null,     extras:[],            note:"",                         createdAt:d(0), expiresAt:new Date(Date.now()+47*3600000).toISOString(),startTime:"08:00",endTime:"17:00"},
+  {id:5,date:d(3), team:"B",client:"Rhum J.M",            status:"confirmed",confirmType:"devis",  extras:[],            note:"",                         createdAt:d(-3),expiresAt:null,startTime:"13:00",endTime:"17:00"},
 ];
 
 const INIT_SHEETS = [
@@ -291,28 +294,40 @@ function SH({icon,title,sub,right}){
 // ─────────────────────────────────────────────────────────────────────────────
 // CALENDAR HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
+const TIME_SLOTS=[
+  {id:"matin",   label:"Matin",            start:"08:00",end:"12:00",hours:4},
+  {id:"aprem",   label:"Après-midi",       start:"13:00",end:"17:00",hours:4},
+  {id:"journee", label:"Journée complète", start:"08:00",end:"17:00",hours:8},
+];
+function slotOverlap(s1,e1,s2,e2){return s1<e2&&e1>s2;}
+function getTeamDayInfo(dateStr,team,bookings){
+  const bs=bookings.filter(b=>b.date===dateStr&&b.team===team&&b.status!=="refused"&&!(b.status==="option"&&b.expiresAt&&new Date(b.expiresAt)<Date.now()));
+  const matinTaken=bs.some(b=>slotOverlap(b.startTime||"08:00",b.endTime||"17:00","08:00","12:00"));
+  const apremTaken=bs.some(b=>slotOverlap(b.startTime||"08:00",b.endTime||"17:00","13:00","17:00"));
+  const hoursBooked=(matinTaken?4:0)+(apremTaken?4:0);
+  const isFull=hoursBooked>=8;
+  let status="free";
+  if(isFull){status=bs.some(b=>b.status==="option")?"option":"confirmed";}
+  else if(hoursBooked>0){status=bs.some(b=>b.status==="confirmed")?"partial-confirmed":bs.some(b=>b.status==="option")?"partial-option":"free";}
+  return{bookings:bs,matinTaken,apremTaken,hoursBooked,isFull,status};
+}
 function getDayStatus(dateStr,bookings){
-  const day=bookings.filter(b=>b.date===dateStr&&b.status!=="expired"&&b.status!=="refused");
-  const A=day.find(b=>b.team==="A"), B=day.find(b=>b.team==="B");
-  const s=b=>{
-    if(!b)return"free";
-    if(b.status==="confirmed")return"confirmed";
-    if(b.status==="option"&&b.expiresAt&&new Date(b.expiresAt)<Date.now())return"free";
-    if(b.status==="option")return"option";
-    return"free";
-  };
-  return{A:s(A),B:s(B),bookingA:A,bookingB:B};
+  const infoA=getTeamDayInfo(dateStr,"A",bookings);
+  const infoB=getTeamDayInfo(dateStr,"B",bookings);
+  return{A:infoA.status,B:infoB.status,infoA,infoB};
 }
 function getDayClass(dateStr,bookings){
   const t=isoToday();
   if(dateStr<t)return"past";
   const{A,B}=getDayStatus(dateStr,bookings);
-  if(A==="confirmed"&&B==="confirmed")return"confirmed-ab";
-  if(A==="confirmed")return"confirmed-a";
-  if(B==="confirmed")return"confirmed-b";
-  if(A==="option"&&B==="option")return"option-ab";
-  if(A==="option")return"option-a";
-  if(B==="option")return"option-b";
+  const isFull=s=>s==="confirmed"||s==="option";
+  const isPartial=s=>s==="partial-confirmed"||s==="partial-option";
+  if(isFull(A)&&isFull(B))return"confirmed-ab";
+  if(isFull(A))return A==="confirmed"?"confirmed-a":"option-a";
+  if(isFull(B))return B==="confirmed"?"confirmed-b":"option-b";
+  if(isPartial(A)&&isPartial(B))return"partial-ab";
+  if(isPartial(A))return"partial-a";
+  if(isPartial(B))return"partial-b";
   return"available";
 }
 function getCountdown(exp){
@@ -747,8 +762,8 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
   const handleDayClick=(ds)=>{
     if(ds<isoToday())return;
     setSelected(ds);
-    const{A,B,bookingA,bookingB}=getDayStatus(ds,bookings);
-    setModal({date:ds,statusA:A,statusB:B,bookingA,bookingB});
+    const{A,B,infoA,infoB}=getDayStatus(ds,bookings);
+    setModal({date:ds,statusA:A,statusB:B,infoA,infoB});
   };
 
   // const statusColors={free:"#4ECDC4",option:"#FF9F43",confirmed:"#FF6B6B"};
@@ -848,17 +863,38 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
 }
 
 function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
-  const[form,setForm]=useState({team:"A",client:"",note:""});
+  const{date,infoA,infoB}=modal;
+
+  const getAvailableSlots=(info)=>{
+    if(!info)return TIME_SLOTS.filter(s=>s.id!=="journee");
+    const slots=[];
+    if(!info.matinTaken&&!info.apremTaken)return[TIME_SLOTS.find(s=>s.id==="journee"),...TIME_SLOTS.filter(s=>s.id!=="journee")];
+    if(!info.matinTaken)slots.push(TIME_SLOTS.find(s=>s.id==="matin"));
+    if(!info.apremTaken)slots.push(TIME_SLOTS.find(s=>s.id==="aprem"));
+    return slots;
+  };
+
+  const availA=getAvailableSlots(infoA);
+  const availB=getAvailableSlots(infoB);
+
+  const teamsWithSlots=[availA.length>0&&"A",availB.length>0&&"B"].filter(Boolean);
+  const initTeam=teamsWithSlots[0]||"A";
+  const initSlot=(initTeam==="A"?availA:availB)[0]?.id||"matin";
+
+  const[form,setForm]=useState({team:initTeam,slot:initSlot,client:"",note:""});
   const[confirmCheck,setConfirmCheck]=useState({devis:false,acompte:false});
   const[confirmTarget,setConfirmTarget]=useState(null);
-  const{date,statusA,statusB,bookingA,bookingB}=modal;
-  const freeTeams=[statusA==="free"&&"A",statusB==="free"&&"B"].filter(Boolean);
 
-  const addOption=()=>{
+  const currentAvailSlots=form.team==="A"?availA:availB;
+
+  const addOption=async()=>{
     if(!form.client.trim())return;
+    const slotDef=TIME_SLOTS.find(s=>s.id===form.slot)||TIME_SLOTS[0];
     const exp=new Date(Date.now()+72*3600000).toISOString();
-    setBookings(bs=>[...bs,{id:Date.now(),date,team:form.team,client:form.client,status:"option",confirmType:null,extras:[],note:form.note,createdAt:isoToday(),expiresAt:exp}]);
-    onNotif(`Option posée — Équipe ${form.team} le ${fmtS(date)}`);onClose();
+    const newB={id:Date.now(),date,team:form.team,client:form.client,status:"option",confirmType:null,extras:[],note:form.note,createdAt:isoToday(),expiresAt:exp,startTime:slotDef.start,endTime:slotDef.end};
+    const{error}=await supabase.from("bookings").insert({date,team:form.team,client_name:form.client,status:"option",note:form.note,expires_at:exp,start_time:slotDef.start,end_time:slotDef.end});
+    if(!error)setBookings(bs=>[...bs,newB]);
+    onNotif(`Option posée — Équipe ${form.team} ${slotDef.label} le ${fmtS(date)}`);onClose();
   };
 
   const confirm=(booking)=>{
@@ -874,33 +910,79 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
 
   const teamColor=t=>t==="A"?"#E8C547":"#4ECDC4";
 
+  const slotLabel=(b)=>{
+    const st=b.startTime||b.start_time;
+    const et=b.endTime||b.end_time;
+    if(!st)return null;
+    const s=TIME_SLOTS.find(s=>s.start===st&&s.end===et);
+    return s?s.label:null;
+  };
+
+  const statusDot=(status)=>{
+    if(status==="free"||!status)return"#4ECDC4";
+    if(status.startsWith("partial"))return"#FF9F43";
+    if(status==="option")return"#FF9F43";
+    return"#FF6B6B";
+  };
+
+  const statusLabel=(info)=>{
+    if(!info||info.hoursBooked===0)return"Disponible";
+    if(info.isFull)return info.status==="option"?"Option journée complète":"Journée complète confirmée";
+    const parts=[];
+    if(info.matinTaken)parts.push("Matin pris");
+    if(info.apremTaken)parts.push("Après-midi pris");
+    return parts.join(" · ");
+  };
+
   return(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
+      <div className="modal" style={{padding:24,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
           <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,color:"#F0EEE8",letterSpacing:"0.05em"}}>{fmtD(date)}</h3>
           <button className="btn btn-ghost" style={{padding:"4px 10px"}} onClick={onClose}>✕</button>
         </div>
 
         {/* Team status */}
-        {["A","B"].map(team=>{
-          const booking=team==="A"?bookingA:bookingB;
-          const status=team==="A"?statusA:statusB;
+        {[{team:"A",info:infoA},{team:"B",info:infoB}].map(({team,info})=>{
           const tc=teamColor(team);
+          const bs=info?.bookings||[];
           return(
             <div key={team} style={{marginBottom:14,padding:14,background:"#0E0E18",borderRadius:8,border:`1px solid ${tc}22`}}>
-              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-                <div style={{width:8,height:8,borderRadius:"50%",background:status==="free"?"#4ECDC4":status==="option"?"#FF9F43":"#FF6B6B"}}/>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:bs.length>0?10:0}}>
+                <div style={{width:8,height:8,borderRadius:"50%",background:statusDot(info?.status)}}/>
                 <span style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:tc}}>Équipe {team}</span>
-                <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>— {status==="free"?"Disponible":status==="option"?"Option en cours":"Confirmé"}</span>
+                <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>— {statusLabel(info)}</span>
               </div>
-              {booking&&(
-                <div style={{paddingLeft:16}}>
-                  {isAdmin&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:500}}>{booking.client}</p>}
+
+              {/* Available slots badges */}
+              {(team==="A"?availA:availB).length>0&&(
+                <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:4,marginBottom:bs.length>0?8:0}}>
+                  {(team==="A"?availA:availB).map(s=>(
+                    <span key={s.id} style={{fontFamily:"'DM Sans'",fontSize:10,padding:"2px 7px",borderRadius:4,background:"#4ECDC418",color:"#4ECDC4",border:"1px solid #4ECDC433"}}>
+                      {s.label} libre
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Existing bookings for this team */}
+              {bs.map(booking=>(
+                <div key={booking.id} style={{paddingLeft:12,paddingTop:8,borderTop:"1px solid #2A2A3E",marginTop:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
+                    {slotLabel(booking)&&(
+                      <span style={{fontFamily:"'DM Sans'",fontSize:10,padding:"2px 7px",borderRadius:4,background:booking.status==="option"?"#FF9F4318":"#FF6B6B18",color:booking.status==="option"?"#FF9F43":"#FF6B6B",border:`1px solid ${booking.status==="option"?"#FF9F4333":"#FF6B6B33"}`}}>
+                        {slotLabel(booking)}
+                      </span>
+                    )}
+                    <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>
+                      {booking.status==="option"?"option":"confirmé"}
+                    </span>
+                  </div>
+                  {isAdmin&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:500}}>{booking.client||booking.client_name}</p>}
                   {!isAdmin&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>Date réservée</p>}
-                  {isAdmin&&booking.note&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>{booking.note}</p>}
+                  {isAdmin&&(booking.note)&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>{booking.note}</p>}
                   {booking.status==="option"&&booking.expiresAt&&(
-                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#FF9F43",marginTop:4}}>Expire dans : {getCountdown(booking.expiresAt)}</p>
+                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#FF9F43",marginTop:4}}>Expire dans : {getCountdown(booking.expiresAt||booking.expires_at)}</p>
                   )}
                   {isAdmin&&booking.status==="option"&&(
                     <>
@@ -929,20 +1011,30 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
                     </>
                   )}
                 </div>
-              )}
+              ))}
             </div>
           );
         })}
 
-        {/* Add option form (client or admin) */}
-        {freeTeams.length>0&&(
+        {/* Add option form */}
+        {teamsWithSlots.length>0&&(
           <div style={{paddingTop:14,borderTop:"1px solid #2A2A3E"}}>
             <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginBottom:10}}>Poser une option :</p>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {/* Team selector */}
               <div style={{display:"flex",gap:8}}>
-                {freeTeams.map(t=>(
-                  <div key={t} style={{flex:1,padding:"10px 12px",borderRadius:8,border:`2px solid ${form.team===t?teamColor(t):"#2A2A3E"}`,background:form.team===t?teamColor(t)+"12":"#0E0E18",cursor:"pointer"}} onClick={()=>setForm(p=>({...p,team:t}))}>
+                {teamsWithSlots.map(t=>(
+                  <div key={t} style={{flex:1,padding:"10px 12px",borderRadius:8,border:`2px solid ${form.team===t?teamColor(t):"#2A2A3E"}`,background:form.team===t?teamColor(t)+"12":"#0E0E18",cursor:"pointer"}} onClick={()=>{const av=t==="A"?availA:availB;setForm(p=>({...p,team:t,slot:av[0]?.id||"matin"}));}}>
                     <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:teamColor(t),textAlign:"center"}}>Équipe {t}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Slot selector */}
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {currentAvailSlots.map(s=>(
+                  <div key={s.id} style={{flex:1,minWidth:80,padding:"8px 10px",borderRadius:7,border:`2px solid ${form.slot===s.id?"#C9A84C":"#2A2A3E"}`,background:form.slot===s.id?"#C9A84C12":"#0E0E18",cursor:"pointer",textAlign:"center"}} onClick={()=>setForm(p=>({...p,slot:s.id}))}>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:12,fontWeight:600,color:form.slot===s.id?"#E8C547":"#8888AA"}}>{s.label}</p>
+                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#555570"}}>{s.start}–{s.end}</p>
                   </div>
                 ))}
               </div>
