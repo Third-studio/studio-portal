@@ -3363,9 +3363,9 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
       {view==="radar"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {/* Stats */}
-          <div style={{display:"flex",gap:10}}>
+          <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
             {[{v:"+445%",l:"Top croissance",c:"#4ECDC4"},{v:`${RADAR_TRENDS.length}`,l:"Tendances actives",c:"#B47FFF"},{v:"6",l:"Niches suivies",c:"#E8C547"}].map(s=>(
-              <div key={s.l} style={{flex:1,background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:"12px 14px"}}>
+              <div key={s.l} style={{flex:"1 1 80px",minWidth:80,background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:"12px 14px"}}>
                 <div style={{fontFamily:"'Bebas Neue'",fontSize:22,color:s.c,letterSpacing:"0.04em"}}>{s.v}</div>
                 <div style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA",marginTop:2}}>{s.l}</div>
               </div>
@@ -3387,11 +3387,11 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
           {/* Trend cards */}
           {filteredTrends.map(t=>(
             <div key={t.id} style={cardStyle(expanded===t.id)}>
-              <div onClick={()=>setExpanded(expanded===t.id?null:t.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",cursor:"pointer"}}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <span style={{fontFamily:"'DM Sans'",fontWeight:700,fontSize:14,color:"#F0EEE8"}}>{t.tag}</span>
-                  <span style={{fontFamily:"'DM Sans'",fontSize:10,fontWeight:700,color:"#4ECDC4",background:"#4ECDC418",border:"1px solid #4ECDC430",borderRadius:999,padding:"2px 8px"}}>{t.growth}</span>
-                  <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{t.platform} · {t.views}</span>
+              <div onClick={()=>setExpanded(expanded===t.id?null:t.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",cursor:"pointer",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",minWidth:0,flex:1}}>
+                  <span style={{fontFamily:"'DM Sans'",fontWeight:700,fontSize:14,color:"#F0EEE8",whiteSpace:"nowrap"}}>{t.tag}</span>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:10,fontWeight:700,color:"#4ECDC4",background:"#4ECDC418",border:"1px solid #4ECDC430",borderRadius:999,padding:"2px 8px",whiteSpace:"nowrap"}}>{t.growth}</span>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",whiteSpace:"nowrap"}}>{t.platform} · {t.views}</span>
                 </div>
                 <span style={{color:"#555570",fontSize:10,transform:expanded===t.id?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
               </div>
@@ -3404,7 +3404,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                   <div style={{borderLeft:"3px solid #00d4ff",paddingLeft:12,fontFamily:"'DM Sans'",fontSize:12,fontStyle:"italic",color:"#6666AA"}}>"{t.hook}"</div>
                   <div>
                     <div style={{fontFamily:"'DM Sans'",fontSize:9,color:"#E8C547",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Shotlist — {t.plans.length} plans</div>
-                    <div style={{display:"grid",gridTemplateColumns:`repeat(${t.plans.length},1fr)`,gap:6}}>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(52px,1fr))",gap:6}}>
                       {t.plans.map((p,i)=>{
                         const cols=["#7B9CFF","#4ECDC4","#FF9F43","#B47FFF","#FF6B6B"];
                         return(
@@ -3455,7 +3455,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                     <div style={{display:"flex",flexDirection:"column",gap:6}}>
                       {col.map(p=>(
                         <div key={p.id} onClick={()=>{onSelectProject(p.id);onSectionChange("projets");}}
-                          style={{background:"#12121A",border:`1px solid #2A2A3E`,borderLeft:`3px solid ${statusColor(p.status)}`,borderRadius:8,padding:"10px 14px",cursor:"pointer",transition:"background .15s",display:"flex",alignItems:"center",justifyContent:"space-between"}}
+                          style={{background:"#12121A",border:`1px solid #2A2A3E`,borderLeft:`3px solid ${statusColor(p.status)}`,borderRadius:8,padding:"10px 14px",cursor:"pointer",transition:"background .15s",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}
                           onMouseEnter={e=>e.currentTarget.style.background="#1A1A26"}
                           onMouseLeave={e=>e.currentTarget.style.background="#12121A"}>
                           <div>
