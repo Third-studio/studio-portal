@@ -3146,6 +3146,14 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
     onNotif(v?"Compte activé":"Compte suspendu");
   };
 
+  const toggleShortone=async(c)=>{
+    const v=!c.shortoneEnabled;
+    const{error}=await supabase.from("profiles").update({shortone_enabled:v}).eq("id",c.id);
+    if(error){onNotif("Erreur : colonne shortone_enabled manquante — lance le SQL ALTER TABLE");return;}
+    setClients(cs=>cs.map(x=>x.id===c.id?{...x,shortoneEnabled:v}:x));
+    onNotif(v?"◆ Shortone activé pour "+c.name:"◆ Shortone désactivé");
+  };
+
   const FormBlock=({isNew})=>(
     <div className="card fadeUp" style={{padding:22,maxWidth:520}}>
       <SH icon={isNew?"➕":"✏️"} title={isNew?"NOUVEAU COMPTE CLIENT":"MODIFIER LE COMPTE"}/>
@@ -3217,7 +3225,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
               <span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#2A2A3E",color:"#8888AA"}}>{c.type}</span>
               {c.discount>0&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E8C54720",color:"#E8C547"}}>-{c.discount}%</span>}
               {c.simulatorEnabled&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
-              {c.shortoneEnabled&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#00d4ff18",color:"#00d4ff"}}>◆ Shortone</span>}
+              <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#2A2A3E"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#555570",cursor:"pointer"}}>◆ Shortone</button>
               <span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:c.isActive?"#4ECDC420":"#FF6B6B20",color:c.isActive?"#4ECDC4":"#FF6B6B"}}>{c.isActive?"Actif":"Suspendu"}</span>
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
               <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
