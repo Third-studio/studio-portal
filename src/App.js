@@ -3444,6 +3444,16 @@ function AppMain() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (appView !== "client") return;
+    const effClientId = userRole === "client" && user ? user.id : (previewClientId || null);
+    const cProjects = effClientId ? projects.filter(p => p.clientId === effClientId) : projects;
+    if (cProjects.length === 0) return;
+    if (cProjects.find(p => p.id === selectedProjectId)) return;
+    setSelectedProjectId(cProjects[0].id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appView, userRole, user, previewClientId, projects]);
+
   if (authLoading || dataLoading) return <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
     <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.8}}/>
     <p style={{color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
@@ -3488,15 +3498,6 @@ function AppMain() {
   const clientProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
   const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (appView !== "client") return;
-    const cProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
-    if (cProjects.length === 0) return;
-    if (cProjects.find(p => p.id === selectedProjectId)) return;
-    setSelectedProjectId(cProjects[0].id);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appView, effectiveClientId, projects]);
   const activeClient = isClient && userProfile
     ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
     : previewClient || clients[0];
