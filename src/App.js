@@ -3560,12 +3560,12 @@ function AppMain() {
               </div>
             ))}
 
-            {/* Project list under "projets" */}
-            {((appView==="prod"&&prodSection==="projets")||(appView==="client"&&clientSection==="projets"))&&(
+            {/* Project list — prod: only on section "projets", client: always */}
+            {((appView==="prod"&&prodSection==="projets")||appView==="client")&&(
               <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid #1A1A26"}}>
                 <span style={{fontFamily:"'DM Sans'",fontSize:9,color:"#555570",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
                 {(appView==="prod"?projects:clientProjects).map(p=>(
-                  <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>setSelectedProjectId(p.id)}>
+                  <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client")setClientSection("projets");setSidebarOpen(false);}}>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontWeight:500,color:"inherit",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{p.title}</p>
                       <div style={{height:2,background:"#1A1A26",borderRadius:1,marginTop:3,overflow:"hidden"}}>
@@ -3615,7 +3615,7 @@ function AppMain() {
 
             {/* CLIENT SECTIONS */}
             {appView==="client"&&clientSection==="projets"&&clientSelProject&&(
-              <ClientProjectView project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing}/>
+              <ClientProjectView key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing}/>
             )}
             {appView==="client"&&clientSection==="calendrier"&&(
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
