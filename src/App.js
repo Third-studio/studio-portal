@@ -2428,21 +2428,56 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE PROJECT MODAL
 // ─────────────────────────────────────────────────────────────────────────────
-function CreateProjectModal({isAdmin,clients,onClose,onCreate}){
+function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,onCreate}){
   const[title,setTitle]=useState("");
   const[clientId,setClientId]=useState("");
+  const[selectedTeam,setSelectedTeam]=useState(null);
   const[loading,setLoading]=useState(false);
 
+  const today=new Date();
+  const in30=new Date(today); in30.setDate(today.getDate()+30);
+  const inRange=d=>{const dd=new Date(d);return dd>=today&&dd<=in30;};
+
+  const teamSlots=(t)=>planningSlots.filter(s=>{
+    const m=teamMembers.find(x=>x.id===s.memberId);
+    return m&&m.team===t&&inRange(s.date);
+  }).length;
+
+  const TeamCard=({team})=>{
+    const members=teamMembers.filter(m=>m.team===team);
+    const slots=teamSlots(team);
+    const busy=slots>=5;
+    const sel=selectedTeam===team;
+    return(
+      <div onClick={()=>setSelectedTeam(sel?null:team)} style={{flex:1,background:sel?"#E8C54715":"#0E0E18",border:`1px solid ${sel?"#E8C547":"#2A2A3E"}`,borderRadius:8,padding:"12px 14px",cursor:"pointer",transition:"all .15s"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+          <span style={{fontFamily:"'Bebas Neue'",fontSize:16,color:sel?"#E8C547":"#F0EEE8",letterSpacing:"0.06em"}}>ÉQUIPE {team}</span>
+          <span style={{fontFamily:"'DM Sans'",fontSize:10,padding:"2px 7px",borderRadius:4,background:busy?"#FF9F4322":"#4ECDC422",color:busy?"#FF9F43":"#4ECDC4",fontWeight:600}}>{busy?"Chargée":"Disponible"}</span>
+        </div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:6}}>
+          {members.map(m=>(
+            <div key={m.id} style={{display:"flex",alignItems:"center",gap:4,background:"#12121A",border:"1px solid #2A2A3E",borderRadius:4,padding:"3px 7px"}}>
+              <div style={{width:16,height:16,borderRadius:"50%",background:m.color||"#E8C547",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"#08080F",flexShrink:0}}>{m.nom[0]}</div>
+              <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#F0EEE8"}}>{m.nom.split(" ")[0]}</span>
+            </div>
+          ))}
+          {members.length===0&&<span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>Aucun membre</span>}
+        </div>
+        <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>{slots} créneau{slots!==1?"x":""} dans les 30 prochains jours</p>
+      </div>
+    );
+  };
+
   const submit=async()=>{
-    if(!title.trim()){return;}
+    if(!title.trim()) return;
     setLoading(true);
-    await onCreate(title.trim(), isAdmin?(clientId||null):undefined);
+    await onCreate(title.trim(), isAdmin?(clientId||null):undefined, selectedTeam);
     setLoading(false);
   };
 
   return(
     <div style={{position:"fixed",inset:0,background:"#000000AA",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
-      <div className="card fadeUp" style={{width:"100%",maxWidth:460,padding:28,background:"#12121A"}}>
+      <div className="card fadeUp" style={{width:"100%",maxWidth:500,padding:28,background:"#12121A"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
           <h2 style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#F0EEE8",letterSpacing:"0.05em"}}>NOUVEAU PROJET</h2>
           <button style={{background:"none",border:"none",color:"#555570",cursor:"pointer",fontSize:18,lineHeight:1}} onClick={onClose}>✕</button>
@@ -2459,6 +2494,15 @@ function CreateProjectModal({isAdmin,clients,onClose,onCreate}){
                 <option value="">— Aucun client pour l'instant —</option>
                 {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
+            </div>
+          )}
+          {isAdmin&&teamMembers.length>0&&(
+            <div>
+              <Lbl>Équipe assignée (optionnel)</Lbl>
+              <div style={{display:"flex",gap:10}}>
+                <TeamCard team="A"/>
+                <TeamCard team="B"/>
+              </div>
             </div>
           )}
           <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:6}}>
@@ -2745,15 +2789,23 @@ export default function App() {
   const showNotif=msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); };
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
   const selProject=projects.find(p=>p.id===selectedProjectId);
-  const createProject=async(title,clientId)=>{
+  const createProject=async(title,clientId,team)=>{
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:clientId||null,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
     if(error){showNotif("Erreur : "+error.message);return null;}
     const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
     setSelectedProjectId(np.id);
+    if(team){
+      const members=teamMembers.filter(m=>m.team===team);
+      if(members.length>0){
+        const rows=members.map(m=>({project_id:data.id,member_id:m.id,role_on_project:""}));
+        const{data:aData}=await supabase.from("project_assignments").insert(rows).select();
+        if(aData) setAssignments(pa=>[...pa,...aData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:""}))]);
+      }
+    }
     if(userRole==="client") setClientSection("projets"); else setProdSection("projets");
     setShowCreateModal(false);
-    showNotif("Projet créé !");
+    showNotif(team?`Projet créé — Équipe ${team} assignée`:"Projet créé !");
     return np;
   };
 
@@ -2911,7 +2963,7 @@ export default function App() {
         </div>
 
         {notif&&<Notif msg={notif} onDone={()=>setNotif(null)}/>}
-        {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} onClose={()=>setShowCreateModal(false)} onCreate={createProject}/>}
+        {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} onClose={()=>setShowCreateModal(false)} onCreate={createProject}/>}
       </div>
     </>
   );
