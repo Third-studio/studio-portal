@@ -3100,7 +3100,7 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
 // ─────────────────────────────────────────────────────────────────────────────
 function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
   const TYPES=["PME","Startup","Association","Collectivité","Particulier","Autre"];
-  const emptyForm={nom:"",email:"",password:"",client_type:"PME",discount:0,simulator_enabled:false};
+  const emptyForm={nom:"",email:"",password:"",client_type:"PME",discount:0,simulator_enabled:false,shortone_enabled:false};
   const[tab,setTab]=useState("liste");
   const[form,setForm]=useState(emptyForm);
   const[editId,setEditId]=useState(null);
@@ -3109,7 +3109,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
   const[showPass,setShowPass]=useState(false);
   const F=(k,v)=>setForm(p=>({...p,[k]:v}));
 
-  const openEdit=(c)=>{setEditId(c.id);setForm({nom:c.name,email:c.email,password:"",client_type:c.type,discount:c.discount,simulator_enabled:c.simulatorEnabled});setTab("edit");};
+  const openEdit=(c)=>{setEditId(c.id);setForm({nom:c.name,email:c.email,password:"",client_type:c.type,discount:c.discount,simulator_enabled:c.simulatorEnabled,shortone_enabled:c.shortoneEnabled||false});setTab("edit");};
   const cancelEdit=()=>{setEditId(null);setForm(emptyForm);setTab("liste");};
 
   const createAccount=async()=>{
@@ -3119,8 +3119,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
     if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
     const uid=data.user?.id;
     if(!uid){onNotif("Erreur création compte");setSaving(false);return;}
-    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,is_active:true});
-    const nc={id:uid,name:form.nom||form.email,email:form.email,type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,isActive:true};
+    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_active:true});
+    const nc={id:uid,name:form.nom||form.email,email:form.email,type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isActive:true};
     setClients(cs=>[...cs,nc]);
     setCreatedPass(form.password);
     setShowPass(true);
@@ -3132,8 +3132,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
 
   const saveEdit=async()=>{
     setSaving(true);
-    await supabase.from("profiles").update({nom:form.nom,client_type:form.client_type,discount:Number(form.discount),simulator_enabled:form.simulator_enabled}).eq("id",editId);
-    setClients(cs=>cs.map(c=>c.id===editId?{...c,name:form.nom||c.email,type:form.client_type,discount:Number(form.discount),simulatorEnabled:form.simulator_enabled}:c));
+    await supabase.from("profiles").update({nom:form.nom,client_type:form.client_type,discount:Number(form.discount),simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled}).eq("id",editId);
+    setClients(cs=>cs.map(c=>c.id===editId?{...c,name:form.nom||c.email,type:form.client_type,discount:Number(form.discount),simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled}:c));
     setSaving(false);
     onNotif("Compte mis à jour");
     cancelEdit();
@@ -3161,6 +3161,10 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             <Lbl>Accès simulateur</Lbl>
             <button className={`btn ${form.simulator_enabled?"btn-green":"btn-ghost"}`} style={{fontSize:12}} onClick={()=>F("simulator_enabled",!form.simulator_enabled)}>{form.simulator_enabled?"✓ Activé":"✗ Désactivé"}</button>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <Lbl>Accès Shortone</Lbl>
+            <button className={`btn ${form.shortone_enabled?"btn-primary":"btn-ghost"}`} style={{fontSize:12}} onClick={()=>F("shortone_enabled",!form.shortone_enabled)}>{form.shortone_enabled?"◆ Activé":"◆ Désactivé"}</button>
           </div>
         </div>
         <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}}>
@@ -3213,6 +3217,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
               <span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#2A2A3E",color:"#8888AA"}}>{c.type}</span>
               {c.discount>0&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E8C54720",color:"#E8C547"}}>-{c.discount}%</span>}
               {c.simulatorEnabled&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
+              {c.shortoneEnabled&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#00d4ff18",color:"#00d4ff"}}>◆ Shortone</span>}
               <span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:c.isActive?"#4ECDC420":"#FF6B6B20",color:c.isActive?"#4ECDC4":"#FF6B6B"}}>{c.isActive?"Actif":"Suspendu"}</span>
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
               <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
@@ -3602,7 +3607,7 @@ function AppMain() {
         setSelectedProjectId(formatted[0]?.id || null);
       }
       if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
-      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,isActive:p.is_active!==false})));
+      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isActive:p.is_active!==false})));
       if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#E8C547"})));
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
@@ -3681,7 +3686,7 @@ function AppMain() {
   const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
 
   const activeClient = isClient && userProfile
-    ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
+    ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, shortoneEnabled:userProfile.shortone_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
     : previewClient || clients[0];
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
 
@@ -3706,6 +3711,7 @@ function AppMain() {
     {k:"calendrier",l:"Calendrier",   icon:"📅"},
     {k:"cm",        l:"Contenu",      icon:"📲"},
     ...(activeClient?.simulatorEnabled?[{k:"estimation",l:"Estimation",icon:"💰"}]:[]),
+    ...(activeClient?.shortoneEnabled?[{k:"shortone",l:"Shortone",icon:"◆"}]:[]),
   ];
 
   return(
@@ -3848,6 +3854,16 @@ function AppMain() {
             )}
             {appView==="client"&&clientSection==="cm"&&(
               <CMClientView posts={posts} setPosts={setPosts} projects={clientProjects} onNotif={showNotif}/>
+            )}
+            {appView==="client"&&clientSection==="shortone"&&activeClient?.shortoneEnabled&&(
+              <ShortoneModule
+                projects={clientProjects}
+                clients={clients}
+                onSelectProject={setSelectedProjectId}
+                onSectionChange={setClientSection}
+                onNotif={showNotif}
+                onCreateFromTrend={()=>showNotif("Contacte ton chargé de projet pour créer une mission.")}
+              />
             )}
             {appView==="client"&&clientSection==="estimation"&&activeClient?.simulatorEnabled&&(
               <div style={{maxWidth:560}}>
