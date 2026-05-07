@@ -269,6 +269,15 @@ const fmtD   = (s) => new Date(s+"T12:00:00").toLocaleDateString("fr-FR",{day:"n
 const fmtS   = (s) => new Date(s+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
 const calcH  = (s,e) => { if(!s||!e)return 0; const[sh,sm]=s.split(":").map(Number);const[eh,em]=e.split(":").map(Number);return Math.max(0,(eh*60+em-sh*60-sm)/60); };
 const fmtProdAuthor = (nom) => { if(!nom)return"Studio"; const p=nom.trim().split(/\s+/); return p.length>1?p[0]+" "+p[1][0]+".":p[0]; };
+const downloadICS = (summary, dateStr, description="", location="Third-One Studio, Martinique") => {
+  const d=dateStr.replace(/-/g,"");
+  const nd=new Date(dateStr+"T12:00:00");nd.setDate(nd.getDate()+1);
+  const dend=nd.toISOString().split("T")[0].replace(/-/g,"");
+  const uid=`${Date.now()}@thirdone.studio`;
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Third-One Studio//FR","BEGIN:VEVENT",`UID:${uid}`,`DTSTAMP:${new Date().toISOString().replace(/[-:]/g,"").split(".")[0]}Z`,`DTSTART;VALUE=DATE:${d}`,`DTEND;VALUE=DATE:${dend}`,`SUMMARY:${summary}`,`DESCRIPTION:${description.replace(/\n/g,"\\n")}`,`LOCATION:${location}`,"END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${summary.replace(/[^a-zA-Z0-9]/g,"_")}.ics`;a.click();
+};
 
 function Notif({msg,color="#4ECDC4",onDone}){
   useEffect(()=>{const t=setTimeout(onDone,3000);return()=>clearTimeout(t);});
@@ -826,10 +835,18 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
       {tab==="suivi"&&(
         <div className="card fadeUp" style={{padding:18}}>
           <SH icon="📊" title="AVANCEMENT"/>
-          {(project.statusNote||project.deliveryDate)&&(
+          {(project.statusNote||project.deliveryDate||project.shootDate)&&(
             <div style={{background:"#E8C54710",border:"1px solid #E8C54720",borderRadius:8,padding:"10px 14px",marginBottom:12}}>
               {project.statusNote&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:500}}>{project.statusNote}</p>}
-              {project.deliveryDate&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:project.statusNote?4:0}}>📅 Livraison prévue : {fmtD(project.deliveryDate)}</p>}
+              {project.shootDate&&(
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:project.statusNote?6:0,gap:8,flexWrap:"wrap"}}>
+                  <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA"}}>🎬 Tournage prévu : {fmtD(project.shootDate)}</p>
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"3px 10px",display:"flex",alignItems:"center",gap:5}} onClick={()=>downloadICS(`Tournage – ${project.title}`,project.shootDate,`Projet : ${project.title}\nThird-One Studio`)}>
+                    <span>📅</span> Ajouter au calendrier
+                  </button>
+                </div>
+              )}
+              {project.deliveryDate&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:4}}>📅 Livraison prévue : {fmtD(project.deliveryDate)}</p>}
             </div>
           )}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -896,6 +913,15 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
   const[month,setMonth]=useState(new Date(TODAY.getFullYear(),TODAY.getMonth(),1));
   const[selected,setSelected]=useState(null);
   const[modal,setModal]=useState(null);
+
+  // Nettoyage auto des options expirées en base au montage
+  useEffect(()=>{
+    const expired=bookings.filter(b=>b.status==="option"&&b.expiresAt&&new Date(b.expiresAt)<Date.now());
+    if(expired.length===0)return;
+    expired.forEach(b=>supabase.from("bookings").update({status:"expired"}).eq("id",b.id));
+    setBookings(bs=>bs.map(b=>expired.some(e=>e.id===b.id)?{...b,status:"expired"}:b));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
 
   const daysInMonth=new Date(month.getFullYear(),month.getMonth()+1,0).getDate();
   const firstDay=(new Date(month.getFullYear(),month.getMonth(),1).getDay()+6)%7;
@@ -1037,11 +1063,11 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
   const addOption=async()=>{
     if(!form.client.trim())return;
     const slotDef=TIME_SLOTS.find(s=>s.id===form.slot)||TIME_SLOTS[0];
-    const exp=new Date(Date.now()+72*3600000).toISOString();
+    const exp=new Date(Date.now()+48*3600000).toISOString();
     const newB={id:Date.now(),date,team:form.team,client:form.client,status:"option",confirmType:null,extras:[],note:form.note,createdAt:isoToday(),expiresAt:exp,startTime:slotDef.start,endTime:slotDef.end};
     const{error}=await supabase.from("bookings").insert({date,team:form.team,client_name:form.client,status:"option",note:form.note,expires_at:exp,start_time:slotDef.start,end_time:slotDef.end});
     if(!error)setBookings(bs=>[...bs,newB]);
-    onNotif(`Option posée — Équipe ${form.team} ${slotDef.label} le ${fmtS(date)}`);onClose();
+    onNotif(`Option posée — Équipe ${form.team} ${slotDef.label} le ${fmtS(date)} · valable 48h`);onClose();
   };
 
   const confirm=(booking)=>{
@@ -1128,8 +1154,13 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
                   {isAdmin&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:500}}>{booking.client||booking.client_name}</p>}
                   {!isAdmin&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>Date réservée</p>}
                   {isAdmin&&(booking.note)&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>{booking.note}</p>}
-                  {booking.status==="option"&&booking.expiresAt&&(
+                  {booking.status==="option"&&(booking.expiresAt||booking.expires_at)&&(
                     <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#FF9F43",marginTop:4}}>Expire dans : {getCountdown(booking.expiresAt||booking.expires_at)}</p>
+                  )}
+                  {booking.status==="confirmed"&&(
+                    <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",marginTop:6,display:"inline-flex",alignItems:"center",gap:4}} onClick={()=>{const sl=slotLabel(booking)||"";downloadICS(`Tournage Third-One Studio – Équipe ${team}`,date,`Créneau : ${sl}\nThird-One Studio, Martinique`);}}>
+                      📅 Ajouter au calendrier
+                    </button>
                   )}
                   {isAdmin&&booking.status==="option"&&(
                     <>
