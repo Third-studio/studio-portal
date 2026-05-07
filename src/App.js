@@ -3523,9 +3523,10 @@ function AppMain() {
   const[previewClientId,setPreviewClientId]=useState(null);
 
   useEffect(()=>{
-    if(!user) return;
+    if(!user){ setDataLoading(false); return; }
     const loadData = async () => {
       setDataLoading(true);
+      try{
       // Récupère le rôle d'abord pour adapter les requêtes
       const { data: myProfile } = await supabase.from("profiles").select("role").eq("id",user.id).single();
       const isAdminUser = myProfile?.role === "admin";
@@ -3601,7 +3602,8 @@ function AppMain() {
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
       if(notesData) setMeetingNotes(notesData.map(n=>({id:n.id,projectId:n.project_id,date:n.date,participants:n.participants||"",content:n.content||"",decisions:n.decisions||""})));
-      setDataLoading(false);
+      }catch(e){ console.error("loadData error",e); }
+      finally{ setDataLoading(false); }
     };
     loadData();
   },[user]);
