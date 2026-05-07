@@ -2582,6 +2582,14 @@ export default function App() {
   const showNotif=msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); };
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
   const selProject=projects.find(p=>p.id===selectedProjectId);
+  const createProject=async()=>{
+    const clientId=userRole==="client"?user.id:null;
+    const{data,error}=await supabase.from("projects").insert({title:"Nouveau projet",client_id:clientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:"",shoot_date:"",status_note:""}).select().single();
+    if(error){showNotif("Erreur création projet");return;}
+    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",storyboards:[],comments:[],livrables:[]};
+    setProjects(ps=>[np,...ps]);
+    setSelectedProjectId(np.id);
+  };
 
   // Pour un client connecté : projets filtrés + profil actif depuis Supabase
   const isClient = userRole === "client";
@@ -2662,12 +2670,9 @@ export default function App() {
                     </div>
                   </div>
                 ))}
-                {appView==="prod"&&(
-                  <button style={{width:"100%",marginTop:6,background:"#E8C54710",border:"1px solid #E8C54725",borderRadius:6,color:"#E8C547",fontFamily:"'DM Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}}
-                    onClick={()=>{const np={id:Date.now(),title:"Nouveau projet",clientId:null,status:"brief",progress:0,createdAt:isoToday(),brief:{objective:"",target:"",duration:"",tone:"",deliverables:""},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",storyboards:[],comments:[],livrables:[]};setProjects(ps=>[...ps,np]);setSelectedProjectId(np.id);}}>
-                    + Nouveau projet
-                  </button>
-                )}
+                <button style={{width:"100%",marginTop:6,background:"#E8C54710",border:"1px solid #E8C54725",borderRadius:6,color:"#E8C547",fontFamily:"'DM Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={createProject}>
+                  + Nouveau projet
+                </button>
               </div>
             )}
           </div>
