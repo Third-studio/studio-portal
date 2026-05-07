@@ -204,12 +204,7 @@ const DEFAULT_PRICING = {
 // ─────────────────────────────────────────────────────────────────────────────
 // INITIAL DATA
 // ─────────────────────────────────────────────────────────────────────────────
-const INIT_CLIENTS = [
-  { id:1, name:"Clément Distilleries", email:"contact@clement.mq",   discount:0,  type:"PME",           simulatorEnabled:true  },
-  { id:2, name:"CTM",                  email:"commandes@ctm.mq",     discount:15, type:"Institutionnel", simulatorEnabled:true  },
-  { id:3, name:"Tropiques Atrium",     email:"prod@tropiques.mq",    discount:10, type:"PME",           simulatorEnabled:false },
-  { id:4, name:"Mairie Fort-de-France",email:"mairie@fdf.mq",        discount:12, type:"Institutionnel", simulatorEnabled:false },
-];
+const INIT_CLIENTS = [];
 
 // INIT_PROJECTS removed
 
@@ -2468,6 +2463,7 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
     );
   };
 
+  const uuidClients=clients.filter(c=>typeof c.id==="string"&&c.id.includes("-"));
   const submit=async()=>{
     if(!title.trim()) return;
     setLoading(true);
@@ -2487,12 +2483,12 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
             <Lbl>Nom du projet</Lbl>
             <input className="input" autoFocus placeholder="Ex: Spot publicitaire Martinique 2026" value={title} onChange={e=>setTitle(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
           </div>
-          {isAdmin&&clients.length>0&&(
+          {isAdmin&&uuidClients.length>0&&(
             <div>
               <Lbl>Client (optionnel)</Lbl>
               <select className="input" value={clientId} onChange={e=>setClientId(e.target.value)}>
                 <option value="">— Aucun client pour l'instant —</option>
-                {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+                {uuidClients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
           )}
