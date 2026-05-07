@@ -140,6 +140,30 @@ const FontLoader = () => (
     .type-pill { padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;border:1px solid #2A2A3E;background:#0E0E18;color:#8888AA;transition:all .15s; }
     .type-pill.selected { background:#E8C54720;border-color:#E8C547;color:#E8C547; }
     .type-pill:hover:not(.selected) { border-color:#3A3A5E;color:#F0EEE8; }
+
+    /* ── RESPONSIVE ── */
+    .app-body { display:flex;flex:1;overflow:hidden; }
+    .app-sidebar { width:200px;border-right:1px solid #2A2A3E;background:#0A0A12;padding:14px 10px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex-shrink:0;transition:transform .25s ease; }
+    .app-main { flex:1;overflow-y:auto;padding:22px 24px; }
+    .mob-only { display:none !important; }
+    .desk-only { display:flex; }
+    .sidebar-backdrop { display:none; }
+
+    @media (max-width:768px) {
+      .app-sidebar { position:fixed;left:0;top:54px;height:calc(100vh - 54px);z-index:40;transform:translateX(-100%);box-shadow:none;width:220px; }
+      .app-sidebar.open { transform:translateX(0);box-shadow:4px 0 30px #00000099; }
+      .app-main { padding:14px 14px 90px; }
+      .mob-only { display:flex !important; }
+      .desk-only { display:none !important; }
+      .sidebar-backdrop { display:block;position:fixed;inset:0;top:54px;background:#00000066;z-index:39;backdrop-filter:blur(2px); }
+      .notif { bottom:80px;right:12px;left:12px;font-size:12px; }
+      .modal { max-width:100% !important;border-radius:12px; }
+    }
+    @media (max-width:480px) {
+      .app-main { padding:12px 12px 90px; }
+      .btn { font-size:12px;padding:7px 12px; }
+      .input { font-size:13px;padding:9px 12px; }
+    }
   `}</style>
 );
 
@@ -2721,6 +2745,7 @@ export default function App() {
   const[prodSection,setProdSection]=useState("dashboard");
   const[clientSection,setClientSection]=useState("projets");
   const[showCreateModal,setShowCreateModal]=useState(false);
+  const[sidebarOpen,setSidebarOpen]=useState(false);
 
   // Data
   const[projects,setProjects]=useState([]);
@@ -2899,38 +2924,42 @@ export default function App() {
       <div style={{minHeight:"100vh",background:"#08080F",color:"#F0EEE8",display:"flex",flexDirection:"column"}}>
 
         {/* ── TOP BAR ── */}
-        <div style={{background:"#0E0E18",borderBottom:"1px solid #2A2A3E",padding:"0 20px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:12}}>
+        <div style={{background:"#0E0E18",borderBottom:"1px solid #2A2A3E",padding:"0 16px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <button className="mob-only" onClick={()=>setSidebarOpen(o=>!o)} style={{background:"none",border:"none",color:"#8888AA",cursor:"pointer",fontSize:18,padding:"4px",lineHeight:1,flexShrink:0}}>☰</button>
             <span style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#E8C547",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</span>
-            <span style={{color:"#2A2A3E"}}>|</span>
-            <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>
+            <span className="desk-only" style={{color:"#2A2A3E",alignItems:"center"}}>|</span>
+            <span className="desk-only" style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",alignItems:"center"}}>
               {appView==="prod"?"Back-office":`Espace client${activeClient?.name?` — ${activeClient.name}`:""}`}
             </span>
           </div>
           {userRole === "admin" && (
-            <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <div style={{display:"flex",alignItems:"center",gap:6}}>
               {previewClientId&&appView==="client"&&(
-                <div style={{display:"flex",alignItems:"center",gap:6,background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>
-                  <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF"}}>👁 Aperçu : {previewClient?.name}</span>
+                <div className="desk-only" style={{alignItems:"center",gap:6,background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF"}}>👁 {previewClient?.name}</span>
                   <button style={{background:"none",border:"none",color:"#7B9CFF",cursor:"pointer",fontSize:12,padding:"0 2px"}} onClick={()=>{setPreviewClientId(null);setAppView("prod");setProdSection("comptes");}}>✕</button>
                 </div>
               )}
-              <div style={{display:"flex",gap:4,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
-                <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("prod")}>⚙ Production</button>
-                <button className={appView==="client"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("client")}>👤 Client</button>
+              <div style={{display:"flex",gap:3,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
+                <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("prod");setSidebarOpen(false);}}>⚙ <span className="desk-only" style={{display:"inline"}}>Prod</span></button>
+                <button className={appView==="client"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("client");setSidebarOpen(false);}}>👤 <span className="desk-only" style={{display:"inline"}}>Client</span></button>
               </div>
             </div>
           )}
         </div>
 
         {/* ── BODY ── */}
-        <div style={{display:"flex",flex:1,overflow:"hidden"}}>
+        <div className="app-body">
+
+          {/* Backdrop mobile */}
+          {sidebarOpen&&<div className="sidebar-backdrop" onClick={()=>setSidebarOpen(false)}/>}
 
           {/* ── SIDEBAR ── */}
-          <div style={{width:200,borderRight:"1px solid #2A2A3E",background:"#0A0A12",padding:"14px 10px",display:"flex",flexDirection:"column",gap:4,overflowY:"auto",flexShrink:0}}>
+          <div className={`app-sidebar${sidebarOpen?" open":""}`}>
             {(appView==="prod"?prodNav:clientNav).map(n=>(
               <div key={n.k} className={`nav-item ${(appView==="prod"?prodSection:clientSection)===n.k?"active":""}`}
-                onClick={()=>appView==="prod"?setProdSection(n.k):setClientSection(n.k)}>
+                onClick={()=>{appView==="prod"?setProdSection(n.k):setClientSection(n.k);setSidebarOpen(false);}}>
                 <span style={{fontSize:14}}>{n.icon}</span>
                 <span>{n.l}</span>
               </div>
@@ -2958,7 +2987,7 @@ export default function App() {
           </div>
 
           {/* ── MAIN CONTENT ── */}
-          <div style={{flex:1,overflowY:"auto",padding:"22px 24px"}}>
+          <div className="app-main">
 
             {/* PROD SECTIONS */}
             {appView==="prod"&&prodSection==="dashboard"&&(
