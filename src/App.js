@@ -725,10 +725,13 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   );
 }
 
-function VideoValidationPanel({project,onUpdate,onNotif}){
+function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
   const[revisionComment,setRevisionComment]=useState("");
   const[showRevForm,setShowRevForm]=useState(false);
   const[saving,setSaving]=useState(false);
+  const[showInvite,setShowInvite]=useState(false);
+  const[inviteName,setInviteName]=useState("");
+  const[copiedToken,setCopiedToken]=useState(null);
 
   const getVideoType=(url)=>{
     if(!url)return null;
@@ -838,6 +841,58 @@ function VideoValidationPanel({project,onUpdate,onNotif}){
           {project.videoStatus==="approved"&&(
             <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
               <button className="btn btn-ghost" style={{fontSize:11,color:"#555570"}} onClick={()=>saveValidation(null,"")}>Annuler mon approbation</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Inviter un collaborateur */}
+      {!isGuest&&(
+        <div style={{marginTop:14,paddingTop:14,borderTop:"1px solid #2A2A3E"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showInvite?10:0}}>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>👥 Accès invité</p>
+            <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowInvite(v=>!v)}>{showInvite?"✕ Fermer":"Inviter un collaborateur"}</button>
+          </div>
+          {showInvite&&(
+            <div style={{background:"#0E0E18",borderRadius:8,padding:14,border:"1px solid #2A2A3E",display:"flex",flexDirection:"column",gap:10}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA"}}>Génère un lien temporaire (30 jours) donnant accès uniquement à la validation vidéo — sans accès au brief, aux devis ni aux messages.</p>
+              <div style={{display:"flex",gap:8}}>
+                <input className="input" placeholder="Nom du collaborateur (ex: Marie, Directrice Marketing)" value={inviteName} onChange={e=>setInviteName(e.target.value)} style={{flex:1}}/>
+                <button className="btn btn-primary" style={{whiteSpace:"nowrap",fontSize:12}} disabled={!inviteName.trim()} onClick={async()=>{
+                  const token=genToken();
+                  const exp=new Date(Date.now()+30*24*3600000).toISOString();
+                  const guests=[...(project.brief?.guests||[]),{token,name:inviteName.trim(),createdAt:isoToday(),expiresAt:exp}];
+                  const newBrief={...project.brief,guests};
+                  await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+                  onUpdate({...project,brief:newBrief});
+                  setInviteName("");
+                  setCopiedToken(token);
+                  navigator.clipboard?.writeText(`${window.location.origin}?guest=${token}`);
+                  onNotif(`Lien copié pour ${inviteName.trim()} !`);
+                }}>Générer le lien</button>
+              </div>
+              {/* Liste des invités actifs */}
+              {(project.brief?.guests||[]).filter(g=>new Date(g.expiresAt)>Date.now()).map(g=>{
+                const url=`${window.location.origin}?guest=${g.token}`;
+                return(
+                  <div key={g.token} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#12121A",borderRadius:6,border:"1px solid #2A2A3E",flexWrap:"wrap"}}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8",fontWeight:500}}>{g.name}</p>
+                      <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#555570",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{url}</p>
+                    </div>
+                    <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopiedToken(g.token);onNotif("Lien copié !");}}>
+                      {copiedToken===g.token?"✓ Copié":"Copier"}
+                    </button>
+                    <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:"#FF6B6B",borderColor:"#FF6B6B30"}} onClick={async()=>{
+                      const guests=(project.brief?.guests||[]).filter(x=>x.token!==g.token);
+                      const newBrief={...project.brief,guests};
+                      await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+                      onUpdate({...project,brief:newBrief});
+                      onNotif("Accès révoqué");
+                    }}>Révoquer</button>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -3172,8 +3227,58 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT APP
+const genToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(18))).map(b=>b.toString(16).padStart(2,"0")).join("");
+
+function GuestView(){
+  const[state,setState]=useState("loading"); // loading | found | expired | invalid
+  const[project,setProject]=useState(null);
+  const[token,setToken]=useState(null);
+
+  useEffect(()=>{
+    const params=new URLSearchParams(window.location.search);
+    const t=params.get("guest");
+    if(!t){setState("invalid");return;}
+    setToken(t);
+    supabase.from("projects").select("id,title,brief,replay_url").then(({data})=>{
+      const found=(data||[]).find(p=>(p.brief?.guests||[]).some(g=>g.token===t));
+      if(!found){setState("invalid");return;}
+      const guest=(found.brief.guests||[]).find(g=>g.token===t);
+      if(guest?.expiresAt&&new Date(guest.expiresAt)<Date.now()){setState("expired");return;}
+      setProject({id:found.id,title:found.title,brief:found.brief,replayUrl:found.replay_url||"",videoStatus:found.brief?.videoStatus||null,videoComment:found.brief?.videoComment||"",moodboard:found.brief?.moodboard||[]});
+      setState("found");
+    });
+  },[]);
+
+  const onUpdate=(updated)=>setProject(p=>({...p,...updated}));
+  const onNotif=()=>{};
+
+  if(state==="loading")return(
+    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center"}}>
+      <p style={{fontFamily:"'DM Sans'",color:"#555570",fontSize:13}}>Chargement…</p>
+    </div>
+  );
+  if(state==="invalid"||state==="expired")return(
+    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:20}}>
+      <div style={{fontSize:40}}>{state==="expired"?"⏰":"🔒"}</div>
+      <p style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#F0EEE8",letterSpacing:"0.05em"}}>{state==="expired"?"Lien expiré":"Lien invalide"}</p>
+      <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center"}}>{state==="expired"?"Ce lien de validation a expiré. Demandez un nouveau lien à votre contact Third-One Studio.":"Ce lien n'existe pas ou a été révoqué."}</p>
+    </div>
+  );
+  return(
+    <div style={{minHeight:"100vh",background:"#08080F",fontFamily:"'DM Sans',sans-serif",padding:"24px 16px",maxWidth:680,margin:"0 auto"}}>
+      <div style={{textAlign:"center",marginBottom:28}}>
+        <img src="/logo.png" alt="Third-One Studio" style={{height:44,filter:"invert(1) brightness(0.9)",marginBottom:8}}/>
+        <p style={{fontFamily:"'Bebas Neue'",fontSize:20,color:"#F0EEE8",letterSpacing:"0.05em"}}>{project.title}</p>
+        <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",letterSpacing:"0.1em",textTransform:"uppercase"}}>Validation vidéo</p>
+      </div>
+      <VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif} isGuest={true}/>
+      <p style={{textAlign:"center",marginTop:24,fontSize:11,color:"#3A3A5E"}}>Accès invité · Third-One Studio</p>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-export default function App() {
+function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
@@ -3510,4 +3615,8 @@ export default function App() {
       </div>
     </>
   );
+}
+export default function App(){
+  if(new URLSearchParams(window.location.search).has("guest"))return <GuestView/>;
+  return <AppMain/>;
 }
