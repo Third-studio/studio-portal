@@ -556,11 +556,67 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
 
 function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
   const[tab,setTab]=useState("suivi");
+  const[brief,setBrief]=useState({
+    title: project.title==="Nouveau projet"?"":project.title,
+    objective: project.brief?.objective||"",
+    target: project.brief?.target||"",
+    duration: project.brief?.duration||"",
+    tone: project.brief?.tone||"",
+    deliverables: project.brief?.deliverables||"",
+    budget: project.brief?.budget||"",
+    shootDate: project.shootDate||"",
+    references: project.brief?.references||"",
+    notes: project.brief?.notes||"",
+  });
+  const[saving,setSaving]=useState(false);
   const hasSimulator=clientData?.simulatorEnabled;
+  const briefEmpty=!project.brief?.objective&&!project.brief?.target&&!project.brief?.duration;
+  const showIntake=project.status==="brief"&&briefEmpty;
+
+  const submitBrief=async()=>{
+    setSaving(true);
+    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,submitted:true};
+    await supabase.from("projects").update({title:brief.title||project.title,brief:newBrief,shoot_date:brief.shootDate||null}).eq("id",project.id);
+    onUpdate({...project,title:brief.title||project.title,brief:newBrief,shootDate:brief.shootDate||""});
+    onNotif("Brief envoyé — l'équipe vous revient rapidement !");
+    setSaving(false);
+  };
+
   const valSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif(st==="approved"?"Storyboard approuvé !":"Révision demandée");};
   const addMsg=(text,role)=>{const c={id:Date.now(),author:clientData?.name||"Client",text,date:new Date().toISOString().split("T")[0],role:"client"};onUpdate({...project,comments:[...project.comments,c]});};
   const finaux=(project.livrables||[]).filter(l=>l.category==="finaux");
   const tabs=[{k:"suivi",l:"Suivi"},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"replay",l:"Révisions vidéo"},{k:"messages",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},...(hasSimulator?[{k:"estimation",l:"💰 Estimation"}]:[])];
+
+  if(showIntake) return(
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div className="fadeUp" style={{background:"linear-gradient(135deg,#E8C54712,#7B9CFF08)",border:"1px solid #E8C54725",borderRadius:10,padding:"18px 20px"}}>
+        <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,color:"#F0EEE8",letterSpacing:"0.04em"}}>VOTRE BRIEF DE PRODUCTION</h2>
+        <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:3}}>Décrivez votre projet pour que l'équipe puisse vous proposer la meilleure production.</p>
+      </div>
+      <div className="card fadeUp" style={{padding:22}}>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div><Lbl>Nom du projet *</Lbl><input className="input" placeholder="Ex: Spot publicitaire pour ma boutique" value={brief.title} onChange={e=>setBrief(p=>({...p,title:e.target.value}))}/></div>
+          <div><Lbl>Objectif / Message principal *</Lbl><textarea className="input" rows={3} placeholder="Quel est le message que vous souhaitez faire passer ? Contexte, occasion..." value={brief.objective} onChange={e=>setBrief(p=>({...p,objective:e.target.value}))}/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><Lbl>Public cible *</Lbl><input className="input" placeholder="Ex: Femmes 25-45 ans, familles, professionnels..." value={brief.target} onChange={e=>setBrief(p=>({...p,target:e.target.value}))}/></div>
+            <div><Lbl>Durée souhaitée</Lbl><input className="input" placeholder="Ex: 30 secondes, 2 minutes..." value={brief.duration} onChange={e=>setBrief(p=>({...p,duration:e.target.value}))}/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><Lbl>Ton / Ambiance</Lbl><input className="input" placeholder="Ex: Dynamique, institutionnel, poétique..." value={brief.tone} onChange={e=>setBrief(p=>({...p,tone:e.target.value}))}/></div>
+            <div><Lbl>Budget approximatif</Lbl><input className="input" placeholder="Ex: 2 000 €, 5 000 €..." value={brief.budget} onChange={e=>setBrief(p=>({...p,budget:e.target.value}))}/></div>
+          </div>
+          <div><Lbl>Livrables attendus</Lbl><input className="input" placeholder="Ex: 1 vidéo 16:9 + version story Instagram, sous-titres..." value={brief.deliverables} onChange={e=>setBrief(p=>({...p,deliverables:e.target.value}))}/></div>
+          <div><Lbl>Date de tournage souhaitée</Lbl><input type="date" className="input" value={brief.shootDate} onChange={e=>setBrief(p=>({...p,shootDate:e.target.value}))}/></div>
+          <div><Lbl>Références / Inspirations</Lbl><textarea className="input" rows={2} placeholder="Liens YouTube, noms de réalisateurs, spots que vous aimez..." value={brief.references} onChange={e=>setBrief(p=>({...p,references:e.target.value}))}/></div>
+          <div><Lbl>Informations complémentaires</Lbl><textarea className="input" rows={3} placeholder="Lieu de tournage, personnes à filmer, contraintes particulières..." value={brief.notes} onChange={e=>setBrief(p=>({...p,notes:e.target.value}))}/></div>
+          <button className="btn btn-primary" style={{alignSelf:"flex-end",padding:"10px 24px"}} disabled={saving||!brief.objective||!brief.target} onClick={submitBrief}>
+            {saving?"Envoi en cours...":"✓ Envoyer mon brief"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp" style={{background:"linear-gradient(135deg,#E8C54710,#7B9CFF08)",border:"1px solid #E8C54720",borderRadius:10,padding:"16px 18px"}}>
@@ -2799,7 +2855,7 @@ export default function App() {
         if(aData) setAssignments(pa=>[...pa,...aData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:""}))]);
       }
     }
-    if(userRole==="client") setClientSection("projets"); else setProdSection("projets");
+    if(userRole==="client"){setAppView("client");setClientSection("projets");}else setProdSection("projets");
     setShowCreateModal(false);
     showNotif(team?`Projet créé — Équipe ${team} assignée`:"Projet créé !");
     return np;
