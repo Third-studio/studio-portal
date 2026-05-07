@@ -3489,13 +3489,18 @@ function AppMain() {
   const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const timeout = setTimeout(() => setAuthLoading(false), 8000);
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        setUser(session?.user || null);
+        setAuthLoading(false);
+      })
+      .catch(() => { setUser(null); setAuthLoading(false); })
+      .finally(() => clearTimeout(timeout));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
-      setAuthLoading(false);
     });
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
+    return () => subscription.unsubscribe();
   }, []);
 
   // Global state
