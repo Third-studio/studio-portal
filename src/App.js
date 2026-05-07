@@ -520,6 +520,98 @@ function ProdLivrables({project,onUpdate,onNotif}){
   );
 }
 
+function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
+  const[urlInput,setUrlInput]=useState("");
+  const[caption,setCaption]=useState("");
+  const[uploading,setUploading]=useState(false);
+  const[hoverId,setHoverId]=useState(null);
+  const fileRef=useRef(null);
+
+  const saveMoodboard=async(items)=>{
+    const newBrief={...project.brief,moodboard:items,videoStatus:project.videoStatus,videoComment:project.videoComment};
+    await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    onUpdate({...project,brief:newBrief,moodboard:items});
+  };
+
+  const addByUrl=async()=>{
+    if(!urlInput.trim())return;
+    const item={id:Date.now(),url:urlInput.trim(),caption:caption.trim(),addedBy:authorName||"Équipe",addedAt:isoToday()};
+    await saveMoodboard([...(project.moodboard||[]),item]);
+    setUrlInput("");setCaption("");
+    onNotif("Image ajoutée au moodboard !");
+  };
+
+  const addByFile=async(file)=>{
+    if(!file)return;
+    setUploading(true);
+    const ext=file.name.split(".").pop();
+    const path=`${project.id}/${Date.now()}.${ext}`;
+    const{error}=await supabase.storage.from("moodboard").upload(path,file,{upsert:true});
+    if(error){onNotif("Erreur upload : "+error.message);setUploading(false);return;}
+    const{data}=supabase.storage.from("moodboard").getPublicUrl(path);
+    const item={id:Date.now(),url:data.publicUrl,caption:caption.trim(),addedBy:authorName||"Équipe",addedAt:isoToday()};
+    await saveMoodboard([...(project.moodboard||[]),item]);
+    setCaption("");setUploading(false);
+    onNotif("Image ajoutée au moodboard !");
+  };
+
+  const remove=async(id)=>{
+    await saveMoodboard((project.moodboard||[]).filter(x=>x.id!==id));
+    onNotif("Image supprimée");
+  };
+
+  const items=project.moodboard||[];
+
+  return(
+    <div className="card fadeUp" style={{padding:18}}>
+      <SH icon="🎨" title="MOODBOARD" sub="Inspirations visuelles pour cadrer la direction artistique"/>
+
+      {/* Add form */}
+      <div style={{background:"#0E0E18",borderRadius:8,padding:"14px",border:"1px solid #2A2A3E",marginBottom:16}}>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",gap:8}}>
+            <input className="input" placeholder="Coller une URL d'image (Pinterest, Unsplash…)" value={urlInput} onChange={e=>setUrlInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addByUrl()} style={{flex:1}}/>
+            <button className="btn btn-primary" onClick={addByUrl} disabled={!urlInput.trim()} style={{whiteSpace:"nowrap"}}>+ URL</button>
+          </div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <input className="input" placeholder="Légende (optionnel)" value={caption} onChange={e=>setCaption(e.target.value)} style={{flex:1}}/>
+            <button className="btn btn-ghost" disabled={uploading} style={{whiteSpace:"nowrap",fontSize:12}} onClick={()=>fileRef.current?.click()}>
+              {uploading?"Envoi…":"⬆ Fichier"}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&addByFile(e.target.files[0])}/>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid */}
+      {items.length===0&&(
+        <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"30px 0"}}>
+          Aucune image pour l'instant.<br/><span style={{fontSize:11}}>Collez des URLs ou uploadez des fichiers pour construire votre direction artistique.</span>
+        </p>
+      )}
+      {items.length>0&&(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
+          {items.map(item=>(
+            <div key={item.id} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"4/3",background:"#0E0E18",border:"1px solid #2A2A3E",cursor:"pointer"}}
+              onMouseEnter={()=>setHoverId(item.id)} onMouseLeave={()=>setHoverId(null)}>
+              <img src={item.url} alt={item.caption||"moodboard"} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+                onError={e=>{e.target.style.display="none";}}/>
+              {/* Overlay */}
+              <div style={{position:"absolute",inset:0,background:"rgba(8,8,15,0.75)",opacity:hoverId===item.id?1:0,transition:"opacity .18s",display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"8px"}}>
+                {item.caption&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#F0EEE8",lineHeight:1.4}}>{item.caption}</p>}
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginTop:"auto"}}>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>{item.addedBy}</span>
+                  <button style={{background:"#FF6B6B18",border:"1px solid #FF6B6B33",borderRadius:4,color:"#FF6B6B",fontFamily:"'DM Sans'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>remove(item.id)}>✕</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
@@ -542,7 +634,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:statusMeta.replayUrl,status:project.status==="brief"?"storyboard":project.status});
     onNotif("Brief sauvegardé !");
   };
-  const tabs=[{k:"brief",l:"Brief"},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
+  const tabs=[{k:"brief",l:"Brief"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp">
@@ -625,6 +717,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
         </div>
       )}
       {tab==="comments"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="prod"/></div>}
+      {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={fmtProdAuthor(userProfile?.nom)} isAdmin={true}/>}
       {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="equipe"&&<TeamSection project={project} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={onUpdateAssignments} onNotif={onNotif}/>}
       {tab==="notes"&&<MeetingNotesSection project={project} meetingNotes={meetingNotes} onUpdateMeetingNotes={onUpdateMeetingNotes} onNotif={onNotif}/>}
@@ -790,7 +883,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
     await supabase.from("messages").insert({project_id:project.id,author,content:text,role:"client"});
   };
   const finaux=(project.livrables||[]).filter(l=>l.category==="finaux");
-  const tabs=[{k:"suivi",l:"Suivi"},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"replay",l:"Révisions vidéo"},{k:"messages",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},...(hasSimulator?[{k:"estimation",l:"💰 Estimation"}]:[])];
+  const tabs=[{k:"suivi",l:"Suivi"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"replay",l:"Révisions vidéo"},{k:"messages",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},...(hasSimulator?[{k:"estimation",l:"💰 Estimation"}]:[])];
 
   if(showIntake) return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -884,6 +977,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
           ))}
         </div>
       )}
+      {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={clientData?.name||"Client"} isAdmin={false}/>}
       {tab==="replay"&&<VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="messages"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="client"/></div>}
       {tab==="livrables"&&(
@@ -3081,6 +3175,7 @@ export default function App() {
           statusNote: p.status_note || "",
           videoStatus: p.brief?.videoStatus || null,
           videoComment: p.brief?.videoComment || "",
+          moodboard: p.brief?.moodboard || [],
           storyboards: (p.storyboards || []).map(s => ({
             id: s.id,
             title: s.title,
@@ -3151,7 +3246,7 @@ export default function App() {
   const createProject=async(title,clientId,team)=>{
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:clientId||null,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
     if(error){showNotif("Erreur : "+error.message);return null;}
-    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",storyboards:[],comments:[],livrables:[]};
+    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
     setSelectedProjectId(np.id);
     if(team){
