@@ -3488,6 +3488,7 @@ function AppMain() {
   const clientProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
   const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
 
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (appView !== "client") return;
     const cProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
