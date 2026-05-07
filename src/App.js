@@ -2351,6 +2351,88 @@ function CMClientPostMini({ post, netData, projects }) {
 
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// J-2 ALERT BANNER
+// ─────────────────────────────────────────────────────────────────────────────
+const WMO_LABELS={
+  0:["Ciel dégagé","☀️"],1:["Peu nuageux","🌤"],2:["Partiellement nuageux","⛅"],3:["Couvert","☁️"],
+  45:["Brume/brouillard","🌫"],48:["Brouillard givrant","🌫"],
+  51:["Bruine légère","🌦"],53:["Bruine modérée","🌦"],55:["Bruine dense","🌧"],
+  61:["Pluie légère","🌦"],63:["Pluie modérée","🌧"],65:["Pluie forte","🌧"],
+  80:["Averses légères","🌦"],81:["Averses modérées","🌧"],82:["Averses violentes","⛈"],
+  95:["Orage","⛈"],96:["Orage avec grêle","⛈"],99:["Orage violent","⛈"],
+};
+const wmoLabel=(code)=>WMO_LABELS[code]||["Météo indisponible","🌡"];
+
+function J2AlertBanner({projects,clients}){
+  const[alerts,setAlerts]=useState([]);
+  const[loading,setLoading]=useState(true);
+
+  useEffect(()=>{
+    const j2=new Date(TODAY);j2.setDate(j2.getDate()+2);
+    const j2str=j2.toISOString().split("T")[0];
+    const upcoming=projects.filter(p=>p.shootDate===j2str&&p.status!=="livré");
+    if(upcoming.length===0){setLoading(false);return;}
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=14.6415&longitude=-61.0242&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=America%2FMartinique&start_date=${j2str}&end_date=${j2str}`)
+      .then(r=>r.json())
+      .then(data=>{
+        const d=data.daily;
+        const weather={code:d?.weathercode?.[0],tmax:d?.temperature_2m_max?.[0],tmin:d?.temperature_2m_min?.[0],rain:d?.precipitation_sum?.[0]};
+        setAlerts(upcoming.map(p=>({project:p,weather,date:j2str})));
+      })
+      .catch(()=>setAlerts(upcoming.map(p=>({project:p,weather:null,date:j2str}))))
+      .finally(()=>setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[projects.length]);
+
+  if(loading||alerts.length===0)return null;
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:4}}>
+      {alerts.map(({project,weather,date})=>{
+        const client=clients.find(c=>c.id===project.clientId);
+        const[label,emoji]=wmoLabel(weather?.code);
+        const bodyLines=[
+          `Bonjour ${client?.name||""},`,
+          ``,
+          `Nous vous confirmons le tournage de votre projet "${project.title}" prévu après-demain, le ${fmtD(date)}.`,
+          ``,
+          `📅 Date : ${fmtD(date)}`,
+          `🕗 Heure d'arrivée de l'équipe : 08h00`,
+          `📍 Lieu : Third-One Studio, Martinique`,
+          weather?`🌤 Météo prévue : ${label} ${emoji} — ${Math.round(weather.tmin||22)}°–${Math.round(weather.tmax||28)}°C${weather.rain>1?` · Précipitations : ${weather.rain?.toFixed(1)} mm`:""}` : "",
+          ``,
+          `N'hésitez pas à nous contacter pour toute question.`,
+          ``,
+          `L'équipe Third-One Studio`,
+        ].filter(l=>l!==undefined);
+        const mailto=`mailto:${client?.email||""}?subject=${encodeURIComponent(`Rappel tournage – ${project.title} – ${fmtD(date)}`)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
+        return(
+          <div key={project.id} style={{background:"linear-gradient(135deg,#E8C54718,#FF9F4310)",border:"2px solid #E8C54740",borderRadius:10,padding:"14px 18px",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+            <div style={{fontSize:28}}>{emoji||"🎬"}</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                <span style={{fontFamily:"'Bebas Neue'",fontSize:16,color:"#E8C547",letterSpacing:"0.05em"}}>J-2 — TOURNAGE</span>
+                <span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8",fontWeight:600}}>{project.title}</span>
+                {client&&<span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>· {client.name}</span>}
+              </div>
+              {weather?(
+                <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:3}}>
+                  {label} · {Math.round(weather.tmin||22)}°–{Math.round(weather.tmax||28)}°C
+                  {weather.rain>1?<span style={{color:"#7B9CFF"}}> · 🌧 {weather.rain?.toFixed(1)} mm prévus</span>:null}
+                </p>
+              ):<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>Météo indisponible</p>}
+            </div>
+            <a href={mailto} style={{textDecoration:"none"}} title={client?.email?"Envoyer à "+client.email:"Email client non renseigné"}>
+              <button className="btn btn-primary" style={{fontSize:12,whiteSpace:"nowrap"}}>📧 Envoyer le rappel</button>
+            </a>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 function AdminDashboard({ projects, clients, assignments, onSelectProject, onSectionChange }) {
@@ -3365,6 +3447,9 @@ export default function App() {
 
           {/* ── MAIN CONTENT ── */}
           <div className="app-main">
+
+            {/* J-2 banner — visible sur toutes les sections prod */}
+            {appView==="prod"&&<J2AlertBanner projects={projects} clients={clients}/>}
 
             {/* PROD SECTIONS */}
             {appView==="prod"&&prodSection==="dashboard"&&(
