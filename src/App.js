@@ -3321,20 +3321,52 @@ const RADAR_TRENDS = [
   { id:4, tag:"#AITools2025",     platform:"LinkedIn",   niche:"Tech",    views:"890K", growth:"+203%", why:"L'IA en entreprise fascine. Les contenus 'avant/après productivité' performent fort.",  hook:"Ces 3 outils IA ont remplacé 4h de mon travail...", plans:["Problème","Outil 1","Outil 2","Outil 3","CTA"] },
 ];
 
-function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNotif,onCreateFromTrend}){
+function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNotif,onCreateFromTrend,isAdmin}){
   const [view,setView]=useState("radar");
-  const [expanded,setExpanded]=useState(1);
+  const [expanded,setExpanded]=useState(null);
   const [nicheFilter,setNicheFilter]=useState("Tous");
   const [scanning,setScanning]=useState(false);
+  const [trends,setTrends]=useState(RADAR_TRENDS);
+  const [trendsLoading,setTrendsLoading]=useState(true);
+  const [lastFetch,setLastFetch]=useState(null);
 
-  const niches=["Tous","Fitness","Beauty","Tech","Food","Voyage","Business"];
-  const nicheColors={"Fitness":"#4ECDC4","Beauty":"#FF6B6B","Tech":"#7B9CFF","Food":"#FF9F43","Voyage":"#B47FFF","Business":"#E8C547"};
+  const niches=["Tous","Fitness","Beauty","Tech","Food","Voyage","Business","Lifestyle","Finance"];
+  const nicheColors={"Fitness":"#4ECDC4","Beauty":"#FF6B6B","Tech":"#7B9CFF","Food":"#FF9F43","Voyage":"#B47FFF","Business":"#E8C547","Lifestyle":"#FF6B9D","Finance":"#4ECDC4"};
+
+  useEffect(()=>{
+    supabase.from("trends").select("*").eq("active",true).order("fetched_at",{ascending:false})
+      .then(({data})=>{
+        if(data&&data.length>0){
+          setTrends(data.map(t=>({...t,plans:Array.isArray(t.plans)?t.plans:Object.values(t.plans||{})})));
+          setLastFetch(data[0].fetched_at);
+          setExpanded(data[0].id);
+        }
+        setTrendsLoading(false);
+      })
+      .catch(()=>setTrendsLoading(false));
+  },[]);
+
+  const runScan=async()=>{
+    setScanning(true);
+    try{
+      const {data,error}=await supabase.functions.invoke("refresh-trends");
+      if(error) throw error;
+      const {data:fresh}=await supabase.from("trends").select("*").eq("active",true).order("fetched_at",{ascending:false});
+      if(fresh&&fresh.length>0){
+        setTrends(fresh.map(t=>({...t,plans:Array.isArray(t.plans)?t.plans:Object.values(t.plans||{})})));
+        setLastFetch(fresh[0].fetched_at);
+        setExpanded(fresh[0].id);
+        onNotif(`${fresh.length} tendances mises à jour ✓`);
+      }
+    }catch(e){ onNotif("Erreur scan : "+(e?.message||e)); }
+    setScanning(false);
+  };
 
   const statusColor=s=>({brief:"#7B9CFF",storyboard:"#E8C547",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#8888AA");
   const statusLabel=s=>({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
   const PIPELINE=["brief","storyboard","tournage","montage","livraison"];
 
-  const filteredTrends=nicheFilter==="Tous"?RADAR_TRENDS:RADAR_TRENDS.filter(t=>t.niche===nicheFilter);
+  const filteredTrends=nicheFilter==="Tous"?trends:trends.filter(t=>t.niche===nicheFilter);
   const clientName=cid=>clients.find(c=>c.id===cid)?.name||"—";
 
   const cardStyle=(active)=>({
@@ -3367,9 +3399,10 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
       {/* ── RADAR ── */}
       {view==="radar"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {trendsLoading&&<div style={{textAlign:"center",padding:"30px 0",fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block",marginRight:8}}>⟳</span>Chargement des tendances...</div>}
           {/* Stats */}
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            {[{v:"+445%",l:"Top croissance",c:"#4ECDC4"},{v:`${RADAR_TRENDS.length}`,l:"Tendances actives",c:"#B47FFF"},{v:"6",l:"Niches suivies",c:"#E8C547"}].map(s=>(
+            {[{v:trends[0]?.growth||"—",l:"Top croissance",c:"#4ECDC4"},{v:`${trends.length}`,l:"Tendances actives",c:"#B47FFF"},{v:`${[...new Set(trends.map(t=>t.niche))].length||6}`,l:"Niches suivies",c:"#E8C547"}].map(s=>(
               <div key={s.l} style={{flex:"1 1 80px",minWidth:80,background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:"12px 14px"}}>
                 <div style={{fontFamily:"'Bebas Neue'",fontSize:22,color:s.c,letterSpacing:"0.04em"}}>{s.v}</div>
                 <div style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA",marginTop:2}}>{s.l}</div>
@@ -3384,10 +3417,13 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                 {n}
               </button>
             ))}
-            <button onClick={()=>{setScanning(true);setTimeout(()=>setScanning(false),2000);}} style={{marginLeft:"auto",background:scanning?"#00d4ff22":"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:scanning?"1px solid #00d4ff":"none",borderRadius:8,color:scanning?"#00d4ff":"#fff",fontFamily:"'DM Sans'",fontWeight:700,fontSize:12,padding:"6px 16px",cursor:"pointer",transition:"all .15s"}}>
-              {scanning?"⟳ Scan...":"⚡ Scanner"}
-            </button>
+            {isAdmin&&(
+              <button onClick={runScan} disabled={scanning} style={{marginLeft:"auto",background:scanning?"#00d4ff22":"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:scanning?"1px solid #00d4ff":"none",borderRadius:8,color:scanning?"#00d4ff":"#fff",fontFamily:"'DM Sans'",fontWeight:700,fontSize:12,padding:"6px 16px",cursor:scanning?"not-allowed":"pointer",transition:"all .15s",opacity:scanning?.7:1}}>
+                {scanning?"⟳ Scan en cours...":"⚡ Scanner les tendances"}
+              </button>
+            )}
           </div>
+          {lastFetch&&<div style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>Dernière mise à jour : {new Date(lastFetch).toLocaleDateString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})}</div>}
 
           {/* Trend cards */}
           {filteredTrends.map(t=>(
@@ -3819,6 +3855,7 @@ function AppMain() {
                 clients={clients}
                 onSelectProject={setSelectedProjectId}
                 onSectionChange={setProdSection}
+                isAdmin={true}
                 onNotif={showNotif}
                 onCreateFromTrend={async(trend)=>{
                   const{data,error}=await supabase.from("projects").insert({
@@ -3861,6 +3898,7 @@ function AppMain() {
                 clients={clients}
                 onSelectProject={setSelectedProjectId}
                 onSectionChange={setClientSection}
+                isAdmin={false}
                 onNotif={showNotif}
                 onCreateFromTrend={()=>showNotif("Contacte ton chargé de projet pour créer une mission.")}
               />
