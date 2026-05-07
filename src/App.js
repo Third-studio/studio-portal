@@ -2768,23 +2768,32 @@ export default function App() {
     if(!user) return;
     const loadData = async () => {
       setDataLoading(true);
-      const [
-        { data: projectsData },
-        { data: postsData },
-        { data: profilesData },
-        { data: membersData },
-        { data: assignData },
-        { data: slotsData },
-        { data: notesData },
-      ] = await Promise.all([
-        supabase.from("projects").select("*, storyboards(*), messages(*), files(*)").order("created_at",{ascending:false}),
+      // Récupère le rôle d'abord pour adapter les requêtes
+      const { data: myProfile } = await supabase.from("profiles").select("role").eq("id",user.id).single();
+      const isAdminUser = myProfile?.role === "admin";
+
+      const queries = [
+        supabase.from("projects").select("*, messages(*), files(*)").order("created_at",{ascending:false}),
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
-        supabase.from("profiles").select("*").eq("role","client").order("nom"),
-        supabase.from("team_members").select("*").order("nom"),
-        supabase.from("project_assignments").select("*"),
-        supabase.from("planning_slots").select("*").order("date"),
-        supabase.from("meeting_notes").select("*").order("date",{ascending:false}),
-      ]);
+      ];
+      // Données admin seulement
+      if(isAdminUser){
+        queries.push(
+          supabase.from("profiles").select("*").eq("role","client").order("nom"),
+          supabase.from("team_members").select("*").order("nom"),
+          supabase.from("project_assignments").select("*"),
+          supabase.from("planning_slots").select("*").order("date"),
+          supabase.from("meeting_notes").select("*").order("date",{ascending:false}),
+        );
+      }
+      const results = await Promise.all(queries);
+      const projectsData = results[0]?.data;
+      const postsData    = results[1]?.data;
+      const profilesData = isAdminUser ? results[2]?.data : null;
+      const membersData  = isAdminUser ? results[3]?.data : null;
+      const assignData   = isAdminUser ? results[4]?.data : null;
+      const slotsData    = isAdminUser ? results[5]?.data : null;
+      const notesData    = isAdminUser ? results[6]?.data : null;
 
       if(projectsData && projectsData.length > 0) {
         const formatted = projectsData.map(p => ({
