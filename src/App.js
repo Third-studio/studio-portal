@@ -560,7 +560,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               </div>
               <div><Lbl>Note de statut (visible client)</Lbl><input className="input" placeholder="Ex: Montage en cours, livraison le 15 mai..." value={statusMeta.statusNote} onChange={e=>setStatusMeta(p=>({...p,statusNote:e.target.value}))}/></div>
               <div>
-                <Lbl>Lien vidéo à valider (Frame.io, Vimeo, YouTube…)</Lbl>
+                <Lbl>Lien vidéo à valider (Dropbox Replay, Vimeo, YouTube…)</Lbl>
                 <div style={{display:"flex",gap:8}}>
                   <input className="input" placeholder="https://..." value={statusMeta.replayUrl} onChange={e=>setStatusMeta(p=>({...p,replayUrl:e.target.value}))} style={{flex:1}}/>
                   {statusMeta.replayUrl&&<a href={statusMeta.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗ Voir</a>}
@@ -628,15 +628,20 @@ function VideoValidationPanel({project,onUpdate,onNotif}){
   const[showRevForm,setShowRevForm]=useState(false);
   const[saving,setSaving]=useState(false);
 
+  const getVideoType=(url)=>{
+    if(!url)return null;
+    if(url.match(/dropbox\.com/))return"dropbox";
+    if(url.match(/youtu\.be\/|youtube\.com/))return"youtube";
+    if(url.match(/vimeo\.com/))return"vimeo";
+    return"other";
+  };
+
   const getEmbedUrl=(url)=>{
     if(!url)return null;
-    // YouTube
     const yt=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
     if(yt)return`https://www.youtube.com/embed/${yt[1]}`;
-    // Vimeo
     const vm=url.match(/vimeo\.com\/(\d+)/);
     if(vm)return`https://player.vimeo.com/video/${vm[1]}`;
-    // Frame.io or other direct embed — show link only
     return null;
   };
 
@@ -645,11 +650,12 @@ function VideoValidationPanel({project,onUpdate,onNotif}){
     const newBrief={...project.brief,videoStatus:status,videoComment:comment};
     await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
     onUpdate({...project,brief:newBrief,videoStatus:status,videoComment:comment});
-    onNotif(status==="approved"?"Vidéo approuvée !" : "Révisions envoyées à l'équipe !");
+    onNotif(status==="approved"?"Vidéo approuvée !":"Révisions envoyées à l'équipe !");
     setSaving(false);
     setShowRevForm(false);
   };
 
+  const videoType=getVideoType(project.replayUrl);
   const embedUrl=getEmbedUrl(project.replayUrl);
 
   return(
@@ -672,12 +678,33 @@ function VideoValidationPanel({project,onUpdate,onNotif}){
             </div>
           )}
 
-          {/* Player */}
-          {embedUrl?(
+          {/* Dropbox Replay */}
+          {videoType==="dropbox"&&(
+            <div style={{background:"#0E0E18",border:"1px solid #0061FF33",borderRadius:10,padding:"24px 20px",display:"flex",flexDirection:"column",alignItems:"center",gap:12}}>
+              <div style={{width:44,height:44,borderRadius:10,background:"#0061FF18",border:"1px solid #0061FF33",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4 6-4-6-4zm12 0l-6 4 6 4 6-4-6-4zM0 14l6 4 6-4-6-4-6 4zm18-4l-6 4 6 4 6-4-6-4zM6 19l6 4 6-4-6-4-6 4z"/></svg>
+              </div>
+              <div style={{textAlign:"center"}}>
+                <p style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8",marginBottom:4}}>Dropbox Replay</p>
+                <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",lineHeight:1.5}}>Ouvrez la vidéo dans Dropbox Replay pour laisser des commentaires horodatés directement sur la timeline.</p>
+              </div>
+              <a href={project.replayUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:"#0061FF",color:"#fff",fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,padding:"10px 22px",borderRadius:7,letterSpacing:"0.03em",display:"inline-flex",alignItems:"center",gap:8}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M6 2L0 6l6 4 6-4-6-4zm12 0l-6 4 6 4 6-4-6-4zM0 14l6 4 6-4-6-4-6 4zm18-4l-6 4 6 4 6-4-6-4zM6 19l6 4 6-4-6-4-6 4z"/></svg>
+                Ouvrir dans Dropbox Replay
+              </a>
+              <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#3A3A5E"}}>Puis revenez ici pour approuver ou demander des révisions.</p>
+            </div>
+          )}
+
+          {/* YouTube / Vimeo embed */}
+          {embedUrl&&(
             <div style={{position:"relative",paddingBottom:"56.25%",height:0,borderRadius:8,overflow:"hidden",border:"1px solid #2A2A3E"}}>
               <iframe src={embedUrl} title="Vidéo" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}} allowFullScreen/>
             </div>
-          ):(
+          )}
+
+          {/* Autre lien générique */}
+          {!embedUrl&&videoType==="other"&&(
             <div style={{background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:8,padding:"24px",display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
               <span style={{fontSize:32}}>▶</span>
               <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",textAlign:"center"}}>Visualisez la vidéo sur la plateforme de revue</p>
