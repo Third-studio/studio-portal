@@ -2746,7 +2746,7 @@ export default function App() {
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
   const selProject=projects.find(p=>p.id===selectedProjectId);
   const createProject=async(title,clientId)=>{
-    const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:clientId||null,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:"",shoot_date:"",status_note:""}).select().single();
+    const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:clientId||null,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
     if(error){showNotif("Erreur : "+error.message);return null;}
     const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
