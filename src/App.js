@@ -2598,10 +2598,24 @@ export default function App() {
     if(!user) return;
     const loadData = async () => {
       setDataLoading(true);
-      const { data: projectsData } = await supabase
-        .from("projects")
-        .select("*, storyboards(*), messages(*), files(*)")
-        .order("created_at", { ascending: false });
+      const [
+        { data: projectsData },
+        { data: postsData },
+        { data: profilesData },
+        { data: membersData },
+        { data: assignData },
+        { data: slotsData },
+        { data: notesData },
+      ] = await Promise.all([
+        supabase.from("projects").select("*, storyboards(*), messages(*), files(*)").order("created_at",{ascending:false}),
+        supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
+        supabase.from("profiles").select("*").eq("role","client").order("nom"),
+        supabase.from("team_members").select("*").order("nom"),
+        supabase.from("project_assignments").select("*"),
+        supabase.from("planning_slots").select("*").order("date"),
+        supabase.from("meeting_notes").select("*").order("date",{ascending:false}),
+      ]);
+
       if(projectsData && projectsData.length > 0) {
         const formatted = projectsData.map(p => ({
           id: p.id,
@@ -2641,50 +2655,12 @@ export default function App() {
         setProjects(formatted);
         setSelectedProjectId(formatted[0]?.id || null);
       }
-      const { data: postsData } = await supabase
-        .from("posts")
-        .select("*")
-        .order("scheduled_at", { ascending: true });
-      if(postsData) {
-        const formattedPosts = postsData.map(p => ({
-          id: p.id,
-          projectId: p.project_id,
-          network: p.network,
-          caption: p.caption || "",
-          assetName: p.asset_name || "",
-          scheduledAt: p.scheduled_at,
-          status: p.status || "draft",
-          comment: p.comment || "",
-          cmNote: p.cm_note || "",
-          createdAt: p.created_at?.split("T")[0],
-        }));
-        setPosts(formattedPosts);
-      }
-      const { data: profilesData } = await supabase.from("profiles").select("*").eq("role","client").order("nom");
-      if(profilesData && profilesData.length > 0) {
-        setClients(profilesData.map(p=>({
-          id: p.id,
-          name: p.nom || p.email || "Client",
-          email: p.email || "",
-          discount: p.discount || 0,
-          type: p.client_type || "PME",
-          simulatorEnabled: p.simulator_enabled || false,
-          isActive: p.is_active !== false,
-        })));
-      }
-
-      const { data: membersData } = await supabase.from("team_members").select("*").order("nom");
+      if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
+      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,isActive:p.is_active!==false})));
       if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#E8C547"})));
-
-      const { data: assignData } = await supabase.from("project_assignments").select("*");
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
-
-      const { data: slotsData } = await supabase.from("planning_slots").select("*").order("date");
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
-
-      const { data: notesData } = await supabase.from("meeting_notes").select("*").order("date",{ascending:false});
       if(notesData) setMeetingNotes(notesData.map(n=>({id:n.id,projectId:n.project_id,date:n.date,participants:n.participants||"",content:n.content||"",decisions:n.decisions||""})));
-
       setDataLoading(false);
     };
     loadData();
