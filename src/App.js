@@ -2426,6 +2426,136 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CLIENTS MANAGER
+// ─────────────────────────────────────────────────────────────────────────────
+function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
+  const TYPES=["PME","Startup","Association","Collectivité","Particulier","Autre"];
+  const emptyForm={nom:"",email:"",password:"",client_type:"PME",discount:0,simulator_enabled:false};
+  const[tab,setTab]=useState("liste");
+  const[form,setForm]=useState(emptyForm);
+  const[editId,setEditId]=useState(null);
+  const[saving,setSaving]=useState(false);
+  const[createdPass,setCreatedPass]=useState(null);
+  const[showPass,setShowPass]=useState(false);
+  const F=(k,v)=>setForm(p=>({...p,[k]:v}));
+
+  const openEdit=(c)=>{setEditId(c.id);setForm({nom:c.name,email:c.email,password:"",client_type:c.type,discount:c.discount,simulator_enabled:c.simulatorEnabled});setTab("edit");};
+  const cancelEdit=()=>{setEditId(null);setForm(emptyForm);setTab("liste");};
+
+  const createAccount=async()=>{
+    if(!form.email||!form.password){onNotif("Email et mot de passe requis");return;}
+    setSaving(true);
+    const{data,error}=await supabase.auth.signUp({email:form.email,password:form.password,options:{data:{nom:form.nom,role:"client"}}});
+    if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
+    const uid=data.user?.id;
+    if(!uid){onNotif("Erreur création compte");setSaving(false);return;}
+    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,is_active:true});
+    const nc={id:uid,name:form.nom||form.email,email:form.email,type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,isActive:true};
+    setClients(cs=>[...cs,nc]);
+    setCreatedPass(form.password);
+    setShowPass(true);
+    setForm(emptyForm);
+    setSaving(false);
+    setTab("liste");
+    onNotif("Compte créé !");
+  };
+
+  const saveEdit=async()=>{
+    setSaving(true);
+    await supabase.from("profiles").update({nom:form.nom,client_type:form.client_type,discount:Number(form.discount),simulator_enabled:form.simulator_enabled}).eq("id",editId);
+    setClients(cs=>cs.map(c=>c.id===editId?{...c,name:form.nom||c.email,type:form.client_type,discount:Number(form.discount),simulatorEnabled:form.simulator_enabled}:c));
+    setSaving(false);
+    onNotif("Compte mis à jour");
+    cancelEdit();
+  };
+
+  const toggleActive=async(c)=>{
+    const v=!c.isActive;
+    await supabase.from("profiles").update({is_active:v}).eq("id",c.id);
+    setClients(cs=>cs.map(x=>x.id===c.id?{...x,isActive:v}:x));
+    onNotif(v?"Compte activé":"Compte suspendu");
+  };
+
+  const FormBlock=({isNew})=>(
+    <div className="card fadeUp" style={{padding:22,maxWidth:520}}>
+      <SH icon={isNew?"➕":"✏️"} title={isNew?"NOUVEAU COMPTE CLIENT":"MODIFIER LE COMPTE"}/>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><Lbl>Nom complet</Lbl><input className="input" placeholder="Jean Dupont" value={form.nom} onChange={e=>F("nom",e.target.value)}/></div>
+          <div><Lbl>Type de client</Lbl><select className="input" value={form.client_type} onChange={e=>F("client_type",e.target.value)}>{TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
+        </div>
+        <div><Lbl>Email</Lbl><input className="input" type="email" placeholder="client@email.com" value={form.email} onChange={e=>F("email",e.target.value)} disabled={!isNew} style={!isNew?{opacity:.5}:{}}/></div>
+        {isNew&&<div><Lbl>Mot de passe provisoire</Lbl><input className="input" type="text" placeholder="Mot de passe temporaire" value={form.password} onChange={e=>F("password",e.target.value)}/></div>}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><Lbl>Remise (%)</Lbl><input className="input" type="number" min={0} max={100} value={form.discount} onChange={e=>F("discount",Number(e.target.value))}/></div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <Lbl>Accès simulateur</Lbl>
+            <button className={`btn ${form.simulator_enabled?"btn-green":"btn-ghost"}`} style={{fontSize:12}} onClick={()=>F("simulator_enabled",!form.simulator_enabled)}>{form.simulator_enabled?"✓ Activé":"✗ Désactivé"}</button>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}}>
+          {!isNew&&<button className="btn btn-ghost" onClick={cancelEdit}>Annuler</button>}
+          <button className="btn btn-primary" disabled={saving} onClick={isNew?createAccount:saveEdit}>{saving?"...":(isNew?"Créer le compte":"Enregistrer")}</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div style={{background:"linear-gradient(135deg,#E8C54710,#7B9CFF08)",border:"1px solid #E8C54720",borderRadius:10,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+        <div>
+          <h2 style={{fontFamily:"'Bebas Neue'",fontSize:24,color:"#F0EEE8",letterSpacing:"0.04em"}}>COMPTES CLIENTS</h2>
+          <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>{clients.length} compte{clients.length!==1?"s":""} — gestion des accès et identifiants</p>
+        </div>
+        <button className="btn btn-primary" onClick={()=>{setTab(tab==="nouveau"?"liste":"nouveau");setEditId(null);setForm(emptyForm);}}>
+          {tab==="nouveau"?"✕ Annuler":"+ Nouveau compte"}
+        </button>
+      </div>
+
+      {showPass&&createdPass&&(
+        <div className="fadeUp" style={{background:"#4ECDC415",border:"1px solid #4ECDC444",borderRadius:8,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+          <div>
+            <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#4ECDC4"}}>✓ Compte créé — transmettez ce mot de passe au client</p>
+            <p style={{fontFamily:"'JetBrains Mono'",fontSize:14,color:"#F0EEE8",marginTop:4,letterSpacing:"0.05em"}}>{createdPass}</p>
+          </div>
+          <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>{setShowPass(false);setCreatedPass(null);}}>✕</button>
+        </div>
+      )}
+
+      {tab==="nouveau"&&<FormBlock isNew={true}/>}
+      {tab==="edit"&&editId&&<FormBlock isNew={false}/>}
+
+      <div style={{display:"flex",flexDirection:"column",gap:8}}>
+        {clients.length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#555570",fontFamily:"'DM Sans'",fontSize:13}}>Aucun compte client — créez le premier ci-dessus</div>}
+        {clients.map(c=>(
+          <div key={c.id} className="card fadeUp" style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,opacity:c.isActive?1:0.55}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:38,height:38,borderRadius:"50%",background:"#E8C54720",border:"1px solid #E8C54740",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:16,color:"#E8C547",flexShrink:0}}>
+                {(c.name||"?")[0].toUpperCase()}
+              </div>
+              <div>
+                <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{c.name}</p>
+                <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{c.email}</p>
+              </div>
+            </div>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#2A2A3E",color:"#8888AA"}}>{c.type}</span>
+              {c.discount>0&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E8C54720",color:"#E8C547"}}>-{c.discount}%</span>}
+              {c.simulatorEnabled&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:c.isActive?"#4ECDC420":"#FF6B6B20",color:c.isActive?"#4ECDC4":"#FF6B6B"}}>{c.isActive?"Actif":"Suspendu"}</span>
+              <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
+              <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
+              <button className={`btn ${c.isActive?"btn-red":"btn-green"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>{c.isActive?"Suspendre":"Réactiver"}</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // ROOT APP
 // ─────────────────────────────────────────────────────────────────────────────
 export default function App() {
@@ -2462,6 +2592,7 @@ export default function App() {
   const[meetingNotes,setMeetingNotes]=useState([]);
   const[notif,setNotif]=useState(null);
   const[dataLoading,setDataLoading]=useState(true);
+  const[previewClientId,setPreviewClientId]=useState(null);
 
   useEffect(()=>{
     if(!user) return;
@@ -2538,6 +2669,7 @@ export default function App() {
           discount: p.discount || 0,
           type: p.client_type || "PME",
           simulatorEnabled: p.simulator_enabled || false,
+          isActive: p.is_active !== false,
         })));
       }
 
@@ -2576,8 +2708,14 @@ export default function App() {
     <p style={{color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
   </div>;
   if (!user) return <Login onLogin={setUser} />;
-
-  // const isAdmin = userRole === "admin";
+  if (userProfile && userProfile.role === "client" && userProfile.is_active === false) return (
+    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <img src="/logo.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.6}}/>
+      <p style={{color:"#FF6B6B",fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:"0.1em"}}>ACCÈS SUSPENDU</p>
+      <p style={{color:"#555570",fontFamily:"'DM Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Votre accès a été suspendu. Contactez Third-One Studio pour plus d'informations.</p>
+      <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
+    </div>
+  );
 
   const showNotif=msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); };
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
@@ -2591,14 +2729,15 @@ export default function App() {
     setSelectedProjectId(np.id);
   };
 
-  // Pour un client connecté : projets filtrés + profil actif depuis Supabase
   const isClient = userRole === "client";
-  const clientProjects = isClient ? projects.filter(p => p.clientId === user.id) : projects;
+  const previewClient = previewClientId ? clients.find(c=>c.id===previewClientId) : null;
+  const effectiveClientId = isClient ? user.id : (previewClientId || null);
+  const clientProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
   const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
-
   const activeClient = isClient && userProfile
     ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
-    : clients[0];
+    : previewClient || clients[0];
+  const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
 
   const statusColor=s=>({brief:"#7B9CFF",storyboard:"#E8C547",review:"#FF9F43",livraison:"#4ECDC4"}[s]||"#8888AA");
 
@@ -2611,6 +2750,7 @@ export default function App() {
     {k:"planning",    l:"Planning",      icon:"📆"},
     {k:"cm",          l:"Social Media",  icon:"📲"},
     {k:"tarifs",      l:"Tarifs",        icon:"💰"},
+    {k:"comptes",     l:"Comptes",       icon:"👥"},
   ];
 
   // ── CLIENT NAV ──────────────────────────────────────────────────────────────
@@ -2636,9 +2776,17 @@ export default function App() {
             </span>
           </div>
           {userRole === "admin" && (
-            <div style={{display:"flex",gap:4,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
-              <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("prod")}>⚙ Production</button>
-              <button className={appView==="client"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("client")}>👤 Client</button>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              {previewClientId&&appView==="client"&&(
+                <div style={{display:"flex",alignItems:"center",gap:6,background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF"}}>👁 Aperçu : {previewClient?.name}</span>
+                  <button style={{background:"none",border:"none",color:"#7B9CFF",cursor:"pointer",fontSize:12,padding:"0 2px"}} onClick={()=>{setPreviewClientId(null);setAppView("prod");setProdSection("comptes");}}>✕</button>
+                </div>
+              )}
+              <div style={{display:"flex",gap:4,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
+                <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("prod")}>⚙ Production</button>
+                <button className={appView==="client"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>setAppView("client")}>👤 Client</button>
+              </div>
             </div>
           )}
         </div>
@@ -2701,6 +2849,9 @@ export default function App() {
             )}
             {appView==="prod"&&prodSection==="cm"&&(
               <CMModule posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
+            )}
+            {appView==="prod"&&prodSection==="comptes"&&(
+              <ClientsManager clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient}/>
             )}
 
             {/* CLIENT SECTIONS */}
