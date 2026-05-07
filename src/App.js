@@ -2426,6 +2426,54 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CREATE PROJECT MODAL
+// ─────────────────────────────────────────────────────────────────────────────
+function CreateProjectModal({isAdmin,clients,onClose,onCreate}){
+  const[title,setTitle]=useState("");
+  const[clientId,setClientId]=useState("");
+  const[loading,setLoading]=useState(false);
+
+  const submit=async()=>{
+    if(!title.trim()){return;}
+    setLoading(true);
+    await onCreate(title.trim(), isAdmin?(clientId||null):undefined);
+    setLoading(false);
+  };
+
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000000AA",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="card fadeUp" style={{width:"100%",maxWidth:460,padding:28,background:"#12121A"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
+          <h2 style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#F0EEE8",letterSpacing:"0.05em"}}>NOUVEAU PROJET</h2>
+          <button style={{background:"none",border:"none",color:"#555570",cursor:"pointer",fontSize:18,lineHeight:1}} onClick={onClose}>✕</button>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div>
+            <Lbl>Nom du projet</Lbl>
+            <input className="input" autoFocus placeholder="Ex: Spot publicitaire Martinique 2026" value={title} onChange={e=>setTitle(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()}/>
+          </div>
+          {isAdmin&&clients.length>0&&(
+            <div>
+              <Lbl>Client (optionnel)</Lbl>
+              <select className="input" value={clientId} onChange={e=>setClientId(e.target.value)}>
+                <option value="">— Aucun client pour l'instant —</option>
+                {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+          )}
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:6}}>
+            <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
+            <button className="btn btn-primary" disabled={loading||!title.trim()} onClick={submit}>
+              {loading?"Création...":"Créer le projet"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CLIENTS MANAGER
 // ─────────────────────────────────────────────────────────────────────────────
 function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
@@ -2576,6 +2624,7 @@ export default function App() {
   const[appView,setAppView]=useState("client"); // "prod" | "client"
   const[prodSection,setProdSection]=useState("dashboard");
   const[clientSection,setClientSection]=useState("projets");
+  const[showCreateModal,setShowCreateModal]=useState(false);
 
   // Data
   const[projects,setProjects]=useState([]);
@@ -2696,13 +2745,16 @@ export default function App() {
   const showNotif=msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); };
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
   const selProject=projects.find(p=>p.id===selectedProjectId);
-  const createProject=async()=>{
-    const clientId=userRole==="client"?user.id:null;
-    const{data,error}=await supabase.from("projects").insert({title:"Nouveau projet",client_id:clientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:"",shoot_date:"",status_note:""}).select().single();
-    if(error){showNotif("Erreur création projet");return;}
+  const createProject=async(title,clientId)=>{
+    const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:clientId||null,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:"",shoot_date:"",status_note:""}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return null;}
     const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
     setSelectedProjectId(np.id);
+    if(userRole==="client") setClientSection("projets"); else setProdSection("projets");
+    setShowCreateModal(false);
+    showNotif("Projet créé !");
+    return np;
   };
 
   const isClient = userRole === "client";
@@ -2794,7 +2846,7 @@ export default function App() {
                     </div>
                   </div>
                 ))}
-                <button style={{width:"100%",marginTop:6,background:"#E8C54710",border:"1px solid #E8C54725",borderRadius:6,color:"#E8C547",fontFamily:"'DM Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={createProject}>
+                <button style={{width:"100%",marginTop:6,background:"#E8C54710",border:"1px solid #E8C54725",borderRadius:6,color:"#E8C547",fontFamily:"'DM Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setShowCreateModal(true)}>
                   + Nouveau projet
                 </button>
               </div>
@@ -2859,6 +2911,7 @@ export default function App() {
         </div>
 
         {notif&&<Notif msg={notif} onDone={()=>setNotif(null)}/>}
+        {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} onClose={()=>setShowCreateModal(false)} onCreate={createProject}/>}
       </div>
     </>
   );
