@@ -3462,7 +3462,8 @@ function AppMain() {
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
   const selProject=projects.find(p=>p.id===selectedProjectId);
   const createProject=async(title,clientId,team)=>{
-    const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:clientId||null,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    const newClientId = userRole==="client" ? user.id : (clientId||null);
+    const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:newClientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
     if(error){showNotif("Erreur : "+error.message);return null;}
     const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
@@ -3486,6 +3487,15 @@ function AppMain() {
   const effectiveClientId = isClient ? user.id : (previewClientId || null);
   const clientProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
   const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
+
+  useEffect(() => {
+    if (appView !== "client") return;
+    const cProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
+    if (cProjects.length === 0) return;
+    if (cProjects.find(p => p.id === selectedProjectId)) return;
+    setSelectedProjectId(cProjects[0].id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appView, effectiveClientId, projects]);
   const activeClient = isClient && userProfile
     ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
     : previewClient || clients[0];
@@ -3503,6 +3513,7 @@ function AppMain() {
     {k:"cm",          l:"Social Media",  icon:"📲"},
     {k:"tarifs",      l:"Tarifs",        icon:"💰"},
     {k:"comptes",     l:"Comptes",       icon:"👥"},
+    {k:"shortone",    l:"Shortone",      icon:"◆"},
   ];
 
   // ── CLIENT NAV ──────────────────────────────────────────────────────────────
@@ -3611,6 +3622,25 @@ function AppMain() {
             )}
             {appView==="prod"&&prodSection==="comptes"&&(
               <ClientsManager clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient}/>
+            )}
+            {appView==="prod"&&prodSection==="shortone"&&(
+              <div style={{display:"flex",flexDirection:"column",gap:14,height:"100%"}}>
+                <div style={{background:"linear-gradient(135deg,#00d4ff10,#8b5cf608)",border:"1px solid #00d4ff20",borderRadius:10,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+                  <div>
+                    <h2 style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#F0EEE8",letterSpacing:"0.04em",display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{color:"#00d4ff"}}>◆</span> SHORTONE.STUDIO
+                    </h2>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>Plateforme de production de contenu social media — Radar tendances IA & Marketplace</p>
+                  </div>
+                  <a href="/shortone.html" target="_blank" rel="noreferrer" style={{fontFamily:"'DM Sans'",fontSize:11,color:"#00d4ff",background:"#00d4ff15",border:"1px solid #00d4ff30",borderRadius:6,padding:"5px 12px",textDecoration:"none",whiteSpace:"nowrap"}}>↗ Ouvrir</a>
+                </div>
+                <iframe
+                  src="/shortone.html"
+                  title="shortone.studio"
+                  style={{flex:1,border:"1px solid #2A2A3E",borderRadius:10,width:"100%",minHeight:"75vh",background:"#12141f"}}
+                  allow="clipboard-write"
+                />
+              </div>
             )}
 
             {/* CLIENT SECTIONS */}
