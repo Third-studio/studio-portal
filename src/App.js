@@ -3548,7 +3548,7 @@ function AppMain() {
       // Données admin seulement
       if(isAdminUser){
         queries.push(
-          supabase.from("profiles").select("*").eq("role","client").order("nom"),
+          supabase.from("profiles").select("*").neq("role","admin").order("nom"),
           supabase.from("team_members").select("*").order("nom"),
           supabase.from("project_assignments").select("*"),
           supabase.from("planning_slots").select("*").order("date"),
