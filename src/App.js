@@ -3309,6 +3309,181 @@ function GuestView(){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+const RADAR_TRENDS = [
+  { id:1, tag:"#75HardChallenge", platform:"TikTok",     niche:"Fitness", views:"2.4M", growth:"+312%", why:"Challenge 75 jours ultra-viral combinant discipline et transformation physique.",     hook:"Jour 1 du challenge qui a changé ma vie...", plans:["Intro","Training","Sweat","Result","CTA"] },
+  { id:2, tag:"#SilentWalking",   platform:"TikTok",     niche:"Fitness", views:"1.1M", growth:"+187%", why:"Tendance bien-être minimaliste. La marche sans écran comme antidote au burnout.",      hook:"J'ai marché 30 min sans mon téléphone. Résultat...", plans:["Contexte","La marche","Feeling","Bilan","CTA"] },
+  { id:3, tag:"#CleanGirl",       platform:"Instagram",  niche:"Beauty",  views:"5.8M", growth:"+445%", why:"Esthétique minimaliste naturelle. Très fort taux de saves et de partages sur Reels.", hook:"Ma routine beauté en 5 produits max...", plans:["Wake up","Skincare","Makeup","GRWM","CTA"] },
+  { id:4, tag:"#AITools2025",     platform:"LinkedIn",   niche:"Tech",    views:"890K", growth:"+203%", why:"L'IA en entreprise fascine. Les contenus 'avant/après productivité' performent fort.",  hook:"Ces 3 outils IA ont remplacé 4h de mon travail...", plans:["Problème","Outil 1","Outil 2","Outil 3","CTA"] },
+];
+
+function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNotif,onCreateFromTrend}){
+  const [view,setView]=useState("radar");
+  const [expanded,setExpanded]=useState(1);
+  const [nicheFilter,setNicheFilter]=useState("Tous");
+  const [scanning,setScanning]=useState(false);
+
+  const niches=["Tous","Fitness","Beauty","Tech","Food","Voyage","Business"];
+  const nicheColors={"Fitness":"#4ECDC4","Beauty":"#FF6B6B","Tech":"#7B9CFF","Food":"#FF9F43","Voyage":"#B47FFF","Business":"#E8C547"};
+
+  const statusColor=s=>({brief:"#7B9CFF",storyboard:"#E8C547",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#8888AA");
+  const statusLabel=s=>({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
+  const PIPELINE=["brief","storyboard","tournage","montage","livraison"];
+
+  const filteredTrends=nicheFilter==="Tous"?RADAR_TRENDS:RADAR_TRENDS.filter(t=>t.niche===nicheFilter);
+  const clientName=cid=>clients.find(c=>c.id===cid)?.name||"—";
+
+  const cardStyle=(active)=>({
+    background:active?"#1A1A2A":"#12121A",
+    border:`1px solid ${active?"#00d4ff30":"#2A2A3E"}`,
+    borderRadius:10,
+    cursor:"pointer",
+    transition:"all .15s",
+  });
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+        <div>
+          <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,color:"#F0EEE8",letterSpacing:"0.05em",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{background:"linear-gradient(135deg,#00d4ff,#8b5cf6)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>◆</span> SHORTONE.STUDIO
+          </h2>
+          <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>Radar tendances IA & production de contenu social media</p>
+        </div>
+        {/* Sub-tabs */}
+        <div style={{display:"flex",gap:4,background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:8,padding:3}}>
+          <button className={view==="radar"?"tab active":"tab"} style={{fontSize:12,padding:"5px 14px"}} onClick={()=>setView("radar")}>⚡ Radar</button>
+          <button className={view==="missions"?"tab active":"tab"} style={{fontSize:12,padding:"5px 14px"}} onClick={()=>setView("missions")}>
+            ⬡ Missions {projects.length>0&&<span style={{marginLeft:4,background:"#FF9F43",color:"#08080F",borderRadius:999,fontSize:9,fontWeight:800,padding:"1px 5px"}}>{projects.length}</span>}
+          </button>
+        </div>
+      </div>
+
+      {/* ── RADAR ── */}
+      {view==="radar"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {/* Stats */}
+          <div style={{display:"flex",gap:10}}>
+            {[{v:"+445%",l:"Top croissance",c:"#4ECDC4"},{v:`${RADAR_TRENDS.length}`,l:"Tendances actives",c:"#B47FFF"},{v:"6",l:"Niches suivies",c:"#E8C547"}].map(s=>(
+              <div key={s.l} style={{flex:1,background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:"12px 14px"}}>
+                <div style={{fontFamily:"'Bebas Neue'",fontSize:22,color:s.c,letterSpacing:"0.04em"}}>{s.v}</div>
+                <div style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA",marginTop:2}}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Niche filter + scan */}
+          <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+            {niches.map(n=>(
+              <button key={n} onClick={()=>setNicheFilter(n)} style={{background:nicheFilter===n?(nicheColors[n]||"#E8C547"):"#12121A",border:`1px solid ${nicheFilter===n?(nicheColors[n]||"#E8C547"):"#2A2A3E"}`,borderRadius:999,color:nicheFilter===n?"#08080F":"#8888AA",fontFamily:"'DM Sans'",fontWeight:600,fontSize:11,padding:"4px 13px",cursor:"pointer",transition:"all .15s"}}>
+                {n}
+              </button>
+            ))}
+            <button onClick={()=>{setScanning(true);setTimeout(()=>setScanning(false),2000);}} style={{marginLeft:"auto",background:scanning?"#00d4ff22":"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:scanning?"1px solid #00d4ff":"none",borderRadius:8,color:scanning?"#00d4ff":"#fff",fontFamily:"'DM Sans'",fontWeight:700,fontSize:12,padding:"6px 16px",cursor:"pointer",transition:"all .15s"}}>
+              {scanning?"⟳ Scan...":"⚡ Scanner"}
+            </button>
+          </div>
+
+          {/* Trend cards */}
+          {filteredTrends.map(t=>(
+            <div key={t.id} style={cardStyle(expanded===t.id)}>
+              <div onClick={()=>setExpanded(expanded===t.id?null:t.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",cursor:"pointer"}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <span style={{fontFamily:"'DM Sans'",fontWeight:700,fontSize:14,color:"#F0EEE8"}}>{t.tag}</span>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:10,fontWeight:700,color:"#4ECDC4",background:"#4ECDC418",border:"1px solid #4ECDC430",borderRadius:999,padding:"2px 8px"}}>{t.growth}</span>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{t.platform} · {t.views}</span>
+                </div>
+                <span style={{color:"#555570",fontSize:10,transform:expanded===t.id?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
+              </div>
+              {expanded===t.id&&(
+                <div style={{padding:"0 16px 16px",borderTop:"1px solid #2A2A3E",paddingTop:14,display:"flex",flexDirection:"column",gap:14}}>
+                  <div>
+                    <div style={{fontFamily:"'DM Sans'",fontSize:9,color:"#E8C547",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:6}}>Pourquoi ça explose</div>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",lineHeight:1.6,margin:0}}>{t.why}</p>
+                  </div>
+                  <div style={{borderLeft:"3px solid #00d4ff",paddingLeft:12,fontFamily:"'DM Sans'",fontSize:12,fontStyle:"italic",color:"#6666AA"}}>"{t.hook}"</div>
+                  <div>
+                    <div style={{fontFamily:"'DM Sans'",fontSize:9,color:"#E8C547",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Shotlist — {t.plans.length} plans</div>
+                    <div style={{display:"grid",gridTemplateColumns:`repeat(${t.plans.length},1fr)`,gap:6}}>
+                      {t.plans.map((p,i)=>{
+                        const cols=["#7B9CFF","#4ECDC4","#FF9F43","#B47FFF","#FF6B6B"];
+                        return(
+                          <div key={i} style={{display:"flex",flexDirection:"column",gap:4}}>
+                            <div style={{aspectRatio:"9/16",borderRadius:6,background:cols[i]+"18",border:`1px solid ${cols[i]}30`,display:"flex",alignItems:"center",justifyContent:"center"}}>
+                              <div style={{width:14,height:14,borderRadius:3,background:cols[i]+"60"}}/>
+                            </div>
+                            <div style={{fontFamily:"'DM Sans'",fontSize:9,color:"#555570",textAlign:"center"}}>{p}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <button onClick={()=>onCreateFromTrend(t)} style={{width:"100%",padding:"10px",background:"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:"none",borderRadius:8,color:"#fff",fontFamily:"'DM Sans'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"opacity .15s"}}
+                    onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+                    ✦ Créer une mission depuis cette tendance
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── MISSIONS ── */}
+      {view==="missions"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {projects.length===0?(
+            <div style={{background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:"40px 20px",textAlign:"center"}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570"}}>Aucune mission en cours — détecte une tendance dans le Radar pour commencer.</p>
+              <button className="btn btn-primary" style={{marginTop:12,fontSize:12}} onClick={()=>setView("radar")}>⚡ Aller au Radar</button>
+            </div>
+          ):(
+            PIPELINE.map(status=>{
+              const col=projects.filter(p=>p.status===status);
+              return(
+                <div key={status}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                    <div style={{width:8,height:8,borderRadius:"50%",background:statusColor(status)}}/>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:11,color:statusColor(status),fontWeight:700,textTransform:"uppercase",letterSpacing:".08em"}}>{statusLabel(status)}</span>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570",marginLeft:2}}>{col.length}</span>
+                  </div>
+                  {col.length===0?(
+                    <div style={{background:"#0E0E18",border:"1px dashed #2A2A3E",borderRadius:8,padding:"10px 14px"}}>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#333350",textAlign:"center"}}>Aucune mission</p>
+                    </div>
+                  ):(
+                    <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                      {col.map(p=>(
+                        <div key={p.id} onClick={()=>{onSelectProject(p.id);onSectionChange("projets");}}
+                          style={{background:"#12121A",border:`1px solid #2A2A3E`,borderLeft:`3px solid ${statusColor(p.status)}`,borderRadius:8,padding:"10px 14px",cursor:"pointer",transition:"background .15s",display:"flex",alignItems:"center",justifyContent:"space-between"}}
+                          onMouseEnter={e=>e.currentTarget.style.background="#1A1A26"}
+                          onMouseLeave={e=>e.currentTarget.style.background="#12121A"}>
+                          <div>
+                            <div style={{fontFamily:"'DM Sans'",fontWeight:600,fontSize:13,color:"#F0EEE8"}}>{p.title}</div>
+                            <div style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>{clientName(p.clientId)}</div>
+                          </div>
+                          <div style={{display:"flex",alignItems:"center",gap:8}}>
+                            <div style={{width:60,height:3,background:"#1A1A26",borderRadius:99}}>
+                              <div style={{height:"100%",width:`${p.progress}%`,background:statusColor(p.status),borderRadius:99}}/>
+                            </div>
+                            <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>{p.progress}%</span>
+                            <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#8888AA"}}>→</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -3626,23 +3801,29 @@ function AppMain() {
               <ClientsManager clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient}/>
             )}
             {appView==="prod"&&prodSection==="shortone"&&(
-              <div style={{display:"flex",flexDirection:"column",gap:14,height:"100%"}}>
-                <div style={{background:"linear-gradient(135deg,#00d4ff10,#8b5cf608)",border:"1px solid #00d4ff20",borderRadius:10,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-                  <div>
-                    <h2 style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#F0EEE8",letterSpacing:"0.04em",display:"flex",alignItems:"center",gap:8}}>
-                      <span style={{color:"#00d4ff"}}>◆</span> SHORTONE.STUDIO
-                    </h2>
-                    <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>Plateforme de production de contenu social media — Radar tendances IA & Marketplace</p>
-                  </div>
-                  <a href="/shortone.html" target="_blank" rel="noreferrer" style={{fontFamily:"'DM Sans'",fontSize:11,color:"#00d4ff",background:"#00d4ff15",border:"1px solid #00d4ff30",borderRadius:6,padding:"5px 12px",textDecoration:"none",whiteSpace:"nowrap"}}>↗ Ouvrir</a>
-                </div>
-                <iframe
-                  src="/shortone.html"
-                  title="shortone.studio"
-                  style={{flex:1,border:"1px solid #2A2A3E",borderRadius:10,width:"100%",minHeight:"75vh",background:"#12141f"}}
-                  allow="clipboard-write"
-                />
-              </div>
+              <ShortoneModule
+                projects={projects}
+                clients={clients}
+                onSelectProject={setSelectedProjectId}
+                onSectionChange={setProdSection}
+                onNotif={showNotif}
+                onCreateFromTrend={async(trend)=>{
+                  const{data,error}=await supabase.from("projects").insert({
+                    title:`Reel ${trend.tag}`,
+                    client_id:null,
+                    status:"brief",
+                    progress:0,
+                    brief:{trendTag:trend.tag,platform:trend.platform,niche:trend.niche,growth:trend.growth,hook:trend.hook,shotlist:trend.plans,source:"shortone_radar"},
+                    replay_url:"",delivery_date:null,shoot_date:null,status_note:null
+                  }).select().single();
+                  if(error){showNotif("Erreur : "+error.message);return;}
+                  const np={id:data.id,title:data.title,clientId:null,status:"brief",progress:0,createdAt:data.created_at?.split("T")[0],brief:data.brief,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
+                  setProjects(ps=>[np,...ps]);
+                  setSelectedProjectId(np.id);
+                  setProdSection("projets");
+                  showNotif(`Mission créée depuis ${trend.tag} — charte à attacher ✓`);
+                }}
+              />
             )}
 
             {/* CLIENT SECTIONS */}
