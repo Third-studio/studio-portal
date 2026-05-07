@@ -54,7 +54,7 @@ export default function Login({ onLogin }) {
       <style>{loginStyles}</style>
       <div style={{ width:"100%", maxWidth:420 }}>
         <div style={{ textAlign:"center", marginBottom:36 }}>
-          <img src="/logo.png" alt="Third-One Studio" style={{ height:60, filter:"invert(1) brightness(0.9)", marginBottom:12 }}/>
+          <img src="/logo192.png" alt="Third-One Studio" style={{ height:60, filter:"invert(1) brightness(0.9)", marginBottom:12 }}/>
           <p style={{ color:"#555570", fontSize:12, letterSpacing:"0.15em", textTransform:"uppercase" }}>Espace client</p>
         </div>
 

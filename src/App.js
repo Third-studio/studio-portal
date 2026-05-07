@@ -3252,27 +3252,58 @@ function GuestView(){
   const onUpdate=(updated)=>setProject(p=>({...p,...updated}));
   const onNotif=()=>{};
 
+  const guestName=project?(project.brief?.guests||[]).find(g=>g.token===token)?.name:"";
+
   if(state==="loading")return(
-    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center"}}>
-      <p style={{fontFamily:"'DM Sans'",color:"#555570",fontSize:13}}>Chargement…</p>
+    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,backgroundImage:"radial-gradient(ellipse at 50% 0%,#C9A84C10 0%,transparent 60%)"}}>
+      <img src="/logo192.png" alt="Third-One Studio" style={{height:40,filter:"invert(1) brightness(0.85)",opacity:0.7}}/>
+      <div style={{width:28,height:28,border:"2px solid #E8C54740",borderTopColor:"#E8C547",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>
     </div>
   );
+
   if(state==="invalid"||state==="expired")return(
-    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,padding:20}}>
-      <div style={{fontSize:40}}>{state==="expired"?"⏰":"🔒"}</div>
-      <p style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#F0EEE8",letterSpacing:"0.05em"}}>{state==="expired"?"Lien expiré":"Lien invalide"}</p>
-      <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center"}}>{state==="expired"?"Ce lien de validation a expiré. Demandez un nouveau lien à votre contact Third-One Studio.":"Ce lien n'existe pas ou a été révoqué."}</p>
+    <div style={{minHeight:"100vh",background:"#08080F",backgroundImage:"radial-gradient(ellipse at 50% 0%,#C9A84C10 0%,transparent 60%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0,padding:24,fontFamily:"'DM Sans',sans-serif"}}>
+      <img src="/logo192.png" alt="Third-One Studio" style={{height:44,filter:"invert(1) brightness(0.85)",marginBottom:32,opacity:0.7}}/>
+      <div style={{background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:14,padding:"36px 32px",maxWidth:400,width:"100%",textAlign:"center",boxShadow:"0 0 60px #C9A84C06"}}>
+        <div style={{width:56,height:56,borderRadius:"50%",background:state==="expired"?"#FF9F4318":"#FF6B6B18",border:`1px solid ${state==="expired"?"#FF9F4340":"#FF6B6B40"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 16px"}}>
+          {state==="expired"?"⏰":"🔒"}
+        </div>
+        <p style={{fontFamily:"'Bebas Neue'",fontSize:24,color:"#F0EEE8",letterSpacing:"0.05em",marginBottom:8}}>
+          {state==="expired"?"Lien expiré":"Lien invalide"}
+        </p>
+        <p style={{fontSize:13,color:"#8888AA",lineHeight:1.6}}>
+          {state==="expired"?"Ce lien de validation a expiré. Contactez votre référent Third-One Studio pour obtenir un nouveau lien.":"Ce lien n'existe pas ou a été révoqué par votre interlocuteur."}
+        </p>
+      </div>
+      <p style={{marginTop:24,fontSize:11,color:"#3A3A5E"}}>© 2026 Third-One Studio</p>
     </div>
   );
+
   return(
-    <div style={{minHeight:"100vh",background:"#08080F",fontFamily:"'DM Sans',sans-serif",padding:"24px 16px",maxWidth:680,margin:"0 auto"}}>
-      <div style={{textAlign:"center",marginBottom:28}}>
-        <img src="/logo.png" alt="Third-One Studio" style={{height:44,filter:"invert(1) brightness(0.9)",marginBottom:8}}/>
-        <p style={{fontFamily:"'Bebas Neue'",fontSize:20,color:"#F0EEE8",letterSpacing:"0.05em"}}>{project.title}</p>
-        <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",letterSpacing:"0.1em",textTransform:"uppercase"}}>Validation vidéo</p>
+    <div style={{minHeight:"100vh",background:"#08080F",backgroundImage:"radial-gradient(ellipse at 50% 0%,#C9A84C12 0%,transparent 55%)",fontFamily:"'DM Sans',sans-serif"}}>
+      {/* Header */}
+      <div style={{borderBottom:"1px solid #1A1A28",background:"#08080Fcc",backdropFilter:"blur(12px)",position:"sticky",top:0,zIndex:10,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <img src="/logo192.png" alt="Third-One Studio" style={{height:32,filter:"invert(1) brightness(0.85)"}}/>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          {guestName&&<span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>Bonjour, <span style={{color:"#8888AA",fontWeight:600}}>{guestName}</span></span>}
+          <span style={{fontFamily:"'DM Sans'",fontSize:10,padding:"3px 8px",borderRadius:4,background:"#C9A84C18",color:"#C9A84C",border:"1px solid #C9A84C33",letterSpacing:"0.05em",textTransform:"uppercase"}}>Accès invité</span>
+        </div>
       </div>
-      <VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif} isGuest={true}/>
-      <p style={{textAlign:"center",marginTop:24,fontSize:11,color:"#3A3A5E"}}>Accès invité · Third-One Studio</p>
+
+      {/* Content */}
+      <div style={{maxWidth:700,margin:"0 auto",padding:"32px 20px 48px"}}>
+        {/* Project header */}
+        <div style={{marginBottom:24}}>
+          <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Validation vidéo</p>
+          <h1 style={{fontFamily:"'Bebas Neue'",fontSize:32,color:"#F0EEE8",letterSpacing:"0.04em",lineHeight:1}}>{project.title}</h1>
+        </div>
+
+        <VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif} isGuest={true}/>
+
+        <p style={{textAlign:"center",marginTop:32,fontSize:11,color:"#3A3A5E"}}>
+          © 2026 Third-One Studio · Accès restreint à la validation vidéo
+        </p>
+      </div>
     </div>
   );
 }
@@ -3414,13 +3445,13 @@ function AppMain() {
   }, [user]);
 
   if (authLoading || dataLoading) return <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-    <img src="/logo.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.8}}/>
+    <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.8}}/>
     <p style={{color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
   </div>;
   if (!user) return <Login onLogin={setUser} />;
   if (userProfile && userProfile.role === "client" && userProfile.is_active === false) return (
     <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-      <img src="/logo.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.6}}/>
+      <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.6}}/>
       <p style={{color:"#FF6B6B",fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:"0.1em"}}>ACCÈS SUSPENDU</p>
       <p style={{color:"#555570",fontFamily:"'DM Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Votre accès a été suspendu. Contactez Third-One Studio pour plus d'informations.</p>
       <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
