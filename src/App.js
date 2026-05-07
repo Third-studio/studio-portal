@@ -268,6 +268,7 @@ const fmtEur   = (n) => new Intl.NumberFormat("fr-FR",{style:"currency",currency
 const fmtD   = (s) => new Date(s+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
 const fmtS   = (s) => new Date(s+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
 const calcH  = (s,e) => { if(!s||!e)return 0; const[sh,sm]=s.split(":").map(Number);const[eh,em]=e.split(":").map(Number);return Math.max(0,(eh*60+em-sh*60-sm)/60); };
+const fmtProdAuthor = (nom) => { if(!nom)return"Studio"; const p=nom.trim().split(/\s+/); return p.length>1?p[0]+" "+p[1][0]+".":p[0]; };
 
 function Notif({msg,color="#4ECDC4",onDone}){
   useEffect(()=>{const t=setTimeout(onDone,3000);return()=>clearTimeout(t);});
@@ -510,17 +511,28 @@ function ProdLivrables({project,onUpdate,onNotif}){
   );
 }
 
-function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients}){
+function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
   const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."}];
   const[brief,setBrief]=useState({...project.brief});
-  const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||""});
+  const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||"",replayUrl:project.replayUrl||""});
   const addSB=sb=>{onUpdate({...project,storyboards:[...project.storyboards,sb]});setShowGen(false);onNotif("Storyboard généré !");};
   const updSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif("Statut mis à jour");};
-  const addMsg=(text,role)=>{const c={id:Date.now(),author:role==="prod"?"Studio":"Client",text,date:new Date().toISOString().split("T")[0],role};onUpdate({...project,comments:[...project.comments,c]});};
-  const saveBrief=()=>{onUpdate({...project,brief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,status:project.status==="brief"?"storyboard":project.status});onNotif("Brief sauvegardé !");};
+  const addMsg=async(text,role)=>{
+    const author=role==="prod"?fmtProdAuthor(userProfile?.nom):(userProfile?.nom||"Client");
+    const date=new Date().toISOString().split("T")[0];
+    const c={id:Date.now(),author,text,date,role};
+    onUpdate({...project,comments:[...project.comments,c]});
+    await supabase.from("messages").insert({project_id:project.id,author,content:text,role});
+  };
+  const saveBrief=async()=>{
+    const newBrief={...brief,videoStatus:project.videoStatus,videoComment:project.videoComment};
+    await supabase.from("projects").update({brief:newBrief,delivery_date:statusMeta.deliveryDate||null,shoot_date:statusMeta.shootDate||null,status_note:statusMeta.statusNote||null,replay_url:statusMeta.replayUrl||null}).eq("id",project.id);
+    onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:statusMeta.replayUrl,status:project.status==="brief"?"storyboard":project.status});
+    onNotif("Brief sauvegardé !");
+  };
   const tabs=[{k:"brief",l:"Brief"},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -547,6 +559,24 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                 <div><Lbl>Date de livraison prévue</Lbl><input type="date" className="input" value={statusMeta.deliveryDate} onChange={e=>setStatusMeta(p=>({...p,deliveryDate:e.target.value}))}/></div>
               </div>
               <div><Lbl>Note de statut (visible client)</Lbl><input className="input" placeholder="Ex: Montage en cours, livraison le 15 mai..." value={statusMeta.statusNote} onChange={e=>setStatusMeta(p=>({...p,statusNote:e.target.value}))}/></div>
+              <div>
+                <Lbl>Lien vidéo à valider (Frame.io, Vimeo, YouTube…)</Lbl>
+                <div style={{display:"flex",gap:8}}>
+                  <input className="input" placeholder="https://..." value={statusMeta.replayUrl} onChange={e=>setStatusMeta(p=>({...p,replayUrl:e.target.value}))} style={{flex:1}}/>
+                  {statusMeta.replayUrl&&<a href={statusMeta.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗ Voir</a>}
+                </div>
+              </div>
+              {project.videoStatus&&(
+                <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF6B6B18":"#E8C54718",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC433":project.videoStatus==="revision"?"#FF6B6B33":"#E8C54733"}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:project.videoComment?6:0}}>
+                    <span style={{fontSize:14}}>{project.videoStatus==="approved"?"✓":project.videoStatus==="revision"?"↩":"⏳"}</span>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:project.videoStatus==="approved"?"#4ECDC4":project.videoStatus==="revision"?"#FF6B6B":"#E8C547"}}>
+                      {project.videoStatus==="approved"?"Vidéo approuvée par le client":project.videoStatus==="revision"?"Révisions demandées":"En attente de validation"}
+                    </span>
+                  </div>
+                  {project.videoComment&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",paddingLeft:22}}>{project.videoComment}</p>}
+                </div>
+              )}
             </div>
           </div>
           <div className="card" style={{padding:18}}>
@@ -593,6 +623,100 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   );
 }
 
+function VideoValidationPanel({project,onUpdate,onNotif}){
+  const[revisionComment,setRevisionComment]=useState("");
+  const[showRevForm,setShowRevForm]=useState(false);
+  const[saving,setSaving]=useState(false);
+
+  const getEmbedUrl=(url)=>{
+    if(!url)return null;
+    // YouTube
+    const yt=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+    if(yt)return`https://www.youtube.com/embed/${yt[1]}`;
+    // Vimeo
+    const vm=url.match(/vimeo\.com\/(\d+)/);
+    if(vm)return`https://player.vimeo.com/video/${vm[1]}`;
+    // Frame.io or other direct embed — show link only
+    return null;
+  };
+
+  const saveValidation=async(status,comment="")=>{
+    setSaving(true);
+    const newBrief={...project.brief,videoStatus:status,videoComment:comment};
+    await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    onUpdate({...project,brief:newBrief,videoStatus:status,videoComment:comment});
+    onNotif(status==="approved"?"Vidéo approuvée !" : "Révisions envoyées à l'équipe !");
+    setSaving(false);
+    setShowRevForm(false);
+  };
+
+  const embedUrl=getEmbedUrl(project.replayUrl);
+
+  return(
+    <div className="card fadeUp" style={{padding:18}}>
+      <SH icon="▶" title="VALIDATION VIDÉO" sub="Visionnez et approuvez ou demandez des révisions"/>
+
+      {!project.replayUrl&&(
+        <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"30px 0"}}>Aucune vidéo partagée pour l'instant.<br/><span style={{fontSize:11}}>L'équipe vous notifiera dès qu'une version sera disponible.</span></p>
+      )}
+
+      {project.replayUrl&&(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          {/* Statut actuel */}
+          {project.videoStatus&&(
+            <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF9F4318":"#E8C54718",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC440":project.videoStatus==="revision"?"#FF9F4340":"#E8C54740"}`,display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>{project.videoStatus==="approved"?"✓":project.videoStatus==="revision"?"↩":"⏳"}</span>
+              <span style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:project.videoStatus==="approved"?"#4ECDC4":project.videoStatus==="revision"?"#FF9F43":"#E8C547"}}>
+                {project.videoStatus==="approved"?"Vous avez approuvé cette version":project.videoStatus==="revision"?"Révisions en cours de traitement":"En attente de votre validation"}
+              </span>
+            </div>
+          )}
+
+          {/* Player */}
+          {embedUrl?(
+            <div style={{position:"relative",paddingBottom:"56.25%",height:0,borderRadius:8,overflow:"hidden",border:"1px solid #2A2A3E"}}>
+              <iframe src={embedUrl} title="Vidéo" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",border:"none"}} allowFullScreen/>
+            </div>
+          ):(
+            <div style={{background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:8,padding:"24px",display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
+              <span style={{fontSize:32}}>▶</span>
+              <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",textAlign:"center"}}>Visualisez la vidéo sur la plateforme de revue</p>
+              <a href={project.replayUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{textDecoration:"none"}}>Ouvrir la vidéo →</a>
+            </div>
+          )}
+
+          {/* Actions */}
+          {project.videoStatus!=="approved"&&(
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {!showRevForm?(
+                <div style={{display:"flex",gap:8}}>
+                  <button className="btn btn-ghost" style={{flex:1,color:"#FF9F43",borderColor:"#FF9F4330"}} onClick={()=>setShowRevForm(true)}>↩ Demander des révisions</button>
+                  <button className="btn btn-green" style={{flex:1}} disabled={saving} onClick={()=>saveValidation("approved")}>✓ Approuver la vidéo</button>
+                </div>
+              ):(
+                <div style={{display:"flex",flexDirection:"column",gap:8,padding:"14px",background:"#0E0E18",borderRadius:8,border:"1px solid #FF9F4330"}}>
+                  <p style={{fontFamily:"'DM Sans'",fontSize:12,fontWeight:600,color:"#F0EEE8"}}>Décrivez les révisions souhaitées :</p>
+                  <textarea className="input" rows={3} placeholder="Ex : La musique est trop forte au début, ajouter les sous-titres sur la partie 0:30–1:00…" value={revisionComment} onChange={e=>setRevisionComment(e.target.value)}/>
+                  <div style={{display:"flex",gap:7}}>
+                    <button className="btn btn-ghost" style={{flex:1,fontSize:12}} onClick={()=>setShowRevForm(false)}>Annuler</button>
+                    <button className="btn btn-primary" style={{flex:1,fontSize:12,background:"#FF9F43"}} disabled={saving||!revisionComment.trim()} onClick={()=>saveValidation("revision",revisionComment)}>Envoyer les révisions</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {project.videoStatus==="approved"&&(
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" style={{fontSize:11,color:"#555570"}} onClick={()=>saveValidation(null,"")}>Annuler mon approbation</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
   const[tab,setTab]=useState("suivi");
   const[brief,setBrief]=useState({
@@ -622,7 +746,13 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
   };
 
   const valSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif(st==="approved"?"Storyboard approuvé !":"Révision demandée");};
-  const addMsg=(text,role)=>{const c={id:Date.now(),author:clientData?.name||"Client",text,date:new Date().toISOString().split("T")[0],role:"client"};onUpdate({...project,comments:[...project.comments,c]});};
+  const addMsg=async(text)=>{
+    const author=clientData?.name||"Client";
+    const date=new Date().toISOString().split("T")[0];
+    const c={id:Date.now(),author,text,date,role:"client"};
+    onUpdate({...project,comments:[...project.comments,c]});
+    await supabase.from("messages").insert({project_id:project.id,author,content:text,role:"client"});
+  };
   const finaux=(project.livrables||[]).filter(l=>l.category==="finaux");
   const tabs=[{k:"suivi",l:"Suivi"},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"replay",l:"Révisions vidéo"},{k:"messages",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},...(hasSimulator?[{k:"estimation",l:"💰 Estimation"}]:[])];
 
@@ -710,17 +840,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
           ))}
         </div>
       )}
-      {tab==="replay"&&(
-        <div className="card fadeUp" style={{padding:18}}>
-          <SH icon="▶" title="RÉVISIONS VIDÉO" sub="Commentez directement sur la timeline vidéo"/>
-          {project.replayUrl?(
-            <div style={{background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:8,aspectRatio:"16/9",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:10}}>
-              <div style={{fontSize:36}}>▶</div>
-              <a href={project.replayUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{textDecoration:"none"}}>Ouvrir dans Replay →</a>
-            </div>
-          ):<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"30px 0"}}>Aucune vidéo partagée pour l'instant.</p>}
-        </div>
-      )}
+      {tab==="replay"&&<VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="messages"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="client"/></div>}
       {tab==="livrables"&&(
         <div className="card fadeUp" style={{padding:18}}>
@@ -2901,6 +3021,8 @@ export default function App() {
           deliveryDate: p.delivery_date || "",
           shootDate: p.shoot_date || "",
           statusNote: p.status_note || "",
+          videoStatus: p.brief?.videoStatus || null,
+          videoComment: p.brief?.videoComment || "",
           storyboards: (p.storyboards || []).map(s => ({
             id: s.id,
             title: s.title,
@@ -2971,7 +3093,7 @@ export default function App() {
   const createProject=async(title,clientId,team)=>{
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:clientId||null,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
     if(error){showNotif("Erreur : "+error.message);return null;}
-    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",storyboards:[],comments:[],livrables:[]};
+    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
     setSelectedProjectId(np.id);
     if(team){
@@ -3096,7 +3218,7 @@ export default function App() {
               <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection}/>
             )}
             {appView==="prod"&&prodSection==="projets"&&selProject&&(
-              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients}/>
+              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile}/>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
               <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif}/>
