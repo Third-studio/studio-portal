@@ -3357,7 +3357,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
   const runScan=async()=>{
     setScanning(true);
     try{
-      const {data,error}=await supabase.functions.invoke("refresh-trends");
+      const {error}=await supabase.functions.invoke("refresh-trends");
       if(error) throw error;
       const {data:fresh}=await supabase.from("trends").select("*").eq("active",true).order("fetched_at",{ascending:false});
       if(fresh&&fresh.length>0){
