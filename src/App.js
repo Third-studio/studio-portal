@@ -629,9 +629,11 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     await supabase.from("messages").insert({project_id:project.id,author,content:text,role});
   };
   const saveBrief=async()=>{
+    if(statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)){onNotif("URL invalide — domaine non autorisé");return;}
     const newBrief={...brief,videoStatus:project.videoStatus,videoComment:project.videoComment};
-    await supabase.from("projects").update({brief:newBrief,delivery_date:statusMeta.deliveryDate||null,shoot_date:statusMeta.shootDate||null,status_note:statusMeta.statusNote||null,replay_url:statusMeta.replayUrl||null}).eq("id",project.id);
-    onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:statusMeta.replayUrl,status:project.status==="brief"?"storyboard":project.status});
+    const safeUrl=statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)?statusMeta.replayUrl:null;
+    await supabase.from("projects").update({brief:newBrief,delivery_date:statusMeta.deliveryDate||null,shoot_date:statusMeta.shootDate||null,status_note:statusMeta.statusNote||null,replay_url:safeUrl}).eq("id",project.id);
+    onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:safeUrl||"",status:project.status==="brief"?"storyboard":project.status});
     onNotif("Brief sauvegardé !");
   };
   const tabs=[{k:"brief",l:"Brief"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
@@ -661,11 +663,12 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               </div>
               <div><Lbl>Note de statut (visible client)</Lbl><input className="input" placeholder="Ex: Montage en cours, livraison le 15 mai..." value={statusMeta.statusNote} onChange={e=>setStatusMeta(p=>({...p,statusNote:e.target.value}))}/></div>
               <div>
-                <Lbl>Lien vidéo à valider (Dropbox Replay, Vimeo, YouTube…)</Lbl>
+                <Lbl>Lien vidéo à valider (YouTube, Vimeo, Dropbox, Drive, WeTransfer, Frame.io…)</Lbl>
                 <div style={{display:"flex",gap:8}}>
-                  <input className="input" placeholder="https://..." value={statusMeta.replayUrl} onChange={e=>setStatusMeta(p=>({...p,replayUrl:e.target.value}))} style={{flex:1}}/>
-                  {statusMeta.replayUrl&&<a href={statusMeta.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗ Voir</a>}
+                  <input className="input" placeholder="https://vimeo.com/..." value={statusMeta.replayUrl} onChange={e=>setStatusMeta(p=>({...p,replayUrl:e.target.value}))} style={{flex:1,borderColor:statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)?"#FF6B6B":undefined}}/>
+                  {statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)&&<a href={statusMeta.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗ Voir</a>}
                 </div>
+                {statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#FF6B6B",marginTop:4}}>⚠ Domaine non autorisé — utilisez YouTube, Vimeo, Dropbox, Drive, WeTransfer ou Frame.io</p>}
               </div>
               {project.videoStatus&&(
                 <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF6B6B18":"#E8C54718",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC433":project.videoStatus==="revision"?"#FF6B6B33":"#E8C54733"}`}}>
@@ -733,8 +736,16 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
   const[inviteName,setInviteName]=useState("");
   const[copiedToken,setCopiedToken]=useState(null);
 
+  const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com)(\/|$)/i;
+
+  const isSafeUrl=(url)=>{
+    if(!url)return false;
+    try{ return ALLOWED_DOMAINS.test(new URL(url).href); }
+    catch{ return false; }
+  };
+
   const getVideoType=(url)=>{
-    if(!url)return null;
+    if(!url||!isSafeUrl(url))return null;
     if(url.match(/dropbox\.com/))return"dropbox";
     if(url.match(/youtu\.be\/|youtube\.com/))return"youtube";
     if(url.match(/vimeo\.com/))return"vimeo";
@@ -742,7 +753,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
   };
 
   const getEmbedUrl=(url)=>{
-    if(!url)return null;
+    if(!url||!isSafeUrl(url))return null;
     const yt=url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
     if(yt)return`https://www.youtube.com/embed/${yt[1]}`;
     const vm=url.match(/vimeo\.com\/(\d+)/);
