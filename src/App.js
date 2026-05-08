@@ -3208,10 +3208,39 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
       {tab==="nouveau"&&<FormBlock isNew={true}/>}
       {tab==="edit"&&editId&&<FormBlock isNew={false}/>}
 
+      {/* Comptes en attente de validation */}
+      {clients.filter(c=>!c.isActive).length>0&&(
+        <div style={{background:"#FF9F4310",border:"1px solid #FF9F4340",borderRadius:10,padding:"14px 18px"}}>
+          <p style={{fontFamily:"'Bebas Neue'",fontSize:15,color:"#FF9F43",letterSpacing:"0.06em",marginBottom:10}}>
+            ⏳ EN ATTENTE DE VALIDATION — {clients.filter(c=>!c.isActive).length} compte{clients.filter(c=>!c.isActive).length>1?"s":""}
+          </p>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {clients.filter(c=>!c.isActive).map(c=>(
+              <div key={c.id} style={{background:"#12121A",border:"1px solid #FF9F4330",borderRadius:8,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:"#FF9F4320",border:"1px solid #FF9F4340",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:14,color:"#FF9F43",flexShrink:0}}>
+                    {(c.name||"?")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{c.name}</p>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{c.email}</p>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
+                  <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>✓ Valider le compte</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Comptes actifs */}
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {clients.length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#555570",fontFamily:"'DM Sans'",fontSize:13}}>Aucun compte client — créez le premier ci-dessus</div>}
-        {clients.map(c=>(
-          <div key={c.id} className="card fadeUp" style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,opacity:c.isActive?1:0.55}}>
+        {clients.filter(c=>c.isActive).length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#555570",fontFamily:"'DM Sans'",fontSize:13}}>Aucun compte client actif — créez le premier ci-dessus</div>}
+        {clients.filter(c=>c.isActive).map(c=>(
+          <div key={c.id} className="card fadeUp" style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <div style={{width:38,height:38,borderRadius:"50%",background:"#E8C54720",border:"1px solid #E8C54740",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:16,color:"#E8C547",flexShrink:0}}>
                 {(c.name||"?")[0].toUpperCase()}
@@ -3226,10 +3255,9 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
               {c.discount>0&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E8C54720",color:"#E8C547"}}>-{c.discount}%</span>}
               {c.simulatorEnabled&&<span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
               <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#2A2A3E"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#555570",cursor:"pointer"}}>◆ Shortone</button>
-              <span style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:c.isActive?"#4ECDC420":"#FF6B6B20",color:c.isActive?"#4ECDC4":"#FF6B6B"}}>{c.isActive?"Actif":"Suspendu"}</span>
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
               <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
-              <button className={`btn ${c.isActive?"btn-red":"btn-green"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>{c.isActive?"Suspendre":"Réactiver"}</button>
+              <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>Suspendre</button>
             </div>
           </div>
         ))}
@@ -3250,14 +3278,13 @@ function GuestView(){
   useEffect(()=>{
     const params=new URLSearchParams(window.location.search);
     const t=params.get("guest");
-    if(!t){setState("invalid");return;}
+    if(!t||t.length<20){setState("invalid");return;}
     setToken(t);
-    supabase.from("projects").select("id,title,brief,replay_url").then(({data})=>{
-      const found=(data||[]).find(p=>(p.brief?.guests||[]).some(g=>g.token===t));
-      if(!found){setState("invalid");return;}
-      const guest=(found.brief.guests||[]).find(g=>g.token===t);
+    supabase.rpc("get_project_by_guest_token",{guest_token:t}).then(({data,error})=>{
+      if(error||!data){setState("invalid");return;}
+      const guest=(data.brief?.guests||[]).find(g=>g.token===t);
       if(guest?.expiresAt&&new Date(guest.expiresAt)<Date.now()){setState("expired");return;}
-      setProject({id:found.id,title:found.title,brief:found.brief,replayUrl:found.replay_url||"",videoStatus:found.brief?.videoStatus||null,videoComment:found.brief?.videoComment||"",moodboard:found.brief?.moodboard||[]});
+      setProject({id:data.id,title:data.title,brief:data.brief,replayUrl:data.replay_url||"",videoStatus:data.brief?.videoStatus||null,videoComment:data.brief?.videoComment||"",moodboard:data.brief?.moodboard||[]});
       setState("found");
     });
   },[]);
