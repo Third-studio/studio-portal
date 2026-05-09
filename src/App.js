@@ -175,6 +175,8 @@ const FontLoader = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 const STATUS_STEPS   = ["Brief","Storyboard","Tournage","Montage","Livraison"];
 const STATUS_INDEX   = { brief:0, storyboard:1, tournage:2, montage:3, livraison:4 };
+const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com)(\/|$)/i;
+const isSafeUrl=(url)=>{if(!url)return false;try{return ALLOWED_DOMAINS.test(new URL(url).href);}catch{return false;}};
 const SHOOT_TYPES    = ["Corporate","Événementiel","Interview","Clip / Fiction","Documentaire","Institutionnel"];
 // const OPTION_EXP_H   = 72;
 const TODAY          = new Date();
@@ -735,14 +737,6 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
   const[showInvite,setShowInvite]=useState(false);
   const[inviteName,setInviteName]=useState("");
   const[copiedToken,setCopiedToken]=useState(null);
-
-  const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com)(\/|$)/i;
-
-  const isSafeUrl=(url)=>{
-    if(!url)return false;
-    try{ return ALLOWED_DOMAINS.test(new URL(url).href); }
-    catch{ return false; }
-  };
 
   const getVideoType=(url)=>{
     if(!url||!isSafeUrl(url))return null;
@@ -3279,6 +3273,101 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ROOT APP
+// ─────────────────────────────────────────────────────────────────────────────
+// SETTINGS PANEL
+const ACCENT_COLORS={or:"#E8C547",cyan:"#4ECDC4",bleu:"#7B9CFF",violet:"#B47FFF",rouge:"#FF6B6B"};
+const DEFAULT_SETTINGS={fontSize:"normale",density:"normale",accent:"or",contrast:false};
+
+function SettingsPanel({settings,onChange,onClose,user,onLogout}){
+  const S=(k,v)=>onChange({...settings,[k]:v});
+  const fontScale={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
+  const densityLabel={"compact":"Compact","normale":"Normal","spacieux":"Spacieux"};
+  return(
+    <>
+      <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:998,background:"#00000055"}}/>
+      <div style={{position:"fixed",top:0,right:0,height:"100vh",width:320,background:"#0E0E18",borderLeft:"1px solid #2A2A3E",zIndex:999,display:"flex",flexDirection:"column",boxShadow:"-8px 0 40px #00000066"}}>
+        {/* Header */}
+        <div style={{padding:"18px 20px",borderBottom:"1px solid #2A2A3E",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <span style={{fontFamily:"'Bebas Neue'",fontSize:18,color:"#F0EEE8",letterSpacing:"0.06em"}}>PARAMÈTRES</span>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#555570",cursor:"pointer",fontSize:18,lineHeight:1}}>✕</button>
+        </div>
+
+        <div style={{flex:1,overflowY:"auto",padding:"18px 20px",display:"flex",flexDirection:"column",gap:22}}>
+
+          {/* Profil */}
+          <div style={{background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
+            <div style={{width:40,height:40,borderRadius:"50%",background:ACCENT_COLORS[settings.accent]+"22",border:`1px solid ${ACCENT_COLORS[settings.accent]}40`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:18,color:ACCENT_COLORS[settings.accent],flexShrink:0}}>
+              {(user?.email||"?")[0].toUpperCase()}
+            </div>
+            <div style={{minWidth:0}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.email||"—"}</p>
+              <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:1}}>Connecté</p>
+            </div>
+          </div>
+
+          {/* Taille de police */}
+          <div>
+            <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Taille du texte</p>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+              {[["petite","A"],["normale","A"],["grande","A"],["tres-grande","A"]].map(([k,l],i)=>(
+                <button key={k} onClick={()=>S("fontSize",k)} style={{padding:"8px 4px",background:settings.fontSize===k?ACCENT_COLORS[settings.accent]+"22":"#12121A",border:`1px solid ${settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#2A2A3E"}`,borderRadius:7,color:settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#8888AA",fontFamily:"'DM Sans'",fontSize:[11,13,16,19][i],fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginTop:4}}>
+              {["Petite","Normale","Grande","XL"].map((l,i)=>(
+                <span key={l} style={{fontFamily:"'DM Sans'",fontSize:9,color:"#555570",textAlign:"center"}}>{l}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Densité */}
+          <div>
+            <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Densité de l'interface</p>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+              {Object.entries(densityLabel).map(([k,l])=>(
+                <button key={k} onClick={()=>S("density",k)} style={{padding:"8px 6px",background:settings.density===k?ACCENT_COLORS[settings.accent]+"22":"#12121A",border:`1px solid ${settings.density===k?ACCENT_COLORS[settings.accent]:"#2A2A3E"}`,borderRadius:7,color:settings.density===k?ACCENT_COLORS[settings.accent]:"#8888AA",fontFamily:"'DM Sans'",fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+                  {l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Couleur d'accent */}
+          <div>
+            <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Couleur d'accent</p>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              {Object.entries(ACCENT_COLORS).map(([k,v])=>(
+                <button key={k} onClick={()=>S("accent",k)} style={{width:32,height:32,borderRadius:"50%",background:v,border:`3px solid ${settings.accent===k?"#F0EEE8":"transparent"}`,cursor:"pointer",transition:"all .15s",boxShadow:settings.accent===k?`0 0 12px ${v}66`:"none"}}/>
+              ))}
+            </div>
+            <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:6,textTransform:"capitalize"}}>{settings.accent}</p>
+          </div>
+
+          {/* Contraste */}
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",fontWeight:600}}>Contraste élevé</p>
+              <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>Améliore la lisibilité</p>
+            </div>
+            <button onClick={()=>S("contrast",!settings.contrast)} className={`toggle ${settings.contrast?"on":""}`}/>
+          </div>
+
+        </div>
+
+        {/* Footer — déconnexion */}
+        <div style={{padding:"16px 20px",borderTop:"1px solid #2A2A3E"}}>
+          <button onClick={onLogout} style={{width:"100%",padding:"10px",background:"#FF6B6B18",border:"1px solid #FF6B6B30",borderRadius:8,color:"#FF6B6B",fontFamily:"'DM Sans'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}
+            onMouseEnter={e=>e.currentTarget.style.background="#FF6B6B28"} onMouseLeave={e=>e.currentTarget.style.background="#FF6B6B18"}>
+            ↩ Se déconnecter
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 const genToken=()=>Array.from(crypto.getRandomValues(new Uint8Array(18))).map(b=>b.toString(16).padStart(2,"0")).join("");
 
 function GuestView(){
@@ -3613,6 +3702,10 @@ function AppMain() {
   const[notif,setNotif]=useState(null);
   const[dataLoading,setDataLoading]=useState(true);
   const[previewClientId,setPreviewClientId]=useState(null);
+  const[showSettings,setShowSettings]=useState(false);
+  const[settings,setSettings]=useState(()=>{try{return JSON.parse(localStorage.getItem("ui_settings"))||DEFAULT_SETTINGS;}catch{return DEFAULT_SETTINGS;}});
+
+  useEffect(()=>{localStorage.setItem("ui_settings",JSON.stringify(settings));},[settings]);
 
   useEffect(()=>{
     if(!user){ setDataLoading(false); return; }
@@ -3796,10 +3889,20 @@ function AppMain() {
     ...(activeClient?.shortoneEnabled?[{k:"shortone",l:"Shortone",icon:"◆"}]:[]),
   ];
 
+  const densityPad={"compact":"14px 14px 70px","normale":"22px 24px","spacieux":"32px 36px"};
+  const fontSizePx={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
+  const accentColor=ACCENT_COLORS[settings.accent]||ACCENT_COLORS.or;
+
   return(
     <>
       <FontLoader/>
-      <div style={{minHeight:"100vh",background:"#08080F",color:"#F0EEE8",display:"flex",flexDirection:"column"}}>
+      <style>{`
+        :root { --accent:${accentColor}; --fs:${fontSizePx[settings.fontSize]}; }
+        .app-main { padding:${densityPad[settings.density]||densityPad.normale} !important; }
+        body { font-size:${fontSizePx[settings.fontSize]}; }
+        ${settings.contrast?"*{--text:#FFFFFF}p,span,div{color:inherit}.nav-item{border-bottom:1px solid #3A3A5E}":""}
+      `}</style>
+      <div style={{minHeight:"100vh",background:settings.contrast?"#050508":"#08080F",color:settings.contrast?"#FFFFFF":"#F0EEE8",display:"flex",flexDirection:"column"}}>
 
         {/* ── TOP BAR ── */}
         <div style={{background:"#0E0E18",borderBottom:"1px solid #2A2A3E",padding:"0 16px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
@@ -3811,20 +3914,26 @@ function AppMain() {
               {appView==="prod"?"Back-office":`Espace client${activeClient?.name?` — ${activeClient.name}`:""}`}
             </span>
           </div>
-          {userRole === "admin" && (
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              {previewClientId&&appView==="client"&&(
-                <div className="desk-only" style={{alignItems:"center",gap:6,background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>
+          <div style={{display:"flex",alignItems:"center",gap:6}}>
+              {userRole==="admin"&&previewClientId&&appView==="client"&&(
+                <div className="desk-only" style={{display:"flex",alignItems:"center",gap:6,background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>
                   <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF"}}>👁 {previewClient?.name}</span>
                   <button style={{background:"none",border:"none",color:"#7B9CFF",cursor:"pointer",fontSize:12,padding:"0 2px"}} onClick={()=>{setPreviewClientId(null);setAppView("prod");setProdSection("comptes");}}>✕</button>
                 </div>
               )}
-              <div style={{display:"flex",gap:3,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
-                <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("prod");setSidebarOpen(false);}}>⚙ <span className="desk-only" style={{display:"inline"}}>Prod</span></button>
-                <button className={appView==="client"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("client");setSidebarOpen(false);}}>👤 <span className="desk-only" style={{display:"inline"}}>Client</span></button>
-              </div>
+              {userRole==="admin"&&(
+                <div style={{display:"flex",gap:3,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
+                  <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("prod");setSidebarOpen(false);}}>⚙ <span className="desk-only" style={{display:"inline"}}>Prod</span></button>
+                  <button className={appView==="client"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("client");setSidebarOpen(false);}}>👤 <span className="desk-only" style={{display:"inline"}}>Client</span></button>
+                </div>
+              )}
+              {/* Avatar / menu utilisateur */}
+              <button onClick={()=>setShowSettings(true)} style={{width:34,height:34,borderRadius:"50%",background:accentColor+"22",border:`1.5px solid ${accentColor}55`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:15,color:accentColor,cursor:"pointer",flexShrink:0,transition:"all .15s"}}
+                onMouseEnter={e=>{e.currentTarget.style.background=accentColor+"40";e.currentTarget.style.borderColor=accentColor;}}
+                onMouseLeave={e=>{e.currentTarget.style.background=accentColor+"22";e.currentTarget.style.borderColor=accentColor+"55";}}>
+                {(user?.email||"?")[0].toUpperCase()}
+              </button>
             </div>
-          )}
         </div>
 
         {/* ── BODY ── */}
@@ -3963,6 +4072,7 @@ function AppMain() {
 
         {notif&&<Notif msg={notif} onDone={()=>setNotif(null)}/>}
         {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} onClose={()=>setShowCreateModal(false)} onCreate={createProject}/>}
+        {showSettings&&<SettingsPanel settings={settings} onChange={setSettings} onClose={()=>setShowSettings(false)} user={user} onLogout={()=>supabase.auth.signOut()}/>}
       </div>
     </>
   );
