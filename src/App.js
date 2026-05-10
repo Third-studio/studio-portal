@@ -3004,14 +3004,23 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
   const[showAdd,setShowAdd]=useState(false);
   const[selMember,setSelMember]=useState("");
   const[roleOnProject,setRoleOnProject]=useState("");
+  const[saving,setSaving]=useState(false);
   const available=teamMembers.filter(m=>!assignedIds.includes(m.id));
   const MEMBER_COLORS=["#E8C547","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF6B6B"];
-  const assign=()=>{
+  const assign=async()=>{
     if(!selMember)return;
-    onUpdateAssignments(prev=>[...prev,{id:Date.now(),projectId:project.id,memberId:Number(selMember),roleOnProject}]);
-    onNotif("Membre assigné !");setShowAdd(false);setSelMember("");setRoleOnProject("");
+    setSaving(true);
+    const memberId=Number(selMember);
+    const{data,error}=await supabase.from("project_assignments").insert({project_id:project.id,member_id:memberId,role_on_project:roleOnProject}).select().single();
+    if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
+    onUpdateAssignments(prev=>[...prev,{id:data.id,projectId:data.project_id,memberId:data.member_id,roleOnProject:data.role_on_project||""}]);
+    onNotif("Membre assigné !");setShowAdd(false);setSelMember("");setRoleOnProject("");setSaving(false);
   };
-  const remove=id=>onUpdateAssignments(prev=>prev.filter(a=>a.id!==id));
+  const remove=async(a)=>{
+    await supabase.from("project_assignments").delete().eq("id",a.id);
+    onUpdateAssignments(prev=>prev.filter(x=>x.id!==a.id));
+    onNotif("Membre retiré");
+  };
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div className="card" style={{padding:16}}>
@@ -3025,7 +3034,7 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
               <div><Lbl>Membre</Lbl><select className="input" value={selMember} onChange={e=>setSelMember(e.target.value)}><option value="">Choisir...</option>{available.map(m=><option key={m.id} value={m.id}>{m.nom} ({m.role})</option>)}</select></div>
               <div><Lbl>Rôle sur ce projet</Lbl><input className="input" placeholder="Cadreur principal..." value={roleOnProject} onChange={e=>setRoleOnProject(e.target.value)}/></div>
             </div>
-            <div style={{display:"flex",gap:7,justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={assign} disabled={!selMember}>Assigner</button></div>
+            <div style={{display:"flex",gap:7,justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={assign} disabled={!selMember||saving}>{saving?"...":"Assigner"}</button></div>
           </div>
         )}
         {projectAssignments.length===0?(
@@ -3046,7 +3055,7 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
                     <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>{a.roleOnProject||member.role}</p>
                   </div>
                   <span style={{fontFamily:"'DM Sans'",fontSize:10,color:member.team==="A"?"#E8C547":"#4ECDC4",background:member.team==="A"?"#E8C54718":"#4ECDC418",border:`1px solid ${member.team==="A"?"#E8C54730":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{member.team||"?"}</span>
-                  <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>remove(a.id)}>✕</button>
+                  <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>remove(a)}>✕</button>
                 </div>
               );
             })}
@@ -3063,14 +3072,48 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
 function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}){
   const notes=meetingNotes.filter(n=>n.projectId===project.id);
   const[showAdd,setShowAdd]=useState(false);
+  const[saving,setSaving]=useState(false);
   const[form,setForm]=useState({date:isoToday(),participants:"",content:"",decisions:""});
   const sf=(k,v)=>setForm(p=>({...p,[k]:v}));
-  const add=()=>{
+
+  const add=async()=>{
     if(!form.content.trim())return;
-    onUpdateMeetingNotes(prev=>[...prev,{id:Date.now(),projectId:project.id,...form}]);
-    onNotif("Note ajoutée !");setForm({date:isoToday(),participants:"",content:"",decisions:""});setShowAdd(false);
+    setSaving(true);
+    const{data,error}=await supabase.from("meeting_notes").insert({project_id:project.id,date:form.date,participants:form.participants,content:form.content,decisions:form.decisions}).select().single();
+    if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
+    onUpdateMeetingNotes(prev=>[...prev,{id:data.id,projectId:data.project_id,date:data.date,participants:data.participants||"",content:data.content||"",decisions:data.decisions||""}]);
+    onNotif("Note ajoutée !");setForm({date:isoToday(),participants:"",content:"",decisions:""});setShowAdd(false);setSaving(false);
   };
-  const del=id=>onUpdateMeetingNotes(prev=>prev.filter(n=>n.id!==id));
+
+  const del=async(id)=>{
+    await supabase.from("meeting_notes").delete().eq("id",id);
+    onUpdateMeetingNotes(prev=>prev.filter(n=>n.id!==id));
+    onNotif("Note supprimée");
+  };
+
+  const exportPDF=(note)=>{
+    const win=window.open("","_blank");
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Note de réunion — ${project.title}</title><style>
+      body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:40px;max-width:720px;margin:0 auto}
+      h1{font-size:22px;font-weight:800;margin-bottom:4px}
+      .sub{color:#666;font-size:13px;margin-bottom:24px}
+      .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:6px;font-weight:600}
+      .box{border:1px solid #ddd;border-radius:6px;padding:14px 16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap}
+      .decisions{border-color:#4ECDC4;background:#f0fffe}
+      .decision-item{display:flex;gap:8px;margin-bottom:4px}
+      .decision-item::before{content:"→";color:#4ECDC4;font-weight:700;flex-shrink:0}
+      @media print{body{padding:20px}button{display:none}}
+    </style></head><body>
+      <h1>Note de réunion</h1>
+      <p class="sub">Projet : ${project.title} — ${new Date(note.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+      ${note.participants?`<p class="label">Participants</p><p class="box">${note.participants}</p>`:""}
+      <p class="label">Notes</p><div class="box">${note.content.replace(/\n/g,"<br>")}</div>
+      ${note.decisions?`<p class="label">Décisions prises</p><div class="box decisions">${note.decisions.split("\n").filter(Boolean).map(d=>`<div class="decision-item">${d}</div>`).join("")}</div>`:""}
+      <p style="color:#aaa;font-size:11px;margin-top:32px">Généré par Third-One Studio — ${new Date().toLocaleDateString("fr-FR")}</p>
+      <script>window.onload=()=>window.print()<\/script>
+    </body></html>`);
+    win.document.close();
+  };
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -3086,19 +3129,22 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
             </div>
             <div><Lbl>Notes libres</Lbl><textarea className="input" rows={4} placeholder="Points abordés, contexte, discussions..." value={form.content} onChange={e=>sf("content",e.target.value)}/></div>
             <div><Lbl>Décisions prises (une par ligne)</Lbl><textarea className="input" rows={3} placeholder={"Décision 1\nDécision 2..."} value={form.decisions} onChange={e=>sf("decisions",e.target.value)}/></div>
-            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={add}>Enregistrer</button></div>
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={add} disabled={saving||!form.content.trim()}>{saving?"Enregistrement...":"Enregistrer"}</button></div>
           </div>
         </div>
       )}
       {notes.length===0&&!showAdd&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"20px 0"}}>Aucune note de réunion</p>}
       {[...notes].sort((a,b)=>b.date.localeCompare(a.date)).map(note=>(
         <div key={note.id} className="card fadeUp" style={{padding:16}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,flexWrap:"wrap",gap:6}}>
             <div>
               <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{fmtD(note.date)}</p>
               {note.participants&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA",marginTop:2}}>👥 {note.participants}</p>}
             </div>
-            <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>del(note.id)}>✕</button>
+            <div style={{display:"flex",gap:6}}>
+              <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 9px"}} onClick={()=>exportPDF(note)}>↓ PDF</button>
+              <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>del(note.id)}>✕</button>
+            </div>
           </div>
           {note.content&&<div style={{background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:7,padding:12,marginBottom:8}}><p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{note.content}</p></div>}
           {note.decisions&&(
@@ -3168,23 +3214,39 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
     setSlotForm({type:slot.type,projectId:slot.projectId||"",startTime:slot.startTime||"09:00",endTime:slot.endTime||"17:00",note:slot.note||""});
     setSlotModal({memberId:slot.memberId,date:slot.date});
   };
-  const saveSlot=()=>{
+  const saveSlot=async()=>{
     if(!slotModal)return;
     const base={memberId:slotModal.memberId,date:slotModal.date,type:slotForm.type,projectId:slotForm.projectId?Number(slotForm.projectId):null,startTime:slotForm.startTime,endTime:slotForm.endTime,note:slotForm.note};
-    if(editSlot){setPlanningSlots(prev=>prev.map(s=>s.id===editSlot.id?{...base,id:editSlot.id}:s));onNotif("Créneau modifié !");}
-    else{setPlanningSlots(prev=>[...prev,{...base,id:Date.now()}]);onNotif("Créneau ajouté !");}
+    if(editSlot){
+      await supabase.from("planning_slots").update({type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).eq("id",editSlot.id);
+      setPlanningSlots(prev=>prev.map(s=>s.id===editSlot.id?{...base,id:editSlot.id}:s));
+      onNotif("Créneau modifié !");
+    }else{
+      const{data}=await supabase.from("planning_slots").insert({member_id:base.memberId,date:base.date,type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).select().single();
+      if(data)setPlanningSlots(prev=>[...prev,{id:data.id,memberId:data.member_id,date:data.date,type:data.type,projectId:data.project_id,startTime:data.start_time||"",endTime:data.end_time||"",note:data.note||""}]);
+      onNotif("Créneau ajouté !");
+    }
     setSlotModal(null);setEditSlot(null);
   };
-  const deleteSlot=id=>{setPlanningSlots(prev=>prev.filter(s=>s.id!==id));onNotif("Créneau supprimé");setSlotModal(null);setEditSlot(null);};
+  const deleteSlot=async(id)=>{
+    await supabase.from("planning_slots").delete().eq("id",id);
+    setPlanningSlots(prev=>prev.filter(s=>s.id!==id));
+    onNotif("Créneau supprimé");setSlotModal(null);setEditSlot(null);
+  };
 
-  const addMember=()=>{
+  const addMember=async()=>{
     if(!memberForm.nom.trim())return;
-    setTeamMembers(prev=>[...prev,{id:Date.now(),...memberForm}]);
+    const{data}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
+    if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#E8C547"}]);
     onNotif("Membre ajouté !");
     setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#E8C547"});
     setShowAddMember(false);
   };
-  const deleteMember=id=>setTeamMembers(prev=>prev.filter(m=>m.id!==id));
+  const deleteMember=async(id)=>{
+    await supabase.from("team_members").delete().eq("id",id);
+    setTeamMembers(prev=>prev.filter(m=>m.id!==id));
+    onNotif("Membre supprimé");
+  };
 
   const weekLabel=`${new Date(weekDays[0]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} – ${new Date(weekDays[6]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}`;
 
