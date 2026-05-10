@@ -4099,7 +4099,21 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
   const[pForm,setPForm]=useState(emptyP);
   const[editId,setEditId]=useState(null);
   const[saving,setSaving]=useState(false);
+  const[accessModal,setAccessModal]=useState(null);
+  const[accessPass,setAccessPass]=useState("");
+  const[creatingAccess,setCreatingAccess]=useState(false);
   const FP=(k,v)=>setPForm(p=>({...p,[k]:v}));
+
+  const createAccess=async()=>{
+    if(!accessPass||accessPass.length<6){onNotif("Mot de passe requis (6 caractères min)");return;}
+    setCreatingAccess(true);
+    const{data,error}=await supabase.auth.signUp({email:accessModal.email,password:accessPass,options:{data:{nom:accessModal.nom,role:"partenaire"}}});
+    if(error){onNotif("Erreur : "+error.message);setCreatingAccess(false);return;}
+    const uid=data.user?.id;
+    if(uid)await supabase.from("profiles").upsert({id:uid,email:accessModal.email,nom:accessModal.nom,role:"partenaire",is_active:true});
+    setCreatingAccess(false);setAccessModal(null);setAccessPass("");
+    onNotif(`✓ Accès partenaire créé pour ${accessModal.nom}`);
+  };
 
   const savePrestataire=async()=>{
     if(!pForm.nom||!pForm.email||!pForm.service_type_id){onNotif("Nom, email et type requis");return;}
@@ -4230,13 +4244,32 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
                       </div>
                     )}
                   </div>
-                  <div style={{display:"flex",gap:6}}>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    <button className="btn btn-blue" style={{padding:"5px 10px",fontSize:11}} onClick={()=>{setAccessModal(p);setAccessPass("");}}>🔑 Accès</button>
                     <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:11}} onClick={()=>openEdit(p)}>✏</button>
                     <button className="btn btn-red" style={{padding:"5px 10px",fontSize:11}} onClick={()=>deletePrestataire(p.id)}>✕</button>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {accessModal&&(
+        <div className="modal-overlay" onClick={()=>setAccessModal(null)}>
+          <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
+            <h3 style={{fontFamily:"'Bebas Neue'",fontSize:18,color:"#F0EEE8",letterSpacing:"0.05em",marginBottom:4}}>CRÉER UN ACCÈS PARTENAIRE</h3>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginBottom:16}}>{accessModal.nom} — {accessModal.email}</p>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570",marginBottom:12}}>Le partenaire pourra se connecter sur thirdone.studio avec son email et ce mot de passe. Il accèdera à un espace dédié pour voir et répondre à ses missions.</p>
+            <div style={{marginBottom:16}}>
+              <Lbl>Mot de passe initial</Lbl>
+              <input className="input" type="password" value={accessPass} onChange={e=>setAccessPass(e.target.value)} placeholder="Minimum 6 caractères"/>
+            </div>
+            <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+              <button className="btn btn-ghost" onClick={()=>setAccessModal(null)}>Annuler</button>
+              <button className="btn btn-primary" disabled={creatingAccess||!accessPass} onClick={createAccess}>{creatingAccess?"Création...":"Créer l'accès"}</button>
+            </div>
           </div>
         </div>
       )}
@@ -4420,6 +4453,184 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
         </div>
       )}
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ESPACE PARTENAIRE (dashboard connecté)
+// ─────────────────────────────────────────────────────────────────────────────
+function PartenaireView({user,userProfile,onLogout}){
+  const[prestataire,setPrestataire]=useState(null);
+  const[missions,setMissions]=useState([]);
+  const[serviceTypes,setServiceTypes]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[respondingId,setRespondingId]=useState(null);
+  const[replyMsg,setReplyMsg]=useState("");
+  const[portfolioInput,setPortfolioInput]=useState("");
+  const[savingPortfolio,setSavingPortfolio]=useState(false);
+  const[notif,setNotif]=useState(null);
+  const showNotif=msg=>{setNotif(msg);setTimeout(()=>setNotif(null),3100);};
+
+  useEffect(()=>{
+    const load=async()=>{
+      const{data:pData}=await supabase.from("prestataires").select("*").eq("email",user.email).single();
+      if(!pData){setLoading(false);return;}
+      setPrestataire(pData);
+      setPortfolioInput((pData.portfolio_urls||[]).join("\n"));
+      const[{data:mData},{data:stData}]=await Promise.all([
+        supabase.from("prestataire_missions").select("*, projects(id,title,shoot_date)").eq("prestataire_id",pData.id).order("created_at",{ascending:false}),
+        supabase.from("service_types").select("*"),
+      ]);
+      if(mData)setMissions(mData);
+      if(stData)setServiceTypes(stData);
+      setLoading(false);
+    };
+    load();
+  },[user.email]);
+
+  const respond=async(mission)=>{
+    if(!replyMsg.trim())return;
+    const urls=portfolioInput.split("\n").map(u=>u.trim()).filter(Boolean);
+    const fullMsg=`${replyMsg}${urls.length>0?`\n\n📎 Portfolio :\n${urls.join("\n")}`:""}`;
+    await supabase.from("prestataire_missions").update({statut:"répondu",message_dispo:replyMsg,responded_at:new Date().toISOString()}).eq("id",mission.id);
+    if(mission.project_id){
+      await supabase.from("messages").insert({project_id:mission.project_id,author:prestataire.nom,content:`🤝 Réponse de ${prestataire.nom}\n\n${fullMsg}`,role:"prestataire"});
+    }
+    setMissions(prev=>prev.map(m=>m.id===mission.id?{...m,statut:"répondu",message_dispo:replyMsg}:m));
+    setReplyMsg("");setRespondingId(null);showNotif("Réponse envoyée !");
+  };
+
+  const savePortfolio=async()=>{
+    if(!prestataire)return;
+    setSavingPortfolio(true);
+    const urls=portfolioInput.split("\n").map(u=>u.trim()).filter(Boolean);
+    await supabase.from("prestataires").update({portfolio_urls:urls}).eq("id",prestataire.id);
+    setPrestataire(p=>({...p,portfolio_urls:urls}));
+    setSavingPortfolio(false);showNotif("Portfolio mis à jour !");
+  };
+
+  const statColor=s=>({envoyé:"#E8C547",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF6B6B"}[s]||"#8888AA");
+  const tLabel=id=>serviceTypes.find(t=>t.id===id)?.label||"";
+  const tIcon=id=>serviceTypes.find(t=>t.id===id)?.icone||"🤝";
+
+  if(loading)return<div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center"}}><FontLoader/><p style={{color:"#C9A84C",fontFamily:"'Bebas Neue'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
+
+  if(!prestataire)return(
+    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <FontLoader/>
+      <p style={{color:"#FF6B6B",fontFamily:"'Bebas Neue'",fontSize:20}}>COMPTE NON LIÉ</p>
+      <p style={{color:"#555570",fontFamily:"'DM Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'est pas encore associé à un prestataire. Contactez Third-One Studio.</p>
+      <button className="btn btn-ghost" onClick={onLogout}>Se déconnecter</button>
+    </div>
+  );
+
+  const pending=missions.filter(m=>m.statut==="envoyé");
+  const historic=missions.filter(m=>m.statut!=="envoyé");
+
+  return(
+    <>
+      <FontLoader/>
+      <div style={{minHeight:"100vh",background:"#08080F",color:"#F0EEE8"}}>
+        <div style={{background:"#0E0E18",borderBottom:"1px solid #2A2A3E",padding:"0 20px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <span style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#E8C547",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</span>
+            <span style={{color:"#2A2A3E"}}>|</span>
+            <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#4ECDC4"}}>Espace Partenaire</span>
+          </div>
+          <button className="btn btn-ghost" style={{fontSize:12}} onClick={onLogout}>Déconnexion</button>
+        </div>
+
+        <div style={{maxWidth:760,margin:"0 auto",padding:"28px 16px",display:"flex",flexDirection:"column",gap:20}}>
+          <div className="fadeUp" style={{background:"linear-gradient(135deg,#4ECDC412,#7B9CFF08)",border:"1px solid #4ECDC430",borderRadius:12,padding:"20px 24px",display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+            <div style={{width:52,height:52,borderRadius:"50%",background:"#4ECDC422",border:"1.5px solid #4ECDC455",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{tIcon(prestataire.service_type_id)}</div>
+            <div style={{flex:1}}>
+              <h1 style={{fontFamily:"'Bebas Neue'",fontSize:24,color:"#F0EEE8",letterSpacing:"0.04em"}}>{prestataire.nom}</h1>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#4ECDC4"}}>{tLabel(prestataire.service_type_id)}</p>
+              {prestataire.description&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:4}}>{prestataire.description}</p>}
+            </div>
+            <div style={{textAlign:"right"}}>
+              <p style={{fontFamily:"'JetBrains Mono'",fontSize:12,color:"#E8C547",fontWeight:600}}>{pending.length} mission{pending.length!==1?"s":""} en attente</p>
+              <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#4ECDC4"}}>{historic.filter(m=>m.statut==="accepté").length} acceptée(s)</p>
+            </div>
+          </div>
+
+          {pending.length>0&&(
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <h2 style={{fontFamily:"'Bebas Neue'",fontSize:18,color:"#E8C547",letterSpacing:"0.05em"}}>MISSIONS EN ATTENTE</h2>
+              {pending.map(m=>(
+                <div key={m.id} className="card fadeUp" style={{padding:20,borderColor:"#E8C54730"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,flexWrap:"wrap",gap:8}}>
+                    <div>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8"}}>{m.projects?.title||"Projet"}</p>
+                      {m.projects?.shoot_date&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>📅 Date souhaitée : {new Date(m.projects.shoot_date+"T12:00:00").toLocaleDateString("fr-FR")}</p>}
+                    </div>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:11,fontWeight:600,color:"#E8C547",background:"#E8C54722",border:"1px solid #E8C54744",borderRadius:10,padding:"2px 8px"}}>En attente</span>
+                  </div>
+                  {m.brief_extrait&&(
+                    <div style={{background:"#0E0E18",borderRadius:8,padding:"12px 16px",marginBottom:14}}>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>Brief du projet</p>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",lineHeight:1.7,whiteSpace:"pre-line"}}>{m.brief_extrait}</p>
+                    </div>
+                  )}
+                  {respondingId===m.id?(
+                    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                      <textarea className="input" rows={4} placeholder="Votre disponibilité, tarif, conditions particulières..." value={replyMsg} onChange={e=>setReplyMsg(e.target.value)}/>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>Vos liens portfolio seront automatiquement joints depuis la section ci-dessous.</p>
+                      <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                        <button className="btn btn-ghost" onClick={()=>{setRespondingId(null);setReplyMsg("");}}>Annuler</button>
+                        <button className="btn btn-primary" disabled={!replyMsg.trim()} onClick={()=>respond(m)}>✓ Envoyer ma réponse</button>
+                      </div>
+                    </div>
+                  ):(
+                    <button className="btn btn-green" onClick={()=>setRespondingId(m.id)}>Répondre à cette mission</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {historic.length>0&&(
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <h2 style={{fontFamily:"'Bebas Neue'",fontSize:18,color:"#F0EEE8",letterSpacing:"0.05em"}}>HISTORIQUE</h2>
+              {historic.map(m=>(
+                <div key={m.id} className="card fadeUp" style={{padding:16}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                    <div>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{m.projects?.title||"Projet"}</p>
+                      {m.responded_at&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginTop:2}}>Répondu le {new Date(m.responded_at).toLocaleDateString("fr-FR")}</p>}
+                    </div>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
+                  </div>
+                  {m.message_dispo&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:8,whiteSpace:"pre-line"}}>{m.message_dispo}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {missions.length===0&&(
+            <div className="card" style={{padding:30,textAlign:"center"}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570"}}>Aucune mission reçue pour l'instant.</p>
+              <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570",marginTop:6}}>Vous serez contacté directement par l'équipe Third-One Studio.</p>
+            </div>
+          )}
+
+          <div className="card" style={{padding:20}}>
+            <SH icon="🖼️" title="MON PORTFOLIO"/>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginBottom:10}}>Liens Instagram, site web, Google Photos… (un par ligne). Ils seront joints à vos réponses.</p>
+            <textarea className="input" rows={4} value={portfolioInput} onChange={e=>setPortfolioInput(e.target.value)} placeholder={"https://instagram.com/votre-compte\nhttps://votre-site.com\nhttps://drive.google.com/..."}/>
+            <div style={{marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                {(prestataire.portfolio_urls||[]).map((url,i)=>(
+                  <a key={i} href={url} target="_blank" rel="noreferrer" style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
+                ))}
+              </div>
+              <button className="btn btn-primary" onClick={savePortfolio} disabled={savingPortfolio}>{savingPortfolio?"Enregistrement...":"Enregistrer"}</button>
+            </div>
+          </div>
+        </div>
+        {notif&&<Notif msg={notif} onDone={()=>setNotif(null)}/>}
+      </div>
+    </>
   );
 }
 
@@ -4695,6 +4906,7 @@ function AppMain() {
     <p style={{color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
   </div>;
   if (!user) return <Login onLogin={setUser} />;
+  if (userProfile && userProfile.role === "partenaire") return <PartenaireView user={user} userProfile={userProfile} onLogout={()=>supabase.auth.signOut()}/>;
   if (userProfile && userProfile.role === "client" && userProfile.is_active === false) return (
     <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.6}}/>
