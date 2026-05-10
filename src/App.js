@@ -614,7 +614,7 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
   );
 }
 
-function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile}){
+function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
@@ -638,7 +638,8 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:safeUrl||"",status:project.status==="brief"?"storyboard":project.status});
     onNotif("Brief sauvegardé !");
   };
-  const tabs=[{k:"brief",l:"Brief"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
+  const tabs=[{k:"brief",l:"Brief"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
+  const[linkingBookingId,setLinkingBookingId]=useState("");
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp">
@@ -726,6 +727,50 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
       {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="equipe"&&<TeamSection project={project} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={onUpdateAssignments} onNotif={onNotif}/>}
       {tab==="notes"&&<MeetingNotesSection project={project} meetingNotes={meetingNotes} onUpdateMeetingNotes={onUpdateMeetingNotes} onNotif={onNotif}/>}
+      {tab==="reservations"&&(()=>{
+        const projBookings=bookings.filter(b=>String(b.projectId)===String(project.id));
+        const unlinked=bookings.filter(b=>!b.projectId&&b.status!=="expired");
+        const statusColor=s=>s==="confirmed"?"#4ECDC4":"#FF9F43";
+        return(
+          <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadeUp">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:17,color:"#F0EEE8",letterSpacing:"0.05em"}}>RÉSERVATIONS LIÉES</h3>
+              {onGoToCalendar&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={onGoToCalendar}>Voir dans le calendrier →</button>}
+            </div>
+            {projBookings.length===0&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"20px 0"}}>Aucune réservation liée à ce projet.</p>}
+            {projBookings.map(b=>(
+              <div key={b.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#0E0E18",borderRadius:8,border:"1px solid #2A2A3E"}}>
+                <div style={{width:5,height:5,borderRadius:"50%",background:statusColor(b.status),flexShrink:0}}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontFamily:"'DM Sans'",fontSize:12,fontWeight:500,color:"#F0EEE8"}}>{b.client||b.client_name}</p>
+                  <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>{fmtS(b.date)} · Équipe {b.team} · {b.startTime||""}–{b.endTime||""}</p>
+                </div>
+                <span style={{fontFamily:"'DM Sans'",fontSize:11,color:statusColor(b.status),background:statusColor(b.status)+"18",border:`1px solid ${statusColor(b.status)}30`,borderRadius:10,padding:"2px 8px"}}>
+                  {b.status==="confirmed"?`Confirmé (${b.confirmType||""})`:"Option"}
+                </span>
+              </div>
+            ))}
+            {unlinked.length>0&&(
+              <div className="card" style={{padding:16}}>
+                <p style={{fontFamily:"'DM Sans'",fontSize:12,fontWeight:600,color:"#F0EEE8",marginBottom:10}}>Lier une réservation existante</p>
+                <div style={{display:"flex",gap:8}}>
+                  <select className="input" style={{flex:1}} value={linkingBookingId} onChange={e=>setLinkingBookingId(e.target.value)}>
+                    <option value="">Choisir une réservation...</option>
+                    {unlinked.map(b=><option key={b.id} value={b.id}>{fmtS(b.date)} · Éq.{b.team} · {b.client||b.client_name}</option>)}
+                  </select>
+                  <button className="btn btn-primary" disabled={!linkingBookingId} onClick={async()=>{
+                    if(!linkingBookingId)return;
+                    await supabase.from("bookings").update({project_id:project.id}).eq("id",linkingBookingId);
+                    if(setBookings)setBookings(bs=>bs.map(b=>String(b.id)===String(linkingBookingId)?{...b,projectId:project.id}:b));
+                    setLinkingBookingId("");
+                    onNotif("Réservation liée !");
+                  }}>Lier</button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -1063,7 +1108,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULE B — CALENDAR
 // ─────────────────────────────────────────────────────────────────────────────
-function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
+function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoToProject}){
   const[month,setMonth]=useState(new Date(TODAY.getFullYear(),TODAY.getMonth(),1));
   const[selected,setSelected]=useState(null);
   const[modal,setModal]=useState(null);
@@ -1162,7 +1207,7 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
 
       {/* Day detail modal */}
       {modal&&(
-        <DayModal modal={modal} bookings={bookings} setBookings={setBookings} isAdmin={isAdmin} onClose={()=>{setModal(null);setSelected(null);}} onNotif={onNotif}/>
+        <DayModal modal={modal} bookings={bookings} setBookings={setBookings} isAdmin={isAdmin} onClose={()=>{setModal(null);setSelected(null);}} onNotif={onNotif} projects={projects}/>
       )}
 
       {/* Admin: upcoming bookings list */}
@@ -1170,18 +1215,26 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
         <div className="card" style={{padding:18}}>
           <SH icon="📋" title="RÉSERVATIONS À VENIR"/>
           <div style={{display:"flex",flexDirection:"column",gap:7}}>
-            {bookings.filter(b=>b.date>=isoToday()&&b.status!=="expired").sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8).map(b=>(
+            {bookings.filter(b=>b.date>=isoToday()&&b.status!=="expired").sort((a,b)=>a.date.localeCompare(b.date)).slice(0,8).map(b=>{
+              const linkedProject=b.projectId?projects.find(p=>String(p.id)===String(b.projectId)):null;
+              return(
               <div key={b.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:"#0E0E18",borderRadius:7,border:"1px solid #2A2A3E"}}>
                 <div style={{width:5,height:5,borderRadius:"50%",background:b.status==="confirmed"?(b.team==="A"?"#E8C547":"#4ECDC4"):"#FF9F43",flexShrink:0}}/>
                 <div style={{flex:1,minWidth:0}}>
                   <p style={{fontFamily:"'DM Sans'",fontSize:12,fontWeight:500,color:"#F0EEE8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.client}</p>
                   <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>{fmtS(b.date)} · Équipe {b.team}</p>
                 </div>
-                <span style={{fontFamily:"'DM Sans'",fontSize:11,color:b.status==="confirmed"?"#4ECDC4":"#FF9F43",background:b.status==="confirmed"?"#4ECDC418":"#FF9F4318",border:`1px solid ${b.status==="confirmed"?"#4ECDC430":"#FF9F4330"}`,borderRadius:10,padding:"2px 8px"}}>
+                {linkedProject&&onGoToProject&&(
+                  <button onClick={()=>onGoToProject(b.projectId)} style={{background:"#E8C54718",border:"1px solid #E8C54730",borderRadius:6,padding:"2px 8px",color:"#E8C547",fontFamily:"'DM Sans'",fontSize:10,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                    📁 {linkedProject.title.slice(0,20)}{linkedProject.title.length>20?"…":""}
+                  </button>
+                )}
+                <span style={{fontFamily:"'DM Sans'",fontSize:11,color:b.status==="confirmed"?"#4ECDC4":"#FF9F43",background:b.status==="confirmed"?"#4ECDC418":"#FF9F4318",border:`1px solid ${b.status==="confirmed"?"#4ECDC430":"#FF9F4330"}`,borderRadius:10,padding:"2px 8px",flexShrink:0}}>
                   {b.status==="confirmed"?`Confirmé (${b.confirmType})`:`Option — ${b.expiresAt?getCountdown(b.expiresAt):"..."}`}
                 </span>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -1189,7 +1242,7 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif}){
   );
 }
 
-function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
+function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[]}){
   const{date,infoA,infoB}=modal;
 
   const getAvailableSlots=(info)=>{
@@ -1208,7 +1261,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
   const initTeam=teamsWithSlots[0]||"A";
   const initSlot=(initTeam==="A"?availA:availB)[0]?.id||"matin";
 
-  const[form,setForm]=useState({team:initTeam,slot:initSlot,client:"",note:""});
+  const[form,setForm]=useState({team:initTeam,slot:initSlot,client:"",note:"",projectId:""});
   const[confirmCheck,setConfirmCheck]=useState({devis:false,acompte:false});
   const[confirmTarget,setConfirmTarget]=useState(null);
 
@@ -1218,8 +1271,8 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
     if(!form.client.trim())return;
     const slotDef=TIME_SLOTS.find(s=>s.id===form.slot)||TIME_SLOTS[0];
     const exp=new Date(Date.now()+48*3600000).toISOString();
-    const newB={id:Date.now(),date,team:form.team,client:form.client,status:"option",confirmType:null,extras:[],note:form.note,createdAt:isoToday(),expiresAt:exp,startTime:slotDef.start,endTime:slotDef.end};
-    const{error}=await supabase.from("bookings").insert({date,team:form.team,client_name:form.client,status:"option",note:form.note,expires_at:exp,start_time:slotDef.start,end_time:slotDef.end});
+    const newB={id:Date.now(),date,team:form.team,client:form.client,status:"option",confirmType:null,extras:[],note:form.note,createdAt:isoToday(),expiresAt:exp,startTime:slotDef.start,endTime:slotDef.end,projectId:form.projectId||null};
+    const{error}=await supabase.from("bookings").insert({date,team:form.team,client_name:form.client,status:"option",note:form.note,expires_at:exp,start_time:slotDef.start,end_time:slotDef.end,project_id:form.projectId||null});
     if(!error)setBookings(bs=>[...bs,newB]);
     onNotif(`Option posée — Équipe ${form.team} ${slotDef.label} le ${fmtS(date)} · valable 48h`);onClose();
   };
@@ -1371,6 +1424,13 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif}){
                 ))}
               </div>
               <input className="input" placeholder="Nom / Société *" value={form.client} onChange={e=>setForm(p=>({...p,client:e.target.value}))}/>
+              <div>
+                <Lbl>Projet lié (optionnel)</Lbl>
+                <select className="input" value={form.projectId} onChange={e=>setForm(p=>({...p,projectId:e.target.value}))}>
+                  <option value="">Aucun</option>
+                  {projects.map(proj=><option key={proj.id} value={proj.id}>{proj.title}</option>)}
+                </select>
+              </div>
               <input className="input" placeholder="Note (optionnel)" value={form.note} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/>
               <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>⏱ L'option expire automatiquement après 72h si non confirmée.</p>
               <button className="btn btn-primary" onClick={addOption} disabled={!form.client.trim()}>Poser l'option</button>
@@ -3660,6 +3720,87 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// CLIENT WELCOME PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+function ClientWelcomePage({client,projects,onGoTo}){
+  const howCards=[
+    {icon:"📁",title:"Mes projets",desc:"Suivez l'avancement de vos projets, validez les storyboards et donnez vos retours vidéo"},
+    {icon:"📅",title:"Calendrier",desc:"Consultez nos disponibilités et posez une option de réservation en ligne"},
+    {icon:"📲",title:"Contenu",desc:"Accédez aux publications planifiées pour vos réseaux sociaux"},
+    {icon:"💬",title:"Messagerie",desc:"Échangez directement avec votre équipe depuis chaque projet"},
+  ];
+  const statusColor=s=>({brief:"#7B9CFF",storyboard:"#E8C547",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#8888AA");
+  const statusLabel=s=>({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
+  const topProjects=projects.slice(0,3);
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:24}} className="fadeUp">
+      {/* Header */}
+      <div style={{background:"linear-gradient(135deg,#E8C54712,#7B9CFF08)",border:"1px solid #E8C54720",borderRadius:12,padding:"24px 28px"}}>
+        <h1 style={{fontFamily:"'Bebas Neue'",fontSize:32,color:"#E8C547",letterSpacing:"0.04em",marginBottom:4}}>
+          Bonjour, {client.name||"vous"} 👋
+        </h1>
+        <p style={{fontFamily:"'DM Sans'",fontSize:14,color:"#8888AA"}}>Bienvenue sur votre espace Third-One Studio</p>
+      </div>
+
+      {/* Comment ça marche */}
+      <div>
+        <h2 style={{fontFamily:"'Bebas Neue'",fontSize:18,color:"#F0EEE8",letterSpacing:"0.06em",marginBottom:12}}>COMMENT ÇA MARCHE</h2>
+        <div style={{display:"flex",gap:12,overflowX:"auto",paddingBottom:4}}>
+          {howCards.map(c=>(
+            <div key={c.title} className="card" style={{flex:"0 0 auto",width:200,padding:16}}>
+              <div style={{fontSize:28,marginBottom:10}}>{c.icon}</div>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8",marginBottom:6}}>{c.title}</p>
+              <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA",lineHeight:1.5}}>{c.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Projets en cours */}
+      <div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <h2 style={{fontFamily:"'Bebas Neue'",fontSize:18,color:"#F0EEE8",letterSpacing:"0.06em"}}>VOS PROJETS EN COURS</h2>
+          {projects.length>0&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>onGoTo("projets")}>Voir tous →</button>}
+        </div>
+        {projects.length===0?(
+          <div className="card" style={{padding:32,textAlign:"center"}}>
+            <p style={{fontFamily:"'DM Sans'",fontSize:14,color:"#8888AA",marginBottom:16}}>Vous n'avez pas encore de projet en cours.<br/><span style={{fontSize:12,color:"#555570"}}>Contactez-nous pour démarrer votre première production.</span></p>
+            <a href="mailto:contact@thirdone.studio" className="btn btn-primary" style={{textDecoration:"none",display:"inline-flex"}}>Démarrer un projet →</a>
+          </div>
+        ):(
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {topProjects.map(p=>{
+              const sc=statusColor(p.status);
+              return(
+                <div key={p.id} className="card" style={{padding:"14px 18px",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8",marginBottom:4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{flex:1,maxWidth:140,height:3,background:"#1A1A26",borderRadius:2,overflow:"hidden"}}>
+                        <div style={{height:"100%",width:`${p.progress||0}%`,background:sc,borderRadius:2,transition:"width .6s"}}/>
+                      </div>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:10,color:sc,background:sc+"22",border:`1px solid ${sc}44`,borderRadius:8,padding:"1px 7px"}}>{statusLabel(p.status)}</span>
+                    </div>
+                  </div>
+                  <button className="btn btn-ghost" style={{fontSize:11,flexShrink:0}} onClick={()=>onGoTo("projets")}>Voir →</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{textAlign:"center",paddingTop:8,borderTop:"1px solid #1A1A26"}}>
+        <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>
+          Une question ? <a href="mailto:contact@thirdone.studio" style={{color:"#E8C547",textDecoration:"none"}}>Contactez-nous sur contact@thirdone.studio</a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -3682,7 +3823,7 @@ function AppMain() {
   // Global state
   const[appView,setAppView]=useState("client"); // "prod" | "client"
   const[prodSection,setProdSection]=useState("dashboard");
-  const[clientSection,setClientSection]=useState("projets");
+  const[clientSection,setClientSection]=useState("accueil");
   const[showCreateModal,setShowCreateModal]=useState(false);
   const[sidebarOpen,setSidebarOpen]=useState(false);
 
@@ -3719,6 +3860,7 @@ function AppMain() {
       const queries = [
         supabase.from("projects").select("*, messages(*), files(*)").order("created_at",{ascending:false}),
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
+        supabase.from("bookings").select("*").order("date",{ascending:true}),
       ];
       // Données admin seulement
       if(isAdminUser){
@@ -3733,11 +3875,12 @@ function AppMain() {
       const results = await Promise.all(queries);
       const projectsData = results[0]?.data;
       const postsData    = results[1]?.data;
-      const profilesData = isAdminUser ? results[2]?.data : null;
-      const membersData  = isAdminUser ? results[3]?.data : null;
-      const assignData   = isAdminUser ? results[4]?.data : null;
-      const slotsData    = isAdminUser ? results[5]?.data : null;
-      const notesData    = isAdminUser ? results[6]?.data : null;
+      const bookingsData = results[2]?.data;
+      const profilesData = isAdminUser ? results[3]?.data : null;
+      const membersData  = isAdminUser ? results[4]?.data : null;
+      const assignData   = isAdminUser ? results[5]?.data : null;
+      const slotsData    = isAdminUser ? results[6]?.data : null;
+      const notesData    = isAdminUser ? results[7]?.data : null;
 
       if(projectsData && projectsData.length > 0) {
         const formatted = projectsData.map(p => ({
@@ -3782,6 +3925,7 @@ function AppMain() {
         setSelectedProjectId(formatted[0]?.id || null);
       }
       if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
+      if(bookingsData) setBookings(bookingsData.map(b=>({...b,projectId:b.project_id||null,client:b.client_name||"",team:b.team||"A",status:b.status||"option",note:b.note||"",startTime:b.start_time||"08:00",endTime:b.end_time||"17:00",createdAt:b.created_at?.split("T")[0],expiresAt:b.expires_at||null,extras:b.extras||[],confirmType:b.confirm_type||null})));
       if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isActive:p.is_active!==false})));
       if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#E8C547"})));
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
@@ -3882,6 +4026,7 @@ function AppMain() {
 
   // ── CLIENT NAV ──────────────────────────────────────────────────────────────
   const clientNav=[
+    {k:"accueil",   l:"Accueil",      icon:"🏠"},
     {k:"projets",   l:"Mes projets",  icon:"📁"},
     {k:"calendrier",l:"Calendrier",   icon:"📅"},
     {k:"cm",        l:"Contenu",      icon:"📲"},
@@ -3969,6 +4114,11 @@ function AppMain() {
                 <button style={{width:"100%",marginTop:6,background:"#E8C54710",border:"1px solid #E8C54725",borderRadius:6,color:"#E8C547",fontFamily:"'DM Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setShowCreateModal(true)}>
                   + Nouveau projet
                 </button>
+                {appView==="client"&&clientProjects.length===0&&(
+                  <button style={{width:"100%",marginTop:4,background:"#4ECDC410",border:"1px solid #4ECDC425",borderRadius:6,color:"#4ECDC4",fontFamily:"'DM Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setClientSection("calendrier")}>
+                    📅 Prendre un RDV →
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -3984,10 +4134,10 @@ function AppMain() {
               <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection}/>
             )}
             {appView==="prod"&&prodSection==="projets"&&selProject&&(
-              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile}/>
+              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")}/>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
-              <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif}/>
+              <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif} projects={projects} onGoToProject={(id)=>{setSelectedProjectId(id);setProdSection("projets");}}/>
             )}
             {appView==="prod"&&prodSection==="organisation"&&(
               <OrgModule sheets={sheets} setSheets={setSheets} onNotif={showNotif}/>
@@ -4032,6 +4182,7 @@ function AppMain() {
             )}
 
             {/* CLIENT SECTIONS */}
+            {appView==="client"&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection}/>}
             {appView==="client"&&clientSection==="projets"&&clientSelProject&&(
               <ClientProjectView key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing}/>
             )}
@@ -4041,7 +4192,7 @@ function AppMain() {
                   <h2 style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#F0EEE8",letterSpacing:"0.04em"}}>DISPONIBILITÉS</h2>
                   <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>Consultez les disponibilités et posez une option sur une date.</p>
                 </div>
-                <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={false} onNotif={showNotif}/>
+                <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={false} onNotif={showNotif} projects={clientProjects}/>
               </div>
             )}
             {appView==="client"&&clientSection==="cm"&&(
