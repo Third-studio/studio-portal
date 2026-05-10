@@ -614,6 +614,147 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// CHARTE GRAPHIQUE PANEL
+// ─────────────────────────────────────────────────────────────────────────────
+function CharteGraphiquePanel({project,onUpdate,onNotif}){
+  const initCharte=()=>({colors:[],fonts:[],logoUrl:"",notes:"",...(project.brief?.charte||{})});
+  const[charte,setCharte]=useState(initCharte);
+  const[uploading,setUploading]=useState(false);
+  const colorRefs=useRef({});
+
+  const saveCharte=async(c)=>{
+    const newBrief={...project.brief,charte:c};
+    await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    onUpdate({...project,brief:newBrief});
+  };
+
+  const handleSave=async()=>{
+    await saveCharte(charte);
+    onNotif("Charte sauvegardée !");
+  };
+
+  const handleLogoUpload=async(e)=>{
+    const file=e.target.files?.[0];
+    if(!file)return;
+    setUploading(true);
+    const path=`${project.id}/logo`;
+    const{error}=await supabase.storage.from("chartes").upload(path,file,{upsert:true});
+    if(error){onNotif("Erreur upload : "+error.message);setUploading(false);return;}
+    const{data:urlData}=supabase.storage.from("chartes").getPublicUrl(path);
+    const publicUrl=urlData?.publicUrl||"";
+    const newCharte={...charte,logoUrl:publicUrl};
+    setCharte(newCharte);
+    await saveCharte(newCharte);
+    onNotif("Logo mis à jour !");
+    setUploading(false);
+  };
+
+  const addColor=()=>{
+    const c={...charte,colors:[...(charte.colors||[]),"#CCCCCC"]};
+    setCharte(c);
+  };
+  const updateColor=(idx,val)=>{
+    const cols=[...(charte.colors||[])];
+    cols[idx]=val;
+    setCharte(c=>({...c,colors:cols}));
+  };
+  const removeColor=(idx)=>{
+    const cols=(charte.colors||[]).filter((_,i)=>i!==idx);
+    setCharte(c=>({...c,colors:cols}));
+  };
+
+  const addFont=()=>setCharte(c=>({...c,fonts:[...(c.fonts||[]),"Nova Police"]}));
+  const updateFont=(idx,val)=>{
+    const fts=[...(charte.fonts||[])];
+    fts[idx]=val;
+    setCharte(c=>({...c,fonts:fts}));
+  };
+  const removeFont=(idx)=>setCharte(c=>({...c,fonts:(c.fonts||[]).filter((_,i)=>i!==idx)}));
+
+  return(
+    <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:16}}>
+      {/* Logo */}
+      <div className="card" style={{padding:18}}>
+        <p style={{fontFamily:"'Bebas Neue'",fontSize:12,color:"#E8C547",letterSpacing:"0.08em",marginBottom:12}}>LOGO</p>
+        <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+          {charte.logoUrl&&(
+            <img src={charte.logoUrl} alt="logo" style={{height:80,borderRadius:8,border:"1px solid #2A2A3E",background:"#0E0E18",objectFit:"contain",padding:4}} onError={e=>{e.target.style.display="none";}}/>
+          )}
+          <label style={{cursor:"pointer"}}>
+            <input type="file" accept="image/*" style={{display:"none"}} onChange={handleLogoUpload} disabled={uploading}/>
+            <span className="btn btn-ghost" style={{fontSize:12,pointerEvents:"none"}}>
+              {uploading?"⏳ Upload...":charte.logoUrl?"Modifier le logo":"+ Ajouter un logo"}
+            </span>
+          </label>
+        </div>
+      </div>
+
+      {/* Couleurs */}
+      <div className="card" style={{padding:18}}>
+        <p style={{fontFamily:"'Bebas Neue'",fontSize:12,color:"#E8C547",letterSpacing:"0.08em",marginBottom:12}}>PALETTE DE COULEURS</p>
+        <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          {(charte.colors||[]).map((col,idx)=>(
+            <div key={idx} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <div
+                onClick={()=>{if(colorRefs.current[idx])colorRefs.current[idx].click();}}
+                style={{width:36,height:36,borderRadius:"50%",background:col,border:"2px solid #2A2A3E",cursor:"pointer",transition:"transform .15s",boxShadow:"0 2px 8px rgba(0,0,0,.4)"}}
+                title={col}
+              />
+              <input
+                type="color"
+                ref={el=>colorRefs.current[idx]=el}
+                value={col}
+                style={{position:"absolute",opacity:0,width:1,height:1,pointerEvents:"none"}}
+                onChange={e=>updateColor(idx,e.target.value)}
+              />
+              <button onClick={()=>removeColor(idx)} style={{background:"none",border:"none",color:"#555570",cursor:"pointer",fontSize:10,padding:0,lineHeight:1}}>✕</button>
+            </div>
+          ))}
+          <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px"}} onClick={addColor}>+ Couleur</button>
+        </div>
+        {(charte.colors||[]).length>0&&(
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10}}>
+            {(charte.colors||[]).map((col,idx)=>(
+              <span key={idx} style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#8888AA"}}>{col}</span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Typographies */}
+      <div className="card" style={{padding:18}}>
+        <p style={{fontFamily:"'Bebas Neue'",fontSize:12,color:"#E8C547",letterSpacing:"0.08em",marginBottom:12}}>TYPOGRAPHIES</p>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {(charte.fonts||[]).map((font,idx)=>(
+            <div key={idx} style={{display:"flex",gap:8,alignItems:"center"}}>
+              <input className="input" value={font} placeholder="Nom de la police..." onChange={e=>updateFont(idx,e.target.value)} style={{flex:1}}/>
+              <button className="btn btn-red" style={{fontSize:10,padding:"5px 8px",flexShrink:0}} onClick={()=>removeFont(idx)}>✕</button>
+            </div>
+          ))}
+          <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",alignSelf:"flex-start"}} onClick={addFont}>+ Police</button>
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="card" style={{padding:18}}>
+        <p style={{fontFamily:"'Bebas Neue'",fontSize:12,color:"#E8C547",letterSpacing:"0.08em",marginBottom:12}}>NOTES / GUIDELINES</p>
+        <textarea
+          className="input"
+          rows={4}
+          placeholder="Ton de la marque, style visuel, éléments à éviter..."
+          value={charte.notes||""}
+          onChange={e=>setCharte(c=>({...c,notes:e.target.value}))}
+        />
+      </div>
+
+      <div style={{display:"flex",justifyContent:"flex-end"}}>
+        <button className="btn btn-primary" onClick={handleSave}>Enregistrer la charte</button>
+      </div>
+    </div>
+  );
+}
+
 function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
@@ -638,7 +779,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:safeUrl||"",status:project.status==="brief"?"storyboard":project.status});
     onNotif("Brief sauvegardé !");
   };
-  const tabs=[{k:"brief",l:"Brief"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
+  const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
   const[linkingBookingId,setLinkingBookingId]=useState("");
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -723,6 +864,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
         </div>
       )}
       {tab==="comments"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="prod"/></div>}
+      {tab==="charte"&&<CharteGraphiquePanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={fmtProdAuthor(userProfile?.nom)} isAdmin={true}/>}
       {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="equipe"&&<TeamSection project={project} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={onUpdateAssignments} onNotif={onNotif}/>}
@@ -2555,7 +2697,7 @@ function J2AlertBanner({projects,clients}){
 
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
-function AdminDashboard({ projects, clients, assignments, onSelectProject, onSectionChange }) {
+function AdminDashboard({ projects, clients, assignments, onSelectProject, onSectionChange, bookings=[], onGoToCalendar, teamMembers=[] }) {
   const [sortBy, setSortBy] = useState("tournage");
 
   const statusColor = s => ({brief:"#7B9CFF",storyboard:"#E8C547",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#8888AA");
@@ -2681,6 +2823,112 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       {projects.length === 0 && (
         <div style={{ textAlign:"center", padding:"40px 0", color:"#555570", fontFamily:"'DM Sans'", fontSize:13 }}>
           Aucun projet pour l instant. Crée ton premier projet dans la section Projets.
+        </div>
+      )}
+
+      {/* ── 1a. Prochaines réservations ───────────────────────────────────── */}
+      {(()=>{
+        const today=new Date(); today.setHours(0,0,0,0);
+        const upcoming=(bookings||[])
+          .filter(b=>b.status!=="expired"&&b.date&&new Date(b.date+"T00:00:00")>=today)
+          .sort((a,b2)=>a.date.localeCompare(b2.date))
+          .slice(0,5);
+        return(
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,color:"#E8C547",letterSpacing:"0.06em"}}>PROCHAINES RÉSERVATIONS</h3>
+              {onGoToCalendar&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={onGoToCalendar}>Voir le calendrier →</button>}
+            </div>
+            {upcoming.length===0?(
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"16px 0"}}>Aucune réservation à venir</p>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {upcoming.map(b=>{
+                  const linkedProject=b.projectId?projects.find(p=>String(p.id)===String(b.projectId)):null;
+                  const clientName=b.client||b.client_name||"";
+                  const teamColor=b.team==="A"?"#7B9CFF":"#FF9F43";
+                  const statusColor2=b.status==="confirmed"?"#4ECDC4":"#FF9F43";
+                  const dateStr=b.date?new Date(b.date+"T00:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}):"—";
+                  return(
+                    <div key={b.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#12121A",borderRadius:8,border:"1px solid #2A2A3E",flexWrap:"wrap"}}>
+                      <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#F0EEE8",minWidth:90}}>{dateStr}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:10,fontWeight:600,color:teamColor,background:teamColor+"18",border:`1px solid ${teamColor}30`,borderRadius:8,padding:"1px 7px",flexShrink:0}}>Éq.{b.team}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8",flex:1,minWidth:80}}>{clientName}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:10,color:statusColor2,background:statusColor2+"18",border:`1px solid ${statusColor2}30`,borderRadius:8,padding:"1px 7px",flexShrink:0}}>
+                        {b.status==="confirmed"?"Confirmé":"Option"}
+                      </span>
+                      {linkedProject&&(
+                        <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",flexShrink:0}}>
+                          📁 {linkedProject.title}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── 1b. Activité récente ──────────────────────────────────────────── */}
+      {(()=>{
+        const recent=[...projects]
+          .sort((a,b2)=>(b2.createdAt||"").localeCompare(a.createdAt||""))
+          .slice(0,5);
+        const statusColor2=s=>({brief:"#7B9CFF",storyboard:"#E8C547",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#8888AA");
+        const statusLabel2=s=>({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
+        return(
+          <div>
+            <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,color:"#E8C547",letterSpacing:"0.06em",marginBottom:12}}>ACTIVITÉ RÉCENTE</h3>
+            {recent.length===0?(
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"16px 0"}}>Aucun projet</p>
+            ):(
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {recent.map(p=>{
+                  const clientName=clients.find(c=>c.id===p.clientId)?.name||p.client||"";
+                  const sc=statusColor2(p.status);
+                  return(
+                    <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:"#12121A",borderRadius:8,border:"1px solid #2A2A3E"}}>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                          <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:500,color:"#F0EEE8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
+                          {clientName&&<span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#8888AA",flexShrink:0}}>{clientName}</span>}
+                        </div>
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <span style={{fontFamily:"'DM Sans'",fontSize:10,color:sc,background:sc+"22",border:`1px solid ${sc}44`,borderRadius:8,padding:"1px 6px"}}>{statusLabel2(p.status)}</span>
+                          <div style={{flex:1,height:3,background:"#1A1A26",borderRadius:2,overflow:"hidden",maxWidth:80}}>
+                            <div style={{height:"100%",width:`${p.progress||0}%`,background:sc,borderRadius:2}}/>
+                          </div>
+                          <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570"}}>{p.progress||0}%</span>
+                        </div>
+                      </div>
+                      <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",flexShrink:0}} onClick={()=>{onSelectProject(p.id);onSectionChange("projets");}}>→</button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── 1c. Stats équipe ──────────────────────────────────────────────── */}
+      {teamMembers&&teamMembers.length>0&&(
+        <div>
+          <h3 style={{fontFamily:"'Bebas Neue'",fontSize:20,color:"#E8C547",letterSpacing:"0.06em",marginBottom:12}}>STATS ÉQUIPE</h3>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+            {[
+              {label:"Membres Équipe A",value:teamMembers.filter(m=>m.team==="A").length,color:"#7B9CFF"},
+              {label:"Membres Équipe B",value:teamMembers.filter(m=>m.team==="B").length,color:"#FF9F43"},
+              {label:"Projets assignés",value:projects.filter(p=>assignments.some(a=>a.projectId===p.id)).length,color:"#B47FFF"},
+            ].map(({label,value,color})=>(
+              <div key={label} style={{background:"#12121A",border:`1px solid ${color}33`,borderRadius:8,padding:"12px 14px"}}>
+                <p style={{fontFamily:"'Bebas Neue'",fontSize:28,color,letterSpacing:"0.05em"}}>{value}</p>
+                <p style={{fontFamily:"'DM Sans'",fontSize:10,color:"#8888AA",textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -4131,7 +4379,7 @@ function AppMain() {
 
             {/* PROD SECTIONS */}
             {appView==="prod"&&prodSection==="dashboard"&&(
-              <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection}/>
+              <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection} bookings={bookings} onGoToCalendar={()=>setProdSection("calendrier")} teamMembers={teamMembers}/>
             )}
             {appView==="prod"&&prodSection==="projets"&&selProject&&(
               <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")}/>
