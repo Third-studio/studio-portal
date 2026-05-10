@@ -3614,7 +3614,6 @@ const DEFAULT_SETTINGS={fontSize:"normale",density:"normale",accent:"or",contras
 
 function SettingsPanel({settings,onChange,onClose,user,onLogout}){
   const S=(k,v)=>onChange({...settings,[k]:v});
-  const fontScale={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
   const densityLabel={"compact":"Compact","normale":"Normal","spacieux":"Spacieux"};
   return(
     <>
