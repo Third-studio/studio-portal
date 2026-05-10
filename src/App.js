@@ -134,9 +134,10 @@ const FontLoader = () => (
     .dot-active { background:#E8C547;color:#08080F;animation:pulse 1.8s infinite; }
     .dot-todo   { background:#1A1A26;color:#555570;border:1px solid #2A2A3E; }
 
-    .comment-bubble { padding:10px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.5;max-width:80%; }
-    .comment-prod   { background:#1A1A26;color:#F0EEE8;align-self:flex-start; }
-    .comment-client { background:#E8C54718;color:#F0EEE8;border:1px solid #E8C54730;align-self:flex-end; }
+    .comment-bubble       { padding:10px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.5;max-width:80%; }
+    .comment-prod         { background:#1A1A26;color:#F0EEE8;align-self:flex-start; }
+    .comment-client       { background:#E8C54718;color:#F0EEE8;border:1px solid #E8C54730;align-self:flex-end; }
+    .comment-prestataire  { background:#4ECDC410;color:#F0EEE8;border:1px solid #4ECDC430;align-self:flex-start;white-space:pre-line; }
 
     .equip-item { display:flex;align-items:center;gap:8px;padding:8px 12px;background:#0E0E18;border-radius:7px;border:1px solid #2A2A3E;transition:all .15s; }
     .equip-item.included { border-color:#E8C54730; }
@@ -393,8 +394,11 @@ function CommentThread({comments,onAdd,role="prod"}){
         {comments.length===0&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"20px 0"}}>Aucun message.</p>}
         {comments.map(c=>(
           <div key={c.id} style={{display:"flex",flexDirection:"column",alignItems:c.role==="client"?"flex-end":"flex-start",gap:2}}>
-            <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570",paddingInline:4}}>{c.author} · {fmtS(c.date)}</span>
-            <div className={`comment-bubble comment-${c.role==="client"?"client":"prod"}`}>{c.text}</div>
+            <span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#555570",paddingInline:4}}>
+              {c.role==="prestataire"&&<span style={{color:"#4ECDC4",marginRight:4}}>🤝</span>}
+              {c.author} · {fmtS(c.date)}
+            </span>
+            <div className={`comment-bubble comment-${c.role==="client"?"client":c.role==="prestataire"?"prestataire":"prod"}`}>{c.text}</div>
           </div>
         ))}
         <div ref={endRef}/>
@@ -755,7 +759,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
   );
 }
 
-function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar}){
+function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar,serviceTypes=[],prestataires=[],prestataireMissions=[],setPrestataireMissions}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
@@ -779,7 +783,8 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:safeUrl||"",status:project.status==="brief"?"storyboard":project.status});
     onNotif("Brief sauvegardé !");
   };
-  const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`}];
+  const briefServices=project.brief?.services||[];
+  const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}])];
   const[linkingBookingId,setLinkingBookingId]=useState("");
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -869,6 +874,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
       {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="equipe"&&<TeamSection project={project} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={onUpdateAssignments} onNotif={onNotif}/>}
       {tab==="notes"&&<MeetingNotesSection project={project} meetingNotes={meetingNotes} onUpdateMeetingNotes={onUpdateMeetingNotes} onNotif={onNotif}/>}
+      {tab==="prestataires"&&<div className="fadeUp"><ProjectPrestatairesPanel project={project} serviceTypes={serviceTypes} prestataires={prestataires} missions={prestataireMissions} setMissions={setPrestataireMissions} onNotif={onNotif}/></div>}
       {tab==="reservations"&&(()=>{
         const projBookings=bookings.filter(b=>String(b.projectId)===String(project.id));
         const unlinked=bookings.filter(b=>!b.projectId&&b.status!=="expired");
@@ -1093,7 +1099,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
   );
 }
 
-function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
+function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceTypes=[]}){
   const[tab,setTab]=useState("suivi");
   const[brief,setBrief]=useState({
     title: project.title==="Nouveau projet"?"":project.title,
@@ -1106,15 +1112,17 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
     shootDate: project.shootDate||"",
     references: project.brief?.references||"",
     notes: project.brief?.notes||"",
+    services: project.brief?.services||[],
   });
   const[saving,setSaving]=useState(false);
   const hasSimulator=clientData?.simulatorEnabled;
   const briefEmpty=!project.brief?.objective&&!project.brief?.target&&!project.brief?.duration;
   const showIntake=project.status==="brief"&&briefEmpty;
 
+  const toggleService=(id)=>setBrief(p=>({...p,services:p.services.includes(id)?p.services.filter(s=>s!==id):[...p.services,id]}));
   const submitBrief=async()=>{
     setSaving(true);
-    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,submitted:true};
+    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,submitted:true};
     await supabase.from("projects").update({title:brief.title||project.title,brief:newBrief,shoot_date:brief.shootDate||null}).eq("id",project.id);
     onUpdate({...project,title:brief.title||project.title,brief:newBrief,shootDate:brief.shootDate||""});
     onNotif("Brief envoyé — l'équipe vous revient rapidement !");
@@ -1154,6 +1162,24 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing}){
           <div><Lbl>Date de tournage souhaitée</Lbl><input type="date" className="input" value={brief.shootDate} onChange={e=>setBrief(p=>({...p,shootDate:e.target.value}))}/></div>
           <div><Lbl>Références / Inspirations</Lbl><textarea className="input" rows={2} placeholder="Liens YouTube, noms de réalisateurs, spots que vous aimez..." value={brief.references} onChange={e=>setBrief(p=>({...p,references:e.target.value}))}/></div>
           <div><Lbl>Informations complémentaires</Lbl><textarea className="input" rows={3} placeholder="Lieu de tournage, personnes à filmer, contraintes particulières..." value={brief.notes} onChange={e=>setBrief(p=>({...p,notes:e.target.value}))}/></div>
+          {serviceTypes.length>0&&(
+            <div>
+              <Lbl>Services complémentaires souhaités</Lbl>
+              <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570",marginBottom:8}}>Cochez les services dont vous avez besoin pour ce projet (lieu, traiteur, transport…)</p>
+              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                {serviceTypes.filter(t=>t.actif!==false).map(t=>{
+                  const sel=brief.services.includes(t.id);
+                  return(
+                    <div key={t.id} className={`option-card ${sel?"selected":""}`} style={{padding:"8px 14px",display:"flex",alignItems:"center",gap:8}} onClick={()=>toggleService(t.id)}>
+                      <div className={`option-check ${sel?"checked":""}`}>{sel&&<span style={{color:"#08080F",fontSize:10,fontWeight:700}}>✓</span>}</div>
+                      <span style={{fontSize:16}}>{t.icone}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8"}}>{t.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <button className="btn btn-primary" style={{alignSelf:"flex-end",padding:"10px 24px"}} disabled={saving||!brief.objective||!brief.target} onClick={submitBrief}>
             {saving?"Envoi en cours...":"✓ Envoyer mon brief"}
           </button>
@@ -4049,6 +4075,451 @@ function ClientWelcomePage({client,projects,onGoTo}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PRESTATAIRES MODULE
+// ─────────────────────────────────────────────────────────────────────────────
+function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPrestataires,missions,setMissions,projects,onNotif}){
+  const[tab,setTab]=useState("annuaire");
+  const[filterType,setFilterType]=useState("all");
+  const[newTypeLabel,setNewTypeLabel]=useState("");
+  const[newTypeIcon,setNewTypeIcon]=useState("🔧");
+
+  const addType=async()=>{
+    if(!newTypeLabel.trim())return;
+    const{data}=await supabase.from("service_types").insert({label:newTypeLabel.trim(),icone:newTypeIcon,actif:true}).select().single();
+    if(data)setServiceTypes(prev=>[...prev,{id:data.id,label:data.label,icone:data.icone,actif:data.actif}]);
+    setNewTypeLabel("");setNewTypeIcon("🔧");
+    onNotif("Type ajouté !");
+  };
+  const deleteType=async(id)=>{
+    await supabase.from("service_types").delete().eq("id",id);
+    setServiceTypes(prev=>prev.filter(t=>t.id!==id));
+    onNotif("Type supprimé");
+  };
+
+  const emptyP={nom:"",email:"",telephone:"",description:"",portfolio_urls:"",service_type_id:""};
+  const[pForm,setPForm]=useState(emptyP);
+  const[editId,setEditId]=useState(null);
+  const[saving,setSaving]=useState(false);
+  const FP=(k,v)=>setPForm(p=>({...p,[k]:v}));
+
+  const savePrestataire=async()=>{
+    if(!pForm.nom||!pForm.email||!pForm.service_type_id){onNotif("Nom, email et type requis");return;}
+    setSaving(true);
+    const urls=pForm.portfolio_urls.split("\n").map(u=>u.trim()).filter(Boolean);
+    const payload={nom:pForm.nom,email:pForm.email,telephone:pForm.telephone,description:pForm.description,portfolio_urls:urls,service_type_id:pForm.service_type_id,actif:true};
+    if(editId){
+      await supabase.from("prestataires").update(payload).eq("id",editId);
+      setPrestataires(prev=>prev.map(p=>p.id===editId?{...p,...payload}:p));
+      onNotif("Prestataire mis à jour");
+    }else{
+      const{data}=await supabase.from("prestataires").insert(payload).select().single();
+      if(data)setPrestataires(prev=>[...prev,data]);
+      onNotif("Prestataire ajouté !");
+    }
+    setPForm(emptyP);setEditId(null);setSaving(false);
+  };
+  const openEdit=(p)=>{
+    setEditId(p.id);
+    setPForm({nom:p.nom,email:p.email,telephone:p.telephone||"",description:p.description||"",portfolio_urls:(p.portfolio_urls||[]).join("\n"),service_type_id:p.service_type_id||""});
+  };
+  const deletePrestataire=async(id)=>{
+    await supabase.from("prestataires").delete().eq("id",id);
+    setPrestataires(prev=>prev.filter(p=>p.id!==id));
+    onNotif("Prestataire supprimé");
+  };
+
+  const filtered=filterType==="all"?prestataires:prestataires.filter(p=>p.service_type_id===filterType);
+  const tLabel=id=>serviceTypes.find(t=>t.id===id)?.label||"";
+  const tIcon=id=>serviceTypes.find(t=>t.id===id)?.icone||"🔧";
+  const statColor=s=>({envoyé:"#E8C547",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF6B6B"}[s]||"#8888AA");
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:18}}>
+      <div className="fadeUp" style={{background:"linear-gradient(135deg,#4ECDC412,#7B9CFF08)",border:"1px solid #4ECDC425",borderRadius:10,padding:"16px 20px"}}>
+        <h2 style={{fontFamily:"'Bebas Neue'",fontSize:26,color:"#F0EEE8",letterSpacing:"0.04em"}}>ESPACE PRESTATAIRES</h2>
+        <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:2}}>Annuaire, types de services et missions envoyées depuis les fiches projet.</p>
+      </div>
+      <div style={{display:"flex",gap:4,background:"#0E0E18",padding:4,borderRadius:8}}>
+        {[{k:"annuaire",l:"Annuaire"},{k:"types",l:"Types de services"},{k:"missions",l:`Missions (${missions.length})`}].map(t=>(
+          <button key={t.k} className={`tab ${tab===t.k?"active":""}`} onClick={()=>setTab(t.k)}>{t.l}</button>
+        ))}
+      </div>
+
+      {tab==="types"&&(
+        <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div className="card" style={{padding:18}}>
+            <SH icon="➕" title="NOUVEAU TYPE"/>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"flex-end"}}>
+              <div style={{width:70}}><Lbl>Icône</Lbl><input className="input" value={newTypeIcon} onChange={e=>setNewTypeIcon(e.target.value)} placeholder="🔧"/></div>
+              <div style={{flex:1}}><Lbl>Nom du type *</Lbl><input className="input" placeholder="Ex: Location de villa, Traiteur, Transport..." value={newTypeLabel} onChange={e=>setNewTypeLabel(e.target.value)}/></div>
+              <button className="btn btn-primary" onClick={addType} disabled={!newTypeLabel.trim()}>Ajouter</button>
+            </div>
+          </div>
+          <div className="card" style={{padding:18}}>
+            <SH icon="🏷️" title="TYPES EXISTANTS"/>
+            {serviceTypes.length===0&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>Aucun type — ajoutez-en un ci-dessus.</p>}
+            <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
+              {serviceTypes.map(t=>(
+                <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#0E0E18",borderRadius:8,border:"1px solid #2A2A3E"}}>
+                  <span style={{fontSize:18}}>{t.icone}</span>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",flex:1}}>{t.label}</span>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{prestataires.filter(p=>p.service_type_id===t.id).length} prestataire(s)</span>
+                  <button className="btn btn-red" style={{padding:"4px 10px",fontSize:11}} onClick={()=>deleteType(t.id)}>Supprimer</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab==="annuaire"&&(
+        <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:12}}>
+          <div className="card" style={{padding:18}}>
+            <SH icon={editId?"✏️":"➕"} title={editId?"MODIFIER PRESTATAIRE":"NOUVEAU PRESTATAIRE"}/>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div><Lbl>Nom *</Lbl><input className="input" value={pForm.nom} onChange={e=>FP("nom",e.target.value)} placeholder="Nom ou entreprise"/></div>
+                <div><Lbl>Type de service *</Lbl>
+                  <select className="input" value={pForm.service_type_id} onChange={e=>FP("service_type_id",e.target.value)}>
+                    <option value="">— Choisir —</option>
+                    {serviceTypes.map(t=><option key={t.id} value={t.id}>{t.icone} {t.label}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div><Lbl>Email *</Lbl><input className="input" type="email" value={pForm.email} onChange={e=>FP("email",e.target.value)} placeholder="contact@exemple.com"/></div>
+                <div><Lbl>Téléphone</Lbl><input className="input" value={pForm.telephone} onChange={e=>FP("telephone",e.target.value)} placeholder="+596 696 ..."/></div>
+              </div>
+              <div><Lbl>Description</Lbl><textarea className="input" rows={2} value={pForm.description} onChange={e=>FP("description",e.target.value)} placeholder="Spécialités, zone d'intervention..."/></div>
+              <div><Lbl>Portfolio / Liens (un par ligne)</Lbl><textarea className="input" rows={3} value={pForm.portfolio_urls} onChange={e=>FP("portfolio_urls",e.target.value)} placeholder={"https://instagram.com/...\nhttps://son-site.com"}/></div>
+              <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+                {editId&&<button className="btn btn-ghost" onClick={()=>{setEditId(null);setPForm(emptyP);}}>Annuler</button>}
+                <button className="btn btn-primary" onClick={savePrestataire} disabled={saving}>{saving?"...":(editId?"Mettre à jour":"Ajouter")}</button>
+              </div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+            <span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>Filtrer :</span>
+            <button className={`type-pill ${filterType==="all"?"selected":""}`} onClick={()=>setFilterType("all")}>Tous ({prestataires.length})</button>
+            {serviceTypes.map(t=>(
+              <button key={t.id} className={`type-pill ${filterType===t.id?"selected":""}`} onClick={()=>setFilterType(t.id)}>
+                {t.icone} {t.label} ({prestataires.filter(p=>p.service_type_id===t.id).length})
+              </button>
+            ))}
+          </div>
+          {filtered.length===0&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570",textAlign:"center",padding:20}}>Aucun prestataire{filterType!=="all"?" pour ce type":""}.</p>}
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {filtered.map(p=>(
+              <div key={p.id} className="card fadeUp" style={{padding:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
+                      <span style={{fontSize:16}}>{tIcon(p.service_type_id)}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8"}}>{p.nom}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA",background:"#1A1A26",padding:"2px 8px",borderRadius:10}}>{tLabel(p.service_type_id)}</span>
+                    </div>
+                    <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA"}}>✉ {p.email}</span>
+                      {p.telephone&&<span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA"}}>📞 {p.telephone}</span>}
+                    </div>
+                    {p.description&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570",marginTop:4}}>{p.description}</p>}
+                    {(p.portfolio_urls||[]).length>0&&(
+                      <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {p.portfolio_urls.map((url,i)=>(
+                          <a key={i} href={url} target="_blank" rel="noreferrer" style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button className="btn btn-ghost" style={{padding:"5px 10px",fontSize:11}} onClick={()=>openEdit(p)}>✏</button>
+                    <button className="btn btn-red" style={{padding:"5px 10px",fontSize:11}} onClick={()=>deletePrestataire(p.id)}>✕</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {tab==="missions"&&(
+        <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:12}}>
+          {missions.length===0&&(
+            <div className="card" style={{padding:30,textAlign:"center"}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570"}}>Aucune mission envoyée.</p>
+              <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570",marginTop:6}}>Envoyez des missions depuis l'onglet "Prestataires" d'une fiche projet.</p>
+            </div>
+          )}
+          {missions.map(m=>{
+            const prest=prestataires.find(p=>p.id===m.prestataire_id);
+            const proj=projects.find(p=>p.id===m.project_id);
+            const respUrl=`${window.location.origin}${window.location.pathname}?prestataire=${m.token}`;
+            return(
+              <div key={m.id} className="card fadeUp" style={{padding:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
+                  <div style={{flex:1}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8"}}>{prest?.nom||"Prestataire inconnu"}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>→ {proj?.title||"Projet inconnu"}</span>
+                      <span style={{fontFamily:"'DM Sans'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
+                    </div>
+                    {m.brief_extrait&&<p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#555570",background:"#0E0E18",padding:"8px 12px",borderRadius:6,whiteSpace:"pre-line",marginBottom:8}}>{m.brief_extrait}</p>}
+                    {m.message_dispo&&(
+                      <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:8,padding:"10px 14px",marginBottom:8}}>
+                        <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#4ECDC4",fontWeight:600,marginBottom:4}}>Réponse reçue</p>
+                        <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8"}}>{m.message_dispo}</p>
+                      </div>
+                    )}
+                    <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>Envoyé le {m.created_at?new Date(m.created_at).toLocaleDateString("fr-FR"):"-"}{m.responded_at&&` · Réponse le ${new Date(m.responded_at).toLocaleDateString("fr-FR")}`}</p>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexDirection:"column",alignItems:"flex-end"}}>
+                    {m.statut==="envoyé"&&(
+                      <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>{navigator.clipboard.writeText(respUrl);onNotif("Lien copié !");}}>🔗 Copier lien réponse</button>
+                    )}
+                    {m.statut==="répondu"&&(
+                      <>
+                        <button className="btn btn-green" style={{fontSize:11}} onClick={async()=>{await supabase.from("prestataire_missions").update({statut:"accepté"}).eq("id",m.id);setMissions(prev=>prev.map(x=>x.id===m.id?{...x,statut:"accepté"}:x));onNotif("Mission acceptée");}}>✓ Accepter</button>
+                        <button className="btn btn-red" style={{fontSize:11}} onClick={async()=>{await supabase.from("prestataire_missions").update({statut:"refusé"}).eq("id",m.id);setMissions(prev=>prev.map(x=>x.id===m.id?{...x,statut:"refusé"}:x));onNotif("Mission refusée");}}>✕ Refuser</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROJECT PRESTATAIRES PANEL (onglet dans fiche projet admin)
+// ─────────────────────────────────────────────────────────────────────────────
+function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,setMissions,onNotif}){
+  const[sending,setSending]=useState(null);
+  const[copied,setCopied]=useState(null);
+
+  const briefServices=project.brief?.services||[];
+  const matchingTypes=serviceTypes.filter(t=>briefServices.includes(t.id));
+  const missionsForProject=missions.filter(m=>m.project_id===project.id);
+
+  const buildExtrait=(prest,typeLabel)=>{
+    const b=project.brief||{};
+    return [
+      `Projet : ${project.title}`,
+      `Service demandé : ${typeLabel}`,
+      b.objective?`Objectif : ${b.objective}`:"",
+      b.target?`Cible : ${b.target}`:"",
+      project.shootDate?`Date souhaitée : ${project.shootDate}`:"",
+      b.notes?`Informations : ${b.notes}`:"",
+      `\nLien pour répondre à cette mission : [votre lien personnalisé]`,
+    ].filter(Boolean).join("\n");
+  };
+
+  const sendMission=async(prest,type)=>{
+    const existing=missionsForProject.find(m=>m.prestataire_id===prest.id);
+    if(existing){onNotif("Mission déjà envoyée à ce prestataire");return;}
+    setSending(prest.id);
+    const extrait=buildExtrait(prest,type.label);
+    const{data}=await supabase.from("prestataire_missions").insert({
+      prestataire_id:prest.id,
+      project_id:project.id,
+      brief_extrait:extrait,
+      statut:"envoyé",
+    }).select().single();
+    if(data){
+      const fullExtrait=extrait.replace("[votre lien personnalisé]",`${window.location.origin}${window.location.pathname}?prestataire=${data.token}`);
+      await supabase.from("prestataire_missions").update({brief_extrait:fullExtrait}).eq("id",data.id);
+      setMissions(prev=>[{...data,brief_extrait:fullExtrait},...prev]);
+      const mailBody=encodeURIComponent(`Bonjour ${prest.nom},\n\nNous avons un projet qui pourrait vous intéresser.\n\n${fullExtrait}\n\nCordialement,\nThird-One Studio`);
+      const mailSubject=encodeURIComponent(`Mission prestataire — ${project.title}`);
+      window.open(`mailto:${prest.email}?subject=${mailSubject}&body=${mailBody}`);
+      onNotif("Mission créée — email pré-rempli ouvert !");
+    }
+    setSending(null);
+  };
+
+  const copyLink=async(token)=>{
+    const url=`${window.location.origin}${window.location.pathname}?prestataire=${token}`;
+    await navigator.clipboard.writeText(url);
+    setCopied(token);
+    setTimeout(()=>setCopied(null),2000);
+    onNotif("Lien copié !");
+  };
+
+  const statColor=s=>({envoyé:"#E8C547",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF6B6B"}[s]||"#8888AA");
+
+  if(briefServices.length===0)return(
+    <div className="card" style={{padding:24,textAlign:"center"}}>
+      <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570"}}>Le client n'a pas encore coché de services prestataires dans son brief.</p>
+    </div>
+  );
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:14}}>
+      {matchingTypes.length===0&&(
+        <div className="card" style={{padding:18}}>
+          <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA"}}>Services cochés par le client mais aucun type correspondant dans l'annuaire. Vérifiez les types de services.</p>
+        </div>
+      )}
+      {matchingTypes.map(type=>{
+        const prests=prestataires.filter(p=>p.service_type_id===type.id);
+        return(
+          <div key={type.id} className="card" style={{padding:16}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+              <span style={{fontSize:20}}>{type.icone}</span>
+              <span style={{fontFamily:"'Bebas Neue'",fontSize:17,color:"#F0EEE8",letterSpacing:"0.05em"}}>{type.label}</span>
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{prests.length} prestataire(s) disponible(s)</span>
+            </div>
+            {prests.length===0&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>Aucun prestataire pour ce type — ajoutez-en dans l'espace Prestataires.</p>}
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {prests.map(p=>{
+                const mission=missionsForProject.find(m=>m.prestataire_id===p.id);
+                return(
+                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#0E0E18",borderRadius:8,border:`1px solid ${mission?"#E8C54740":"#2A2A3E"}`,flexWrap:"wrap"}}>
+                    <div style={{flex:1}}>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:13,fontWeight:600,color:"#F0EEE8"}}>{p.nom}</p>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>{p.email}{p.telephone?` · ${p.telephone}`:""}</p>
+                    </div>
+                    {mission?(
+                      <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                        <span style={{fontFamily:"'DM Sans'",fontSize:11,fontWeight:600,color:statColor(mission.statut),background:statColor(mission.statut)+"22",border:`1px solid ${statColor(mission.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{mission.statut}</span>
+                        {mission.statut==="envoyé"&&(
+                          <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>copyLink(mission.token)}>{copied===mission.token?"✓ Copié !":"🔗 Lien"}</button>
+                        )}
+                      </div>
+                    ):(
+                      <button className="btn btn-primary" style={{fontSize:11,padding:"6px 12px"}} disabled={sending===p.id} onClick={()=>sendMission(p,type)}>
+                        {sending===p.id?"Envoi...":"✉ Envoyer mission"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+      {missionsForProject.length>0&&(
+        <div className="card" style={{padding:16}}>
+          <SH icon="📬" title="HISTORIQUE DES MISSIONS"/>
+          <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:8}}>
+            {missionsForProject.map(m=>{
+              const prest=prestataires.find(p=>p.id===m.prestataire_id);
+              return(
+                <div key={m.id} style={{padding:"10px 14px",background:"#0E0E18",borderRadius:8,border:"1px solid #2A2A3E"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6}}>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8"}}>{prest?.nom||"—"}</span>
+                    <span style={{fontFamily:"'DM Sans'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",padding:"2px 8px",borderRadius:10}}>{m.statut}</span>
+                  </div>
+                  {m.message_dispo&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:4,whiteSpace:"pre-line"}}>{m.message_dispo}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE RÉPONSE PRESTATAIRE (token public)
+// ─────────────────────────────────────────────────────────────────────────────
+function PrestaireResponsePage({token}){
+  const[mission,setMission]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[submitting,setSubmitting]=useState(false);
+  const[done,setDone]=useState(false);
+  const[message,setMessage]=useState("");
+  const[portfolioUrls,setPortfolioUrls]=useState("");
+  const[errMsg,setErrMsg]=useState("");
+
+  useEffect(()=>{
+    supabase.from("prestataire_missions").select("*, prestataires(*), projects(id,title)").eq("token",token).single()
+      .then(({data,error})=>{
+        if(error||!data)setErrMsg("Mission introuvable ou lien expiré.");
+        else setMission(data);
+        setLoading(false);
+      });
+  },[token]);
+
+  const submit=async()=>{
+    if(!message.trim())return;
+    setSubmitting(true);
+    const urls=portfolioUrls.split("\n").map(u=>u.trim()).filter(Boolean);
+    const fullMsg=`${message}${urls.length>0?`\n\n📎 Portfolio / Photos :\n${urls.join("\n")}`:""}`;
+    await supabase.from("prestataire_missions").update({statut:"répondu",message_dispo:message,responded_at:new Date().toISOString()}).eq("id",mission.id);
+    if(mission.project_id){
+      const nom=mission.prestataires?.nom||"Prestataire";
+      await supabase.from("messages").insert({project_id:mission.project_id,author:`${nom}`,content:`🤝 Réponse de ${nom}\n\n${fullMsg}`,role:"prestataire"});
+    }
+    setDone(true);setSubmitting(false);
+  };
+
+  if(loading)return<div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{color:"#C9A84C",fontFamily:"'Bebas Neue'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
+  if(errMsg)return<div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><p style={{color:"#FF6B6B",fontFamily:"'Bebas Neue'",fontSize:20}}>LIEN INVALIDE</p><p style={{color:"#555570",fontFamily:"'DM Sans'",fontSize:13}}>{errMsg}</p></div>;
+  if(done)return(
+    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <FontLoader/>
+      <span style={{fontSize:48}}>✅</span>
+      <p style={{color:"#4ECDC4",fontFamily:"'Bebas Neue'",fontSize:22,letterSpacing:"0.1em"}}>RÉPONSE ENVOYÉE</p>
+      <p style={{color:"#8888AA",fontFamily:"'DM Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Merci ! L'équipe Third-One Studio a bien reçu votre disponibilité. Ils vous recontacteront directement.</p>
+    </div>
+  );
+
+  return(
+    <>
+      <FontLoader/>
+      <div style={{minHeight:"100vh",background:"#08080F",color:"#F0EEE8",padding:"32px 16px"}}>
+        <div style={{maxWidth:580,margin:"0 auto"}}>
+          <div style={{textAlign:"center",marginBottom:32}}>
+            <p style={{fontFamily:"'Bebas Neue'",fontSize:26,color:"#E8C547",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</p>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:4}}>Mission prestataire</p>
+          </div>
+          <div style={{background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:24,marginBottom:16}}>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Projet</p>
+            <p style={{fontFamily:"'DM Sans'",fontSize:15,fontWeight:600,color:"#F0EEE8"}}>{mission.projects?.title||"—"}</p>
+            {mission.prestataires&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:4}}>Demande pour : <span style={{color:"#E8C547"}}>{mission.prestataires.nom}</span></p>}
+          </div>
+          {mission.brief_extrait&&(
+            <div style={{background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:24,marginBottom:16}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Brief du projet</p>
+              <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",lineHeight:1.7,whiteSpace:"pre-line"}}>{mission.brief_extrait}</p>
+            </div>
+          )}
+          {mission.statut!=="envoyé"?(
+            <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:10,padding:24,textAlign:"center"}}>
+              <p style={{fontFamily:"'DM Sans'",color:"#4ECDC4",fontSize:14,fontWeight:600}}>Vous avez déjà répondu à cette mission.</p>
+              <p style={{fontFamily:"'DM Sans'",color:"#8888AA",fontSize:12,marginTop:6}}>Statut : {mission.statut}</p>
+            </div>
+          ):(
+            <div style={{background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:24}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8",marginBottom:16}}>Votre réponse</p>
+              <div style={{marginBottom:14}}>
+                <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:6}}>Message de disponibilité *</label>
+                <textarea style={{width:"100%",background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:6,padding:"10px 14px",color:"#F0EEE8",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none",resize:"none",minHeight:100,boxSizing:"border-box"}}
+                  placeholder="Ex : Bonjour, je suis disponible. Mon tarif pour ce type de prestation est..." value={message} onChange={e=>setMessage(e.target.value)}/>
+              </div>
+              <div style={{marginBottom:20}}>
+                <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:6}}>Photos / Portfolio (un lien par ligne, optionnel)</label>
+                <textarea style={{width:"100%",background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:6,padding:"10px 14px",color:"#F0EEE8",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none",resize:"none",boxSizing:"border-box"}}
+                  rows={3} placeholder={"https://instagram.com/votre-compte\nhttps://drive.google.com/...\nhttps://votre-site.com/galerie"} value={portfolioUrls} onChange={e=>setPortfolioUrls(e.target.value)}/>
+              </div>
+              <button style={{width:"100%",background:"#E8C547",color:"#08080F",border:"none",borderRadius:6,padding:"12px",fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:600,cursor:"pointer",opacity:submitting||!message.trim()?0.5:1,transition:"opacity .2s"}}
+                disabled={submitting||!message.trim()} onClick={submit}>
+                {submitting?"Envoi en cours...":"✓ Envoyer ma réponse"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -4088,6 +4559,9 @@ function AppMain() {
   const[assignments,setAssignments]=useState([]);
   const[planningSlots,setPlanningSlots]=useState([]);
   const[meetingNotes,setMeetingNotes]=useState([]);
+  const[serviceTypes,setServiceTypes]=useState([]);
+  const[prestataires,setPrestataires]=useState([]);
+  const[prestataireMissions,setPrestataireMissions]=useState([]);
   const[notif,setNotif]=useState(null);
   const[dataLoading,setDataLoading]=useState(true);
   const[previewClientId,setPreviewClientId]=useState(null);
@@ -4118,17 +4592,23 @@ function AppMain() {
           supabase.from("project_assignments").select("*"),
           supabase.from("planning_slots").select("*").order("date"),
           supabase.from("meeting_notes").select("*").order("date",{ascending:false}),
+          supabase.from("service_types").select("*").order("label"),
+          supabase.from("prestataires").select("*").order("nom"),
+          supabase.from("prestataire_missions").select("*").order("created_at",{ascending:false}),
         );
       }
       const results = await Promise.all(queries);
-      const projectsData = results[0]?.data;
-      const postsData    = results[1]?.data;
-      const bookingsData = results[2]?.data;
-      const profilesData = isAdminUser ? results[3]?.data : null;
-      const membersData  = isAdminUser ? results[4]?.data : null;
-      const assignData   = isAdminUser ? results[5]?.data : null;
-      const slotsData    = isAdminUser ? results[6]?.data : null;
-      const notesData    = isAdminUser ? results[7]?.data : null;
+      const projectsData  = results[0]?.data;
+      const postsData     = results[1]?.data;
+      const bookingsData  = results[2]?.data;
+      const profilesData  = isAdminUser ? results[3]?.data : null;
+      const membersData   = isAdminUser ? results[4]?.data : null;
+      const assignData    = isAdminUser ? results[5]?.data : null;
+      const slotsData     = isAdminUser ? results[6]?.data : null;
+      const notesData     = isAdminUser ? results[7]?.data : null;
+      const stData        = isAdminUser ? results[8]?.data : null;
+      const prestData     = isAdminUser ? results[9]?.data : null;
+      const missionsData  = isAdminUser ? results[10]?.data : null;
 
       if(projectsData && projectsData.length > 0) {
         const formatted = projectsData.map(p => ({
@@ -4179,6 +4659,9 @@ function AppMain() {
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
       if(notesData) setMeetingNotes(notesData.map(n=>({id:n.id,projectId:n.project_id,date:n.date,participants:n.participants||"",content:n.content||"",decisions:n.decisions||""})));
+      if(stData) setServiceTypes(stData.map(t=>({id:t.id,label:t.label,icone:t.icone||"🔧",actif:t.actif!==false})));
+      if(prestData) setPrestataires(prestData.map(p=>({id:p.id,nom:p.nom,email:p.email,telephone:p.telephone||"",description:p.description||"",portfolio_urls:p.portfolio_urls||[],service_type_id:p.service_type_id,actif:p.actif!==false})));
+      if(missionsData) setPrestataireMissions(missionsData.map(m=>({id:m.id,prestataire_id:m.prestataire_id,project_id:m.project_id,brief_extrait:m.brief_extrait||"",statut:m.statut||"envoyé",message_dispo:m.message_dispo||"",token:m.token,responded_at:m.responded_at,created_at:m.created_at})));
       }catch(e){ console.error("loadData error",e); }
       finally{ setDataLoading(false); }
     };
@@ -4269,6 +4752,7 @@ function AppMain() {
     {k:"cm",          l:"Social Media",  icon:"📲"},
     {k:"tarifs",      l:"Tarifs",        icon:"💰"},
     {k:"comptes",     l:"Comptes",       icon:"👥"},
+    {k:"prestataires",l:"Prestataires",  icon:"🤝"},
     {k:"shortone",    l:"Shortone",      icon:"◆"},
   ];
 
@@ -4382,7 +4866,7 @@ function AppMain() {
               <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection} bookings={bookings} onGoToCalendar={()=>setProdSection("calendrier")} teamMembers={teamMembers}/>
             )}
             {appView==="prod"&&prodSection==="projets"&&selProject&&(
-              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")}/>
+              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions}/>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
               <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif} projects={projects} onGoToProject={(id)=>{setSelectedProjectId(id);setProdSection("projets");}}/>
@@ -4401,6 +4885,9 @@ function AppMain() {
             )}
             {appView==="prod"&&prodSection==="comptes"&&(
               <ClientsManager clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient}/>
+            )}
+            {appView==="prod"&&prodSection==="prestataires"&&(
+              <PrestatairesModule serviceTypes={serviceTypes} setServiceTypes={setServiceTypes} prestataires={prestataires} setPrestataires={setPrestataires} missions={prestataireMissions} setMissions={setPrestataireMissions} projects={projects} onNotif={showNotif}/>
             )}
             {appView==="prod"&&prodSection==="shortone"&&(
               <ShortoneModule
@@ -4432,7 +4919,7 @@ function AppMain() {
             {/* CLIENT SECTIONS */}
             {appView==="client"&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection}/>}
             {appView==="client"&&clientSection==="projets"&&clientSelProject&&(
-              <ClientProjectView key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing}/>
+              <ClientProjectView key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing} serviceTypes={serviceTypes}/>
             )}
             {appView==="client"&&clientSection==="calendrier"&&(
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -4477,6 +4964,8 @@ function AppMain() {
   );
 }
 export default function App(){
-  if(new URLSearchParams(window.location.search).has("guest"))return <GuestView/>;
+  const params=new URLSearchParams(window.location.search);
+  if(params.has("guest"))return <GuestView/>;
+  if(params.has("prestataire"))return <PrestaireResponsePage token={params.get("prestataire")}/>;
   return <AppMain/>;
 }
