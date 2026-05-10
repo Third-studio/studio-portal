@@ -384,13 +384,45 @@ function Timeline({status}){
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED: COMMENT THREAD
 // ─────────────────────────────────────────────────────────────────────────────
+function PrestaireProposalCard({content}){
+  let data;
+  try{ data=JSON.parse(content); }catch{ return <span style={{whiteSpace:"pre-line",fontFamily:"'DM Sans',sans-serif",fontSize:13}}>{content}</span>; }
+  if(data.type!=="prestataire_proposal") return <span style={{whiteSpace:"pre-line",fontFamily:"'DM Sans',sans-serif",fontSize:13}}>{content}</span>;
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      {(data.prix||data.description)&&(
+        <div style={{background:"#0E0E18",borderRadius:8,padding:"12px 14px",border:"1px solid #4ECDC430"}}>
+          {data.prix&&(
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:data.description?6:0,flexWrap:"wrap"}}>
+              <span style={{fontFamily:"'Bebas Neue'",fontSize:22,color:"#4ECDC4",letterSpacing:"0.04em"}}>{Number(data.prix).toLocaleString("fr-FR")} €</span>
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#8888AA"}}>— proposition</span>
+              {data.non_concurrence&&<span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",marginLeft:"auto"}}>✓ Clause non-concurrence acceptée</span>}
+            </div>
+          )}
+          {data.description&&<p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",fontStyle:"italic",lineHeight:1.5}}>{data.description}</p>}
+        </div>
+      )}
+      {data.message&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#F0EEE8",lineHeight:1.6,whiteSpace:"pre-line"}}>{data.message}</p>}
+      {!data.prix&&data.non_concurrence&&<span style={{fontFamily:"'DM Sans'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",alignSelf:"flex-start"}}>✓ Clause non-concurrence acceptée</span>}
+      {(data.portfolio_urls||[]).length>0&&(
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+          <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>Portfolio :</span>
+          {data.portfolio_urls.map((url,i)=>(
+            <a key={i} href={url} target="_blank" rel="noreferrer" style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function CommentThread({comments,onAdd,role="prod"}){
   const[text,setText]=useState("");
   const endRef=useRef(null);
   useEffect(()=>{endRef.current?.scrollIntoView({behavior:"smooth"});},[comments]);
   return(
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:260,overflowY:"auto",padding:"2px 0"}}>
+      <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:320,overflowY:"auto",padding:"2px 0"}}>
         {comments.length===0&&<p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570",textAlign:"center",padding:"20px 0"}}>Aucun message.</p>}
         {comments.map(c=>(
           <div key={c.id} style={{display:"flex",flexDirection:"column",alignItems:c.role==="client"?"flex-end":"flex-start",gap:2}}>
@@ -398,7 +430,9 @@ function CommentThread({comments,onAdd,role="prod"}){
               {c.role==="prestataire"&&<span style={{color:"#4ECDC4",marginRight:4}}>🤝</span>}
               {c.author} · {fmtS(c.date)}
             </span>
-            <div className={`comment-bubble comment-${c.role==="client"?"client":c.role==="prestataire"?"prestataire":"prod"}`}>{c.text}</div>
+            <div className={`comment-bubble comment-${c.role==="client"?"client":c.role==="prestataire"?"prestataire":"prod"}`}>
+              {c.role==="prestataire"?<PrestaireProposalCard content={c.text}/>:c.text}
+            </div>
           </div>
         ))}
         <div ref={endRef}/>
@@ -4466,6 +4500,9 @@ function PartenaireView({user,userProfile,onLogout}){
   const[loading,setLoading]=useState(true);
   const[respondingId,setRespondingId]=useState(null);
   const[replyMsg,setReplyMsg]=useState("");
+  const[replyPrix,setReplyPrix]=useState("");
+  const[replyDesc,setReplyDesc]=useState("");
+  const[nonConcurrence,setNonConcurrence]=useState(false);
   const[portfolioInput,setPortfolioInput]=useState("");
   const[savingPortfolio,setSavingPortfolio]=useState(false);
   const[notif,setNotif]=useState(null);
@@ -4490,14 +4527,17 @@ function PartenaireView({user,userProfile,onLogout}){
 
   const respond=async(mission)=>{
     if(!replyMsg.trim())return;
-    const urls=portfolioInput.split("\n").map(u=>u.trim()).filter(Boolean);
-    const fullMsg=`${replyMsg}${urls.length>0?`\n\n📎 Portfolio :\n${urls.join("\n")}`:""}`;
-    await supabase.from("prestataire_missions").update({statut:"répondu",message_dispo:replyMsg,responded_at:new Date().toISOString()}).eq("id",mission.id);
+    if(!nonConcurrence){showNotif("Veuillez accepter la clause de non-concurrence");return;}
+    const urls=(prestataire.portfolio_urls||[]);
+    const proposal={type:"prestataire_proposal",message:replyMsg,prix:replyPrix?Number(replyPrix):null,description:replyDesc,portfolio_urls:urls,non_concurrence:true};
+    const summary=[replyPrix?`Proposition : ${replyPrix} €`:"",replyDesc,replyMsg].filter(Boolean).join("\n");
+    await supabase.from("prestataire_missions").update({statut:"répondu",message_dispo:summary,responded_at:new Date().toISOString()}).eq("id",mission.id);
     if(mission.project_id){
-      await supabase.from("messages").insert({project_id:mission.project_id,author:prestataire.nom,content:`🤝 Réponse de ${prestataire.nom}\n\n${fullMsg}`,role:"prestataire"});
+      await supabase.from("messages").insert({project_id:mission.project_id,author:prestataire.nom,content:JSON.stringify(proposal),role:"prestataire"});
     }
-    setMissions(prev=>prev.map(m=>m.id===mission.id?{...m,statut:"répondu",message_dispo:replyMsg}:m));
-    setReplyMsg("");setRespondingId(null);showNotif("Réponse envoyée !");
+    setMissions(prev=>prev.map(m=>m.id===mission.id?{...m,statut:"répondu",message_dispo:summary}:m));
+    setReplyMsg("");setReplyPrix("");setReplyDesc("");setNonConcurrence(false);setRespondingId(null);
+    showNotif("Proposition envoyée !");
   };
 
   const savePortfolio=async()=>{
@@ -4573,12 +4613,33 @@ function PartenaireView({user,userProfile,onLogout}){
                     </div>
                   )}
                   {respondingId===m.id?(
-                    <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                      <textarea className="input" rows={4} placeholder="Votre disponibilité, tarif, conditions particulières..." value={replyMsg} onChange={e=>setReplyMsg(e.target.value)}/>
-                      <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>Vos liens portfolio seront automatiquement joints depuis la section ci-dessous.</p>
+                    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                        <div>
+                          <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:4}}>Prix proposé (€ HT)</label>
+                          <input className="input" type="number" min="0" placeholder="Ex: 800" value={replyPrix} onChange={e=>setReplyPrix(e.target.value)}/>
+                        </div>
+                        <div>
+                          <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:4}}>Ce qui est inclus</label>
+                          <input className="input" placeholder="Ex: Demi-journée, 2 photos HD..." value={replyDesc} onChange={e=>setReplyDesc(e.target.value)}/>
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:4}}>Message *</label>
+                        <textarea className="input" rows={3} placeholder="Votre disponibilité, conditions particulières..." value={replyMsg} onChange={e=>setReplyMsg(e.target.value)}/>
+                      </div>
+                      <p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#555570"}}>Vos liens portfolio seront automatiquement joints à la proposition.</p>
+                      <div style={{background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:8,padding:"12px 14px"}}>
+                        <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",userSelect:"none"}}>
+                          <input type="checkbox" checked={nonConcurrence} onChange={e=>setNonConcurrence(e.target.checked)} style={{marginTop:3,flexShrink:0,accentColor:"#FF9F43"}}/>
+                          <span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8",lineHeight:1.5}}>
+                            <strong style={{color:"#FF9F43"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
+                          </span>
+                        </label>
+                      </div>
                       <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-                        <button className="btn btn-ghost" onClick={()=>{setRespondingId(null);setReplyMsg("");}}>Annuler</button>
-                        <button className="btn btn-primary" disabled={!replyMsg.trim()} onClick={()=>respond(m)}>✓ Envoyer ma réponse</button>
+                        <button className="btn btn-ghost" onClick={()=>{setRespondingId(null);setReplyMsg("");setReplyPrix("");setReplyDesc("");setNonConcurrence(false);}}>Annuler</button>
+                        <button className="btn btn-primary" disabled={!replyMsg.trim()||!nonConcurrence} onClick={()=>respond(m)}>✓ Envoyer ma proposition</button>
                       </div>
                     </div>
                   ):(
@@ -4643,7 +4704,10 @@ function PrestaireResponsePage({token}){
   const[submitting,setSubmitting]=useState(false);
   const[done,setDone]=useState(false);
   const[message,setMessage]=useState("");
+  const[prix,setPrix]=useState("");
+  const[description,setDescription]=useState("");
   const[portfolioUrls,setPortfolioUrls]=useState("");
+  const[nonConcurrence,setNonConcurrence]=useState(false);
   const[errMsg,setErrMsg]=useState("");
 
   useEffect(()=>{
@@ -4657,13 +4721,15 @@ function PrestaireResponsePage({token}){
 
   const submit=async()=>{
     if(!message.trim())return;
+    if(!nonConcurrence)return;
     setSubmitting(true);
     const urls=portfolioUrls.split("\n").map(u=>u.trim()).filter(Boolean);
-    const fullMsg=`${message}${urls.length>0?`\n\n📎 Portfolio / Photos :\n${urls.join("\n")}`:""}`;
-    await supabase.from("prestataire_missions").update({statut:"répondu",message_dispo:message,responded_at:new Date().toISOString()}).eq("id",mission.id);
+    const nom=mission.prestataires?.nom||"Prestataire";
+    const proposal={type:"prestataire_proposal",message,prix:prix?Number(prix):null,description,portfolio_urls:urls,non_concurrence:true};
+    const summary=[prix?`Proposition : ${prix} €`:"",description,message].filter(Boolean).join("\n");
+    await supabase.from("prestataire_missions").update({statut:"répondu",message_dispo:summary,responded_at:new Date().toISOString()}).eq("id",mission.id);
     if(mission.project_id){
-      const nom=mission.prestataires?.nom||"Prestataire";
-      await supabase.from("messages").insert({project_id:mission.project_id,author:`${nom}`,content:`🤝 Réponse de ${nom}\n\n${fullMsg}`,role:"prestataire"});
+      await supabase.from("messages").insert({project_id:mission.project_id,author:nom,content:JSON.stringify(proposal),role:"prestataire"});
     }
     setDone(true);setSubmitting(false);
   };
@@ -4705,22 +4771,43 @@ function PrestaireResponsePage({token}){
               <p style={{fontFamily:"'DM Sans'",color:"#8888AA",fontSize:12,marginTop:6}}>Statut : {mission.statut}</p>
             </div>
           ):(
-            <div style={{background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:24}}>
-              <p style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8",marginBottom:16}}>Votre réponse</p>
-              <div style={{marginBottom:14}}>
-                <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:6}}>Message de disponibilité *</label>
-                <textarea style={{width:"100%",background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:6,padding:"10px 14px",color:"#F0EEE8",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none",resize:"none",minHeight:100,boxSizing:"border-box"}}
-                  placeholder="Ex : Bonjour, je suis disponible. Mon tarif pour ce type de prestation est..." value={message} onChange={e=>setMessage(e.target.value)}/>
+            <div style={{background:"#12121A",border:"1px solid #2A2A3E",borderRadius:10,padding:24,display:"flex",flexDirection:"column",gap:14}}>
+              <p style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8"}}>Votre proposition</p>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div>
+                  <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:5}}>Prix proposé (€ HT)</label>
+                  <input style={{width:"100%",background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:6,padding:"10px 14px",color:"#F0EEE8",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none",boxSizing:"border-box"}}
+                    type="number" min="0" placeholder="Ex: 800" value={prix} onChange={e=>setPrix(e.target.value)}/>
+                </div>
+                <div>
+                  <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:5}}>Ce qui est inclus</label>
+                  <input style={{width:"100%",background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:6,padding:"10px 14px",color:"#F0EEE8",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none",boxSizing:"border-box"}}
+                    placeholder="Ex: Demi-journée, 2 photos HD..." value={description} onChange={e=>setDescription(e.target.value)}/>
+                </div>
               </div>
-              <div style={{marginBottom:20}}>
-                <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:6}}>Photos / Portfolio (un lien par ligne, optionnel)</label>
+              <div>
+                <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:5}}>Message *</label>
+                <textarea style={{width:"100%",background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:6,padding:"10px 14px",color:"#F0EEE8",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none",resize:"none",minHeight:90,boxSizing:"border-box"}}
+                  placeholder="Votre disponibilité, conditions particulières..." value={message} onChange={e=>setMessage(e.target.value)}/>
+              </div>
+              <div>
+                <label style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",display:"block",marginBottom:5}}>Photos / Portfolio (un lien par ligne)</label>
                 <textarea style={{width:"100%",background:"#0E0E18",border:"1px solid #2A2A3E",borderRadius:6,padding:"10px 14px",color:"#F0EEE8",fontFamily:"'DM Sans',sans-serif",fontSize:13,outline:"none",resize:"none",boxSizing:"border-box"}}
                   rows={3} placeholder={"https://instagram.com/votre-compte\nhttps://drive.google.com/...\nhttps://votre-site.com/galerie"} value={portfolioUrls} onChange={e=>setPortfolioUrls(e.target.value)}/>
               </div>
-              <button style={{width:"100%",background:"#E8C547",color:"#08080F",border:"none",borderRadius:6,padding:"12px",fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:600,cursor:"pointer",opacity:submitting||!message.trim()?0.5:1,transition:"opacity .2s"}}
-                disabled={submitting||!message.trim()} onClick={submit}>
-                {submitting?"Envoi en cours...":"✓ Envoyer ma réponse"}
+              <div style={{background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:8,padding:"12px 14px"}}>
+                <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",userSelect:"none"}}>
+                  <input type="checkbox" checked={nonConcurrence} onChange={e=>setNonConcurrence(e.target.checked)} style={{marginTop:3,flexShrink:0,accentColor:"#FF9F43"}}/>
+                  <span style={{fontFamily:"'DM Sans'",fontSize:12,color:"#F0EEE8",lineHeight:1.5}}>
+                    <strong style={{color:"#FF9F43"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
+                  </span>
+                </label>
+              </div>
+              <button style={{width:"100%",background:nonConcurrence&&message.trim()?"#E8C547":"#2A2A3E",color:nonConcurrence&&message.trim()?"#08080F":"#555570",border:"none",borderRadius:6,padding:"12px",fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:600,cursor:nonConcurrence&&message.trim()?"pointer":"not-allowed",transition:"all .2s"}}
+                disabled={submitting||!message.trim()||!nonConcurrence} onClick={submit}>
+                {submitting?"Envoi en cours...":"✓ Envoyer ma proposition"}
               </button>
+              {!nonConcurrence&&<p style={{fontFamily:"'DM Sans'",fontSize:11,color:"#FF9F43",textAlign:"center",marginTop:-8}}>Veuillez accepter la clause de non-concurrence pour continuer.</p>}
             </div>
           )}
         </div>
