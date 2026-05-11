@@ -4914,6 +4914,114 @@ function PrestaireResponsePage({token}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+function ComptesSection({clients,setClients,onNotif,onPreviewClient}){
+  const[tab,setTab]=useState("clients");
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{display:"flex",gap:3,background:"#0E0E18",padding:4,borderRadius:8,width:"fit-content",border:"1px solid #2A2A3E"}}>
+        {[{k:"clients",l:"👥 Clients"},{k:"acces",l:"🔐 Accès équipe"}].map(t=>(
+          <button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setTab(t.k)}>{t.l}</button>
+        ))}
+      </div>
+      {tab==="clients"&&<ClientsManager clients={clients} setClients={setClients} onNotif={onNotif} onPreviewClient={onPreviewClient}/>}
+      {tab==="acces"&&<AccessManager onNotif={onNotif}/>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+function AccessManager({onNotif}){
+  const[collabs,setCollabs]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[showAdd,setShowAdd]=useState(false);
+  const[nom,setNom]=useState("");
+  const[email,setEmail]=useState("");
+  const[password,setPassword]=useState("");
+  const[creating,setCreating]=useState(false);
+
+  useEffect(()=>{
+    supabase.from("profiles").select("*").eq("role","collaborateur")
+      .then(({data})=>{setCollabs(data||[]);setLoading(false);});
+  },[]);
+
+  const create=async()=>{
+    if(!nom.trim()||!email.trim()||password.length<6)return;
+    setCreating(true);
+    const{data,error}=await supabase.auth.signUp({email,password,options:{data:{nom}}});
+    if(error||!data.user){onNotif("Erreur : "+(error?.message||"Compte déjà existant"));setCreating(false);return;}
+    await supabase.from("profiles").upsert({id:data.user.id,email,nom,role:"collaborateur"});
+    setCollabs(prev=>[...prev,{id:data.user.id,email,nom,role:"collaborateur"}]);
+    setNom("");setEmail("");setPassword("");setShowAdd(false);
+    onNotif("Accès collaborateur créé !");
+    setCreating(false);
+  };
+
+  const revoke=async(c)=>{
+    await supabase.from("profiles").update({role:"client",is_active:false}).eq("id",c.id);
+    setCollabs(prev=>prev.filter(x=>x.id!==c.id));
+    onNotif("Accès révoqué");
+  };
+
+  const MODULES=["Dashboard","Projets","Calendrier","Organisation","Planning","Social Media","Prestataires"];
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:16}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+        <div>
+          <SH icon="🔐" title="ACCÈS COLLABORATEURS"/>
+          <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:-8,marginBottom:4}}>Accès complet au back-office sauf Tarifs et Comptes.</p>
+        </div>
+        <button className="btn btn-primary" style={{fontSize:12}} onClick={()=>setShowAdd(v=>!v)}>{showAdd?"Annuler":"+ Ajouter un accès"}</button>
+      </div>
+
+      {showAdd&&(
+        <div className="card" style={{padding:20,display:"flex",flexDirection:"column",gap:12}}>
+          <p style={{fontFamily:"'Bebas Neue'",fontSize:16,color:"#E8C547",letterSpacing:"0.05em"}}>NOUVEL ACCÈS COLLABORATEUR</p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+            <div><Lbl>Nom</Lbl><input className="input" placeholder="Ex : Lucas Martin" value={nom} onChange={e=>setNom(e.target.value)}/></div>
+            <div><Lbl>Email</Lbl><input className="input" type="email" placeholder="lucas@thirdone.studio" value={email} onChange={e=>setEmail(e.target.value)}/></div>
+          </div>
+          <div><Lbl>Mot de passe initial</Lbl><input className="input" type="password" placeholder="Minimum 6 caractères" value={password} onChange={e=>setPassword(e.target.value)}/></div>
+          <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:8,padding:"12px 14px"}}>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#4ECDC4",fontWeight:600,marginBottom:8}}>Modules accessibles</p>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {MODULES.map(m=><span key={m} style={{fontFamily:"'DM Sans'",fontSize:11,background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:4,padding:"2px 8px",color:"#F0EEE8"}}>✓ {m}</span>)}
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,background:"#FF6B6B15",border:"1px solid #FF6B6B30",borderRadius:4,padding:"2px 8px",color:"#FF6B6B88",textDecoration:"line-through"}}>Tarifs</span>
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,background:"#FF6B6B15",border:"1px solid #FF6B6B30",borderRadius:4,padding:"2px 8px",color:"#FF6B6B88",textDecoration:"line-through"}}>Comptes</span>
+            </div>
+          </div>
+          <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
+            <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Annuler</button>
+            <button className="btn btn-primary" disabled={creating||!nom.trim()||!email.trim()||password.length<6} onClick={create}>{creating?"Création...":"Créer l'accès"}</button>
+          </div>
+        </div>
+      )}
+
+      {loading?<p style={{color:"#555570",fontFamily:"'DM Sans'",fontSize:13,textAlign:"center",padding:"20px 0"}}>Chargement...</p>
+      :collabs.length===0?(
+        <div className="card" style={{padding:24,textAlign:"center"}}>
+          <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570"}}>Aucun collaborateur. Ajoutez un accès ci-dessus.</p>
+        </div>
+      ):collabs.map(c=>(
+        <div key={c.id} className="card" style={{padding:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+          <div style={{width:38,height:38,borderRadius:"50%",background:"#7B9CFF22",border:"1px solid #7B9CFF44",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:18,color:"#7B9CFF",flexShrink:0}}>
+            {(c.nom||c.email||"?")[0].toUpperCase()}
+          </div>
+          <div style={{flex:1}}>
+            <p style={{fontFamily:"'DM Sans'",fontSize:14,fontWeight:600,color:"#F0EEE8"}}>{c.nom||"—"}</p>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570"}}>{c.email}</p>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+            <span style={{fontFamily:"'DM Sans'",fontSize:11,background:"#7B9CFF22",border:"1px solid #7B9CFF44",borderRadius:10,padding:"2px 10px",color:"#7B9CFF"}}>collaborateur</span>
+            <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>revoke(c)}>Révoquer</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -4971,7 +5079,7 @@ function AppMain() {
       try{
       // Récupère le rôle d'abord pour adapter les requêtes
       const { data: myProfile } = await supabase.from("profiles").select("role").eq("id",user.id).single();
-      const isAdminUser = myProfile?.role === "admin";
+      const isAdminUser = myProfile?.role === "admin" || myProfile?.role === "collaborateur";
 
       const queries = [
         supabase.from("projects").select("*, messages(*), files(*)").order("created_at",{ascending:false}),
@@ -5069,8 +5177,10 @@ function AppMain() {
     if (user) {
       supabase.from("profiles").select("*").eq("id", user.id).single()
         .then(({ data }) => {
-          setUserRole(data?.role || "client");
+          const role = data?.role || "client";
+          setUserRole(role);
           setUserProfile(data || null);
+          if(role === "collaborateur" || role === "admin") setAppView("prod");
         });
     }
   }, [user]);
@@ -5125,6 +5235,8 @@ function AppMain() {
   };
 
   const isClient = userRole === "client";
+  const isAdmin = userRole === "admin";
+  const isCollab = userRole === "collaborateur";
   const previewClient = previewClientId ? clients.find(c=>c.id===previewClientId) : null;
   const effectiveClientId = isClient ? user.id : (previewClientId || null);
   const clientProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
@@ -5138,18 +5250,20 @@ function AppMain() {
   const statusColor=s=>({brief:"#7B9CFF",storyboard:"#E8C547",review:"#FF9F43",livraison:"#4ECDC4"}[s]||"#8888AA");
 
   // ── PROD NAV ────────────────────────────────────────────────────────────────
-  const prodNav=[
+  const prodNavAll=[
     {k:"dashboard",   l:"Dashboard",     icon:"📊"},
     {k:"projets",     l:"Projets",       icon:"📁"},
     {k:"calendrier",  l:"Calendrier",    icon:"📅"},
     {k:"organisation",l:"Organisation",  icon:"🗂️"},
     {k:"planning",    l:"Planning",      icon:"📆"},
     {k:"cm",          l:"Social Media",  icon:"📲"},
+    {k:"prestataires",l:"Prestataires",  icon:"🤝"},
     {k:"tarifs",      l:"Tarifs",        icon:"💰"},
     {k:"comptes",     l:"Comptes",       icon:"👥"},
-    {k:"prestataires",l:"Prestataires",  icon:"🤝"},
     {k:"shortone",    l:"Shortone",      icon:"◆"},
   ];
+  const COLLAB_BLOCKED=["tarifs","comptes"];
+  const prodNav=isCollab?prodNavAll.filter(n=>!COLLAB_BLOCKED.includes(n.k)):prodNavAll;
 
   // ── CLIENT NAV ──────────────────────────────────────────────────────────────
   const clientNav=[
@@ -5193,11 +5307,14 @@ function AppMain() {
                   <button style={{background:"none",border:"none",color:"#7B9CFF",cursor:"pointer",fontSize:12,padding:"0 2px"}} onClick={()=>{setPreviewClientId(null);setAppView("prod");setProdSection("comptes");}}>✕</button>
                 </div>
               )}
-              {userRole==="admin"&&(
+              {isAdmin&&(
                 <div style={{display:"flex",gap:3,background:"#12121A",padding:3,borderRadius:7,border:"1px solid #2A2A3E"}}>
                   <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("prod");setSidebarOpen(false);}}>⚙ <span className="desk-only" style={{display:"inline"}}>Prod</span></button>
                   <button className={appView==="client"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("client");setSidebarOpen(false);}}>👤 <span className="desk-only" style={{display:"inline"}}>Client</span></button>
                 </div>
+              )}
+              {isCollab&&(
+                <span style={{fontFamily:"'DM Sans'",fontSize:11,color:"#7B9CFF",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>Collaborateur</span>
               )}
               {/* Avatar / menu utilisateur */}
               <button onClick={()=>setShowSettings(true)} style={{width:34,height:34,borderRadius:"50%",background:accentColor+"22",border:`1.5px solid ${accentColor}55`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Bebas Neue'",fontSize:15,color:accentColor,cursor:"pointer",flexShrink:0,transition:"all .15s"}}
@@ -5278,8 +5395,8 @@ function AppMain() {
             {appView==="prod"&&prodSection==="cm"&&(
               <CMModule posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
             )}
-            {appView==="prod"&&prodSection==="comptes"&&(
-              <ClientsManager clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient}/>
+            {appView==="prod"&&prodSection==="comptes"&&isAdmin&&(
+              <ComptesSection clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient}/>
             )}
             {appView==="prod"&&prodSection==="prestataires"&&(
               <PrestatairesModule serviceTypes={serviceTypes} setServiceTypes={setServiceTypes} prestataires={prestataires} setPrestataires={setPrestataires} missions={prestataireMissions} setMissions={setPrestataireMissions} projects={projects} onNotif={showNotif}/>
