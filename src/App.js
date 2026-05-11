@@ -3597,7 +3597,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
     onNotif(v?"◆ Shortone activé pour "+c.name:"◆ Shortone désactivé");
   };
 
-  const FormBlock=({isNew})=>(
+  const renderForm=(isNew)=>(
     <div className="card fadeUp" style={{padding:22,maxWidth:520}}>
       <SH icon={isNew?"➕":"✏️"} title={isNew?"NOUVEAU COMPTE CLIENT":"MODIFIER LE COMPTE"}/>
       <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -3648,8 +3648,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
         </div>
       )}
 
-      {tab==="nouveau"&&<FormBlock isNew={true}/>}
-      {tab==="edit"&&editId&&<FormBlock isNew={false}/>}
+      {tab==="nouveau"&&renderForm(true)}
+      {tab==="edit"&&editId&&renderForm(false)}
 
       {/* Comptes en attente de validation */}
       {clients.filter(c=>!c.isActive).length>0&&(
