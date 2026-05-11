@@ -4960,8 +4960,13 @@ function AccessManager({onNotif}){
     setCreating(true);
     const{data,error}=await supabase.auth.signUp({email,password,options:{data:{nom}}});
     if(error||!data.user){onNotif("Erreur : "+(error?.message||"Compte déjà existant"));setCreating(false);return;}
-    await supabase.from("profiles").upsert({id:data.user.id,email,nom,role:"collaborateur"});
-    setCollabs(prev=>[...prev,{id:data.user.id,email,nom,role:"collaborateur"}]);
+    const uid=data.user.id;
+    const {error:insErr}=await supabase.from("profiles").insert({id:uid,email,nom,role:"collaborateur",is_active:true});
+    if(insErr){
+      const{error:updErr}=await supabase.from("profiles").update({nom,role:"collaborateur",is_active:true}).eq("id",uid);
+      if(updErr){onNotif("Erreur profil : "+updErr.message);setCreating(false);return;}
+    }
+    setCollabs(prev=>[...prev,{id:uid,email,nom,role:"collaborateur"}]);
     setNom("");setEmail("");setPassword("");setShowAdd(false);
     onNotif("Accès collaborateur créé !");
     setCreating(false);
