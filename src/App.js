@@ -4177,6 +4177,18 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
   const[filterType,setFilterType]=useState("all");
   const[newTypeLabel,setNewTypeLabel]=useState("");
   const[newTypeIcon,setNewTypeIcon]=useState("🔧");
+  const[loadingMissions,setLoadingMissions]=useState(false);
+
+  const refreshMissions=async()=>{
+    setLoadingMissions(true);
+    const{data}=await supabase.from("prestataire_missions").select("*").order("created_at",{ascending:false});
+    if(data) setMissions(data);
+    setLoadingMissions(false);
+    onNotif("Missions actualisées");
+  };
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(()=>{ if(tab==="missions") refreshMissions(); },[tab]);
 
   const addType=async()=>{
     if(!newTypeLabel.trim())return;
@@ -4372,7 +4384,10 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
 
       {tab==="missions"&&(
         <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:12}}>
-          {missions.length===0&&(
+          <div style={{display:"flex",justifyContent:"flex-end"}}>
+            <button className="btn btn-ghost" style={{fontSize:11}} disabled={loadingMissions} onClick={refreshMissions}>{loadingMissions?"↻ Chargement...":"↻ Actualiser"}</button>
+          </div>
+          {missions.length===0&&!loadingMissions&&(
             <div className="card" style={{padding:30,textAlign:"center"}}>
               <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570"}}>Aucune mission envoyée.</p>
               <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#555570",marginTop:6}}>Envoyez des missions depuis l'onglet "Prestataires" d'une fiche projet.</p>
@@ -4427,10 +4442,25 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
 function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,setMissions,onNotif}){
   const[sending,setSending]=useState(null);
   const[copied,setCopied]=useState(null);
+  const[freshBrief,setFreshBrief]=useState(project.brief||{});
+  const[refreshing,setRefreshing]=useState(false);
 
-  const briefServices=project.brief?.services||[];
+  useEffect(()=>{
+    supabase.from("projects").select("brief").eq("id",project.id).single()
+      .then(({data})=>{ if(data?.brief) setFreshBrief(data.brief); });
+  },[project.id]);
+
+  const refreshBrief=async()=>{
+    setRefreshing(true);
+    const{data}=await supabase.from("projects").select("brief").eq("id",project.id).single();
+    if(data?.brief) setFreshBrief(data.brief);
+    setRefreshing(false);
+    onNotif("Brief actualisé");
+  };
+
+  const briefServices=freshBrief.services||[];
   const matchingTypes=serviceTypes.filter(t=>briefServices.includes(t.id));
-  const missionsForProject=missions.filter(m=>m.project_id===project.id);
+  const missionsForProject=missions.filter(m=>String(m.project_id)===String(project.id));
 
   const buildExtrait=(prest,typeLabel)=>{
     const b=project.brief||{};
@@ -4479,13 +4509,17 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
   const statColor=s=>({envoyé:"#E8C547",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF6B6B"}[s]||"#8888AA");
 
   if(briefServices.length===0)return(
-    <div className="card" style={{padding:24,textAlign:"center"}}>
+    <div className="card" style={{padding:24,textAlign:"center",display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
       <p style={{fontFamily:"'DM Sans'",fontSize:13,color:"#555570"}}>Le client n'a pas encore coché de services prestataires dans son brief.</p>
+      <button className="btn btn-ghost" style={{fontSize:11}} disabled={refreshing} onClick={refreshBrief}>{refreshing?"↻ Actualisation...":"↻ Actualiser le brief"}</button>
     </div>
   );
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <div style={{display:"flex",justifyContent:"flex-end"}}>
+        <button className="btn btn-ghost" style={{fontSize:11}} disabled={refreshing} onClick={refreshBrief}>{refreshing?"↻ Actualisation...":"↻ Actualiser le brief"}</button>
+      </div>
       {matchingTypes.length===0&&(
         <div className="card" style={{padding:18}}>
           <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA"}}>Services cochés par le client mais aucun type correspondant dans l'annuaire. Vérifiez les types de services.</p>
