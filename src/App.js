@@ -178,6 +178,7 @@ const STATUS_STEPS   = ["Brief","Storyboard","Tournage","Montage","Livraison"];
 const STATUS_INDEX   = { brief:0, storyboard:1, tournage:2, montage:3, livraison:4 };
 const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com)(\/|$)/i;
 const isSafeUrl=(url)=>{if(!url)return false;try{return ALLOWED_DOMAINS.test(new URL(url).href);}catch{return false;}};
+const safePortfolioUrl=(url)=>{if(!url)return null;try{const u=new URL(url.trim());return["https:","http:"].includes(u.protocol)?u.href:null;}catch{return null;}};
 const SHOOT_TYPES    = ["Corporate","Événementiel","Interview","Clip / Fiction","Documentaire","Institutionnel"];
 // const OPTION_EXP_H   = 72;
 const TODAY          = new Date();
@@ -407,9 +408,9 @@ function PrestaireProposalCard({content}){
       {(data.portfolio_urls||[]).length>0&&(
         <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
           <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>Portfolio :</span>
-          {data.portfolio_urls.map((url,i)=>(
-            <a key={i} href={url} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
-          ))}
+          {data.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(
+            <a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
+          ):null;})}
         </div>
       )}
     </div>
@@ -4377,9 +4378,7 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
                     {p.description&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93",marginTop:4}}>{p.description}</p>}
                     {(p.portfolio_urls||[]).length>0&&(
                       <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {p.portfolio_urls.map((url,i)=>(
-                          <a key={i} href={url} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
-                        ))}
+                        {p.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
                       </div>
                     )}
                   </div>
@@ -4808,9 +4807,7 @@ function PartenaireView({user,userProfile,onLogout}){
             <textarea className="input" rows={4} value={portfolioInput} onChange={e=>setPortfolioInput(e.target.value)} placeholder={"https://instagram.com/votre-compte\nhttps://votre-site.com\nhttps://drive.google.com/..."}/>
             <div style={{marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {(prestataire.portfolio_urls||[]).map((url,i)=>(
-                  <a key={i} href={url} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
-                ))}
+                {(prestataire.portfolio_urls||[]).map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
               </div>
               <button className="btn btn-primary" onClick={savePortfolio} disabled={savingPortfolio}>{savingPortfolio?"Enregistrement...":"Enregistrer"}</button>
             </div>
