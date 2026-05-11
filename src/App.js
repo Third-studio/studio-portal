@@ -506,6 +506,7 @@ function ProdLivrables({project,onUpdate,onNotif}){
   const files=key=>(project.livrables||[]).filter(l=>l.category===key);
   const add=()=>{
     if(!form.name.trim())return;
+    if(form.url&&!safePortfolioUrl(form.url)){onNotif("URL invalide — utilisez un lien https://");return;}
     onUpdate({...project,livrables:[...(project.livrables||[]),{id:Date.now(),...form,category:showAdd,date:new Date().toISOString().split("T")[0]}]});
     onNotif("Fichier ajouté !");setForm({name:"",url:"",note:""});setShowAdd(null);
   };
@@ -548,7 +549,7 @@ function ProdLivrables({project,onUpdate,onNotif}){
                       <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</p>
                       {f.note&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{f.note}</p>}
                     </div>
-                    <a href={f.url} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",textDecoration:"none"}}>↗</a>
+                    {safePortfolioUrl(f.url)&&<a href={safePortfolioUrl(f.url)} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",textDecoration:"none"}}>↗</a>}
                     <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>del(f.id)}>✕</button>
                   </div>
                 ))}
@@ -635,8 +636,8 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
           {items.map(item=>(
             <div key={item.id} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"4/3",background:"#F5F5F7",border:"1px solid #E5E5EA",cursor:"pointer"}}
               onMouseEnter={()=>setHoverId(item.id)} onMouseLeave={()=>setHoverId(null)}>
-              <img src={item.url} alt={item.caption||"moodboard"} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
-                onError={e=>{e.target.style.display="none";}}/>
+              {safePortfolioUrl(item.url)&&<img src={safePortfolioUrl(item.url)} alt={item.caption||"moodboard"} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+                onError={e=>{e.target.style.display="none";}}/>}
               {/* Overlay */}
               <div style={{position:"absolute",inset:0,background:"rgba(8,8,15,0.75)",opacity:hoverId===item.id?1:0,transition:"opacity .18s",display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"8px"}}>
                 {item.caption&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#1D1D1F",lineHeight:1.4}}>{item.caption}</p>}
@@ -1299,7 +1300,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
               {finaux.map(l=>(
                 <div key={l.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#F5F5F7",borderRadius:8,border:"1px solid #4ECDC430"}}>
                   <div style={{flex:1}}><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{l.name}</p><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>Depuis le {fmtS(l.date)}</p></div>
-                  <a href={l.url} target="_blank" rel="noreferrer" className="btn btn-green" style={{textDecoration:"none",fontSize:11}}>⬇ Télécharger</a>
+                  {safePortfolioUrl(l.url)&&<a href={safePortfolioUrl(l.url)} target="_blank" rel="noreferrer" className="btn btn-green" style={{textDecoration:"none",fontSize:11}}>⬇ Télécharger</a>}
                 </div>
               ))}
             </div>
