@@ -4945,31 +4945,29 @@ function AccessManager({onNotif}){
   const[collabs,setCollabs]=useState([]);
   const[loading,setLoading]=useState(true);
   const[showAdd,setShowAdd]=useState(false);
-  const[nom,setNom]=useState("");
   const[email,setEmail]=useState("");
-  const[password,setPassword]=useState("");
-  const[creating,setCreating]=useState(false);
+  const[promoting,setPromoting]=useState(false);
 
   useEffect(()=>{
     supabase.from("profiles").select("*").eq("role","collaborateur")
       .then(({data})=>{setCollabs(data||[]);setLoading(false);});
   },[]);
 
-  const create=async()=>{
-    if(!nom.trim()||!email.trim()||password.length<6)return;
-    setCreating(true);
-    const{data,error}=await supabase.auth.signUp({email,password,options:{data:{nom}}});
-    if(error||!data.user){onNotif("Erreur : "+(error?.message||"Compte déjà existant"));setCreating(false);return;}
-    const uid=data.user.id;
-    const{error:rpcErr}=await supabase.rpc("create_collaborateur",{user_id:uid,user_email:email,user_nom:nom});
-    if(rpcErr){onNotif("Erreur profil : "+rpcErr.message);setCreating(false);return;}
-    setCollabs(prev=>[...prev,{id:uid,email,nom,role:"collaborateur"}]);
-    setNom("");setEmail("");setPassword("");setShowAdd(false);
-    onNotif("Accès collaborateur créé !");
-    setCreating(false);
+  const promote=async()=>{
+    if(!email.trim())return;
+    setPromoting(true);
+    const{data,error}=await supabase.rpc("promote_to_collaborateur",{target_email:email.trim()});
+    if(error){onNotif("Erreur : "+error.message);setPromoting(false);return;}
+    if(data==="not_found"){onNotif("Aucun compte trouvé pour cet email. Le collaborateur doit d'abord se connecter une fois sur la plateforme.");setPromoting(false);return;}
+    const{data:profile}=await supabase.from("profiles").select("*").eq("email",email.trim()).single();
+    if(profile) setCollabs(prev=>[...prev.filter(x=>x.email!==email.trim()),profile]);
+    setEmail("");setShowAdd(false);
+    onNotif("Accès collaborateur accordé !");
+    setPromoting(false);
   };
 
   const revoke=async(c)=>{
+    await supabase.rpc("promote_to_collaborateur",{target_email:"__revoke__"});
     await supabase.from("profiles").update({role:"client",is_active:false}).eq("id",c.id);
     setCollabs(prev=>prev.filter(x=>x.id!==c.id));
     onNotif("Accès révoqué");
@@ -4989,12 +4987,13 @@ function AccessManager({onNotif}){
 
       {showAdd&&(
         <div className="card" style={{padding:20,display:"flex",flexDirection:"column",gap:12}}>
-          <p style={{fontFamily:"'Bebas Neue'",fontSize:16,color:"#E8C547",letterSpacing:"0.05em"}}>NOUVEL ACCÈS COLLABORATEUR</p>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-            <div><Lbl>Nom</Lbl><input className="input" placeholder="Ex : Lucas Martin" value={nom} onChange={e=>setNom(e.target.value)}/></div>
-            <div><Lbl>Email</Lbl><input className="input" type="email" placeholder="lucas@thirdone.studio" value={email} onChange={e=>setEmail(e.target.value)}/></div>
+          <p style={{fontFamily:"'Bebas Neue'",fontSize:16,color:"#E8C547",letterSpacing:"0.05em"}}>ACCORDER UN ACCÈS COLLABORATEUR</p>
+          <div style={{background:"#E8C54710",border:"1px solid #E8C54730",borderRadius:8,padding:"10px 14px"}}>
+            <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#E8C547",lineHeight:1.6}}>
+              Le collaborateur doit d'abord <strong>créer son compte</strong> sur thirdone.studio (page de connexion → S'inscrire). Une fois fait, entre son email ci-dessous pour lui accorder l'accès.
+            </p>
           </div>
-          <div><Lbl>Mot de passe initial</Lbl><input className="input" type="password" placeholder="Minimum 6 caractères" value={password} onChange={e=>setPassword(e.target.value)}/></div>
+          <div><Lbl>Email du collaborateur</Lbl><input className="input" type="email" placeholder="lucas@thirdone.studio" value={email} onChange={e=>setEmail(e.target.value)}/></div>
           <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:8,padding:"12px 14px"}}>
             <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#4ECDC4",fontWeight:600,marginBottom:8}}>Modules accessibles</p>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
@@ -5004,7 +5003,7 @@ function AccessManager({onNotif}){
           </div>
           <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
             <button className="btn btn-ghost" onClick={()=>setShowAdd(false)}>Annuler</button>
-            <button className="btn btn-primary" disabled={creating||!nom.trim()||!email.trim()||password.length<6} onClick={create}>{creating?"Création...":"Créer l'accès"}</button>
+            <button className="btn btn-primary" disabled={promoting||!email.trim()} onClick={promote}>{promoting?"Recherche...":"Accorder l'accès"}</button>
           </div>
         </div>
       )}
