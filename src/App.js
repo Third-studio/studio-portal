@@ -3110,7 +3110,7 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
       <p class="label">Notes</p><div class="box">${note.content.replace(/\n/g,"<br>")}</div>
       ${note.decisions?`<p class="label">Décisions prises</p><div class="box decisions">${note.decisions.split("\n").filter(Boolean).map(d=>`<div class="decision-item">${d}</div>`).join("")}</div>`:""}
       <p style="color:#aaa;font-size:11px;margin-top:32px">Généré par Third-One Studio — ${new Date().toLocaleDateString("fr-FR")}</p>
-      <script>window.onload=()=>window.print()<\/script>
+      <script>window.onload=()=>window.print()</script>
     </body></html>`);
     win.document.close();
   };
@@ -4590,7 +4590,7 @@ function PartenaireView({user,userProfile,onLogout}){
   const respond=async(mission)=>{
     if(!replyMsg.trim())return;
     if(!nonConcurrence){showNotif("Veuillez accepter la clause de non-concurrence");return;}
-    const urls=(prestataire.portfolio_urls||[]);
+    const urls=portfolioInput.split("\n").map(u=>u.trim()).filter(Boolean);
     const proposal={type:"prestataire_proposal",message:replyMsg,prix:replyPrix?Number(replyPrix):null,description:replyDesc,portfolio_urls:urls,non_concurrence:true};
     const summary=[replyPrix?`Proposition : ${replyPrix} €`:"",replyDesc,replyMsg].filter(Boolean).join("\n");
     await supabase.from("prestataire_missions").update({statut:"répondu",message_dispo:summary,responded_at:new Date().toISOString()}).eq("id",mission.id);
@@ -4942,6 +4942,7 @@ function AppMain() {
         supabase.from("projects").select("*, messages(*), files(*)").order("created_at",{ascending:false}),
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
         supabase.from("bookings").select("*").order("date",{ascending:true}),
+        supabase.from("service_types").select("*").order("label"),
       ];
       // Données admin seulement
       if(isAdminUser){
@@ -4951,7 +4952,6 @@ function AppMain() {
           supabase.from("project_assignments").select("*"),
           supabase.from("planning_slots").select("*").order("date"),
           supabase.from("meeting_notes").select("*").order("date",{ascending:false}),
-          supabase.from("service_types").select("*").order("label"),
           supabase.from("prestataires").select("*").order("nom"),
           supabase.from("prestataire_missions").select("*").order("created_at",{ascending:false}),
         );
@@ -4960,12 +4960,12 @@ function AppMain() {
       const projectsData  = results[0]?.data;
       const postsData     = results[1]?.data;
       const bookingsData  = results[2]?.data;
-      const profilesData  = isAdminUser ? results[3]?.data : null;
-      const membersData   = isAdminUser ? results[4]?.data : null;
-      const assignData    = isAdminUser ? results[5]?.data : null;
-      const slotsData     = isAdminUser ? results[6]?.data : null;
-      const notesData     = isAdminUser ? results[7]?.data : null;
-      const stData        = isAdminUser ? results[8]?.data : null;
+      const stData        = results[3]?.data;
+      const profilesData  = isAdminUser ? results[4]?.data : null;
+      const membersData   = isAdminUser ? results[5]?.data : null;
+      const assignData    = isAdminUser ? results[6]?.data : null;
+      const slotsData     = isAdminUser ? results[7]?.data : null;
+      const notesData     = isAdminUser ? results[8]?.data : null;
       const prestData     = isAdminUser ? results[9]?.data : null;
       const missionsData  = isAdminUser ? results[10]?.data : null;
 
