@@ -3582,6 +3582,13 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
     onNotif(v?"Compte activé":"Compte suspendu");
   };
 
+  const deleteClient=async(c)=>{
+    if(!window.confirm(`Supprimer définitivement le compte de ${c.name} ?\n\nCette action est irréversible.`))return;
+    await supabase.from("profiles").delete().eq("id",c.id);
+    setClients(cs=>cs.filter(x=>x.id!==c.id));
+    onNotif("Compte supprimé");
+  };
+
   const toggleShortone=async(c)=>{
     const v=!c.shortoneEnabled;
     const{error}=await supabase.from("profiles").update({shortone_enabled:v}).eq("id",c.id);
@@ -3693,7 +3700,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
               <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'DM Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#2A2A3E"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#555570",cursor:"pointer"}}>◆ Shortone</button>
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
               <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
-              <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>Suspendre</button>
+              <button className={`btn ${c.isActive?"btn-red":"btn-green"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>{c.isActive?"Suspendre":"Réactiver"}</button>
+              <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px",opacity:0.7}} onClick={()=>deleteClient(c)}>🗑 Supprimer</button>
             </div>
           </div>
         ))}
@@ -5202,6 +5210,13 @@ function AppMain() {
     <p style={{color:"#C9A84C",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
   </div>;
   if (!user) return <Login onLogin={setUser} />;
+  if (user && userProfile === null && userRole !== null) return (
+    <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <p style={{color:"#FF6B6B",fontFamily:"'Bebas Neue'",fontSize:20,letterSpacing:"0.1em"}}>COMPTE SUPPRIMÉ</p>
+      <p style={{color:"#555570",fontFamily:"'DM Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'existe plus. Contactez Third-One Studio.</p>
+      <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
+    </div>
+  );
   if (userProfile && userProfile.role === "partenaire") return <PartenaireView user={user} userProfile={userProfile} onLogout={()=>supabase.auth.signOut()}/>;
   if (userProfile && userProfile.role === "client" && userProfile.is_active === false) return (
     <div style={{minHeight:"100vh",background:"#08080F",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
