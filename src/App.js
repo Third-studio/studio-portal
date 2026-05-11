@@ -4914,17 +4914,20 @@ function PrestaireResponsePage({token}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function ComptesSection({clients,setClients,onNotif,onPreviewClient}){
+function ComptesSection({clients,setClients,onNotif,onPreviewClient,isAdmin=false}){
   const[tab,setTab]=useState("clients");
+  const tabs=[{k:"clients",l:"👥 Clients"},...(isAdmin?[{k:"acces",l:"🔐 Accès équipe"}]:[])];
   return(
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
-      <div style={{display:"flex",gap:3,background:"#0E0E18",padding:4,borderRadius:8,width:"fit-content",border:"1px solid #2A2A3E"}}>
-        {[{k:"clients",l:"👥 Clients"},{k:"acces",l:"🔐 Accès équipe"}].map(t=>(
-          <button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setTab(t.k)}>{t.l}</button>
-        ))}
-      </div>
+      {isAdmin&&(
+        <div style={{display:"flex",gap:3,background:"#0E0E18",padding:4,borderRadius:8,width:"fit-content",border:"1px solid #2A2A3E"}}>
+          {tabs.map(t=>(
+            <button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setTab(t.k)}>{t.l}</button>
+          ))}
+        </div>
+      )}
       {tab==="clients"&&<ClientsManager clients={clients} setClients={setClients} onNotif={onNotif} onPreviewClient={onPreviewClient}/>}
-      {tab==="acces"&&<AccessManager onNotif={onNotif}/>}
+      {tab==="acces"&&isAdmin&&<AccessManager onNotif={onNotif}/>}
     </div>
   );
 }
@@ -4962,14 +4965,14 @@ function AccessManager({onNotif}){
     onNotif("Accès révoqué");
   };
 
-  const MODULES=["Dashboard","Projets","Calendrier","Organisation","Planning","Social Media","Prestataires"];
+  const MODULES=["Dashboard","Projets","Calendrier","Organisation","Planning","Social Media","Prestataires","Comptes"];
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
         <div>
           <SH icon="🔐" title="ACCÈS COLLABORATEURS"/>
-          <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:-8,marginBottom:4}}>Accès complet au back-office sauf Tarifs et Comptes.</p>
+          <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#8888AA",marginTop:-8,marginBottom:4}}>Accès complet au back-office sauf la section Estimation / Tarifs.</p>
         </div>
         <button className="btn btn-primary" style={{fontSize:12}} onClick={()=>setShowAdd(v=>!v)}>{showAdd?"Annuler":"+ Ajouter un accès"}</button>
       </div>
@@ -4986,8 +4989,7 @@ function AccessManager({onNotif}){
             <p style={{fontFamily:"'DM Sans'",fontSize:12,color:"#4ECDC4",fontWeight:600,marginBottom:8}}>Modules accessibles</p>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
               {MODULES.map(m=><span key={m} style={{fontFamily:"'DM Sans'",fontSize:11,background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:4,padding:"2px 8px",color:"#F0EEE8"}}>✓ {m}</span>)}
-              <span style={{fontFamily:"'DM Sans'",fontSize:11,background:"#FF6B6B15",border:"1px solid #FF6B6B30",borderRadius:4,padding:"2px 8px",color:"#FF6B6B88",textDecoration:"line-through"}}>Tarifs</span>
-              <span style={{fontFamily:"'DM Sans'",fontSize:11,background:"#FF6B6B15",border:"1px solid #FF6B6B30",borderRadius:4,padding:"2px 8px",color:"#FF6B6B88",textDecoration:"line-through"}}>Comptes</span>
+              <span style={{fontFamily:"'DM Sans'",fontSize:11,background:"#FF6B6B15",border:"1px solid #FF6B6B30",borderRadius:4,padding:"2px 8px",color:"#FF6B6B88",textDecoration:"line-through"}}>Estimation / Tarifs</span>
             </div>
           </div>
           <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
@@ -5262,7 +5264,7 @@ function AppMain() {
     {k:"comptes",     l:"Comptes",       icon:"👥"},
     {k:"shortone",    l:"Shortone",      icon:"◆"},
   ];
-  const COLLAB_BLOCKED=["tarifs","comptes"];
+  const COLLAB_BLOCKED=["tarifs"];
   const prodNav=isCollab?prodNavAll.filter(n=>!COLLAB_BLOCKED.includes(n.k)):prodNavAll;
 
   // ── CLIENT NAV ──────────────────────────────────────────────────────────────
@@ -5395,8 +5397,8 @@ function AppMain() {
             {appView==="prod"&&prodSection==="cm"&&(
               <CMModule posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
             )}
-            {appView==="prod"&&prodSection==="comptes"&&isAdmin&&(
-              <ComptesSection clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient}/>
+            {appView==="prod"&&prodSection==="comptes"&&(isAdmin||isCollab)&&(
+              <ComptesSection clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient} isAdmin={isAdmin}/>
             )}
             {appView==="prod"&&prodSection==="prestataires"&&(
               <PrestatairesModule serviceTypes={serviceTypes} setServiceTypes={setServiceTypes} prestataires={prestataires} setPrestataires={setPrestataires} missions={prestataireMissions} setMissions={setPrestataireMissions} projects={projects} onNotif={showNotif}/>
