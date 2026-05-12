@@ -799,7 +799,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
-  const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."}];
+  const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."},{k:"deliveryWished",l:"Livraison souhaitée",p:"Date ou délai souhaité"}];
   const[brief,setBrief]=useState({...project.brief});
   const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||"",replayUrl:project.replayUrl||""});
   const addSB=sb=>{onUpdate({...project,storyboards:[...project.storyboards,sb]});setShowGen(false);onNotif("Storyboard généré !");};
@@ -1170,6 +1170,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
     deliverables: project.brief?.deliverables||"",
     budget: project.brief?.budget||"",
     shootDate: project.shootDate||"",
+    deliveryWished: project.brief?.deliveryWished||"",
     references: project.brief?.references||"",
     notes: project.brief?.notes||"",
     services: project.brief?.services||[],
@@ -1185,7 +1186,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
   const setMusiqueField=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:val}}));
   const submitBrief=async()=>{
     setSaving(true);
-    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,submitted:true};
+    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,deliveryWished:brief.deliveryWished,submitted:true};
     await supabase.from("projects").update({title:brief.title||project.title,brief:newBrief,shoot_date:brief.shootDate||null}).eq("id",project.id);
     onUpdate({...project,title:brief.title||project.title,brief:newBrief,shootDate:brief.shootDate||""});
     onNotif("Brief envoyé avec succès — notre équipe revient vers vous rapidement ✨");
@@ -1223,7 +1224,10 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
             <div><Lbl>Budget approximatif</Lbl><input className="input" placeholder="Ex : 2 000 €, 5 000 €…" value={brief.budget} onChange={e=>setBrief(p=>({...p,budget:e.target.value}))}/></div>
           </div>
           <div><Lbl>Livrables souhaités</Lbl><input className="input" placeholder="Ex : 1 vidéo 16:9 + version story Instagram, sous-titres…" value={brief.deliverables} onChange={e=>setBrief(p=>({...p,deliverables:e.target.value}))}/></div>
-          <div><Lbl>Date de tournage envisagée</Lbl><input type="date" className="input" value={brief.shootDate} onChange={e=>setBrief(p=>({...p,shootDate:e.target.value}))}/></div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <div><Lbl>Date de tournage envisagée</Lbl><input type="date" className="input" value={brief.shootDate} onChange={e=>setBrief(p=>({...p,shootDate:e.target.value}))}/></div>
+            <div><Lbl>Date de livraison souhaitée</Lbl><input type="date" className="input" value={brief.deliveryWished} onChange={e=>setBrief(p=>({...p,deliveryWished:e.target.value}))}/></div>
+          </div>
           <div><Lbl>Références & inspirations</Lbl><textarea className="input" rows={2} placeholder="Liens YouTube, publicités que vous aimez, univers visuels…" value={brief.references} onChange={e=>setBrief(p=>({...p,references:e.target.value}))}/></div>
           <div><Lbl>Informations complémentaires</Lbl><textarea className="input" rows={3} placeholder="Lieu de tournage, personnes à filmer, contraintes particulières…" value={brief.notes} onChange={e=>setBrief(p=>({...p,notes:e.target.value}))}/></div>
           {serviceTypes.length>0&&(
