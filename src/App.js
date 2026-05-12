@@ -880,6 +880,29 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               <button className="btn btn-primary" style={{alignSelf:"flex-end"}} onClick={saveBrief}>Enregistrer</button>
             </div>
           </div>
+          {project.brief?.musique&&(()=>{
+            const m=project.brief.musique;
+            const hasMusic=(m.ambiances?.length||m.genres?.length||m.instruments?.length||m.tempo||m.voix||m.inspiration);
+            if(!hasMusic)return null;
+            const AMB_LABELS={cinematique:"🎬 Cinématique / Épique",emotionnel:"💫 Émotionnel / Touchant",energique:"⚡ Énergique",calme:"🌊 Calme / Méditatif",luxueux:"💎 Luxueux / Premium",festif:"🎉 Festif",mysterieux:"🌙 Mystérieux",inspirant:"🚀 Inspirant",romantique:"💕 Romantique",funky:"🎶 Funky"};
+            const GEN_LABELS={orchestral:"Orchestral",jazz:"Jazz / Soul",electro:"Électronique",hiphop:"Hip-Hop / Trap",reggae:"Reggae / Dancehall",zouk:"Zouk / Afrobeat",pop:"Pop / Indie",acoustique:"Acoustique / Folk",rnb:"R&B / Neo-Soul",ambient:"Ambient / Lo-fi",classique:"Classique"};
+            const INS_LABELS={piano:"🎹 Piano",guitare_ac:"🎸 Guitare acoustique",guitare_el:"⚡🎸 Guitare électrique",cordes:"🎻 Cordes",cuivres:"🎺 Cuivres",percus:"🥁 Percussions",basse:"🎵 Basse",synth:"🎛 Synthétiseurs",voix:"🎤 Voix / Chœurs"};
+            const TEMPO_LABELS={tres_lent:"Très lent (< 70 BPM)",lent:"Lent (70–90 BPM)",modere:"Modéré (90–110 BPM)",entrainant:"Entraînant (110–130 BPM)",rapide:"Rapide (> 130 BPM)"};
+            const VOIX_LABELS={instrumental:"Instrumental uniquement",atmospherique:"Voix atmosphérique",principale:"Voix principale"};
+            const Tag=({children})=><span style={{display:"inline-block",padding:"3px 9px",borderRadius:12,background:"#00B4D810",border:"1px solid #00B4D830",fontFamily:"'Inter'",fontSize:11,color:"#0090B3",marginRight:4,marginBottom:4}}>{children}</span>;
+            return(
+              <div className="card" style={{padding:18,marginTop:12}}>
+                <SH icon="🎵" title="AMBIANCE MUSICALE"/>
+                <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                  {m.ambiances?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Ambiance</p><div>{m.ambiances.map(a=><Tag key={a}>{AMB_LABELS[a]||a}</Tag>)}</div></div>}
+                  {m.genres?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Genre</p><div>{m.genres.map(g=><Tag key={g}>{GEN_LABELS[g]||g}</Tag>)}</div></div>}
+                  {m.instruments?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Instruments</p><div>{m.instruments.map(i=><Tag key={i}>{INS_LABELS[i]||i}</Tag>)}</div></div>}
+                  {(m.tempo||m.voix)&&<div style={{display:"flex",gap:16,flexWrap:"wrap"}}>{m.tempo&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Tempo</p><Tag>{TEMPO_LABELS[m.tempo]||m.tempo}</Tag></div>}{m.voix&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Voix</p><Tag>{VOIX_LABELS[m.voix]||m.voix}</Tag></div>}</div>}
+                  {m.inspiration&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Inspiration</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontStyle:"italic"}}>"{m.inspiration}"</p></div>}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
       {tab==="storyboards"&&(
@@ -1150,6 +1173,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
     references: project.brief?.references||"",
     notes: project.brief?.notes||"",
     services: project.brief?.services||[],
+    musique: project.brief?.musique||{ambiances:[],genres:[],instruments:[],tempo:"",voix:"",inspiration:""},
   });
   const[saving,setSaving]=useState(false);
   const hasSimulator=clientData?.simulatorEnabled;
@@ -1157,9 +1181,11 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
   const showIntake=project.status==="brief"&&briefEmpty;
 
   const toggleService=(id)=>setBrief(p=>({...p,services:p.services.includes(id)?p.services.filter(s=>s!==id):[...p.services,id]}));
+  const toggleMusique=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:p.musique[key].includes(val)?p.musique[key].filter(x=>x!==val):[...p.musique[key],val]}}));
+  const setMusiqueField=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:val}}));
   const submitBrief=async()=>{
     setSaving(true);
-    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,submitted:true};
+    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,submitted:true};
     await supabase.from("projects").update({title:brief.title||project.title,brief:newBrief,shoot_date:brief.shootDate||null}).eq("id",project.id);
     onUpdate({...project,title:brief.title||project.title,brief:newBrief,shootDate:brief.shootDate||""});
     onNotif("Brief envoyé avec succès — notre équipe revient vers vous rapidement ✨");
@@ -1218,6 +1244,92 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
               </div>
             </div>
           )}
+          {/* ── AMBIANCE MUSICALE ── */}
+          {(()=>{
+            const MUS_AMBIANCES=[{v:"cinematique",l:"Cinématique / Épique",e:"🎬"},{v:"emotionnel",l:"Émotionnel / Touchant",e:"💫"},{v:"energique",l:"Énergique / Dynamique",e:"⚡"},{v:"calme",l:"Calme / Méditatif",e:"🌊"},{v:"luxueux",l:"Luxueux / Premium",e:"💎"},{v:"festif",l:"Festif / Célébration",e:"🎉"},{v:"mysterieux",l:"Mystérieux / Dramatique",e:"🌙"},{v:"inspirant",l:"Inspirant / Motivant",e:"🚀"},{v:"romantique",l:"Romantique / Tendre",e:"💕"},{v:"funky",l:"Funky / Groovy",e:"🎶"}];
+            const MUS_GENRES=[{v:"orchestral",l:"Orchestral / Symphonique"},{v:"jazz",l:"Jazz / Soul / Blues"},{v:"electro",l:"Électronique / Synthwave"},{v:"hiphop",l:"Hip-Hop / Trap"},{v:"reggae",l:"Reggae / Dancehall"},{v:"zouk",l:"Zouk / Afrobeat"},{v:"pop",l:"Pop / Indie"},{v:"acoustique",l:"Acoustique / Folk"},{v:"rnb",l:"R&B / Neo-Soul"},{v:"ambient",l:"Ambient / Lo-fi"},{v:"classique",l:"Musique Classique"}];
+            const MUS_INSTRU=[{v:"piano",l:"Piano / Claviers",e:"🎹"},{v:"guitare_ac",l:"Guitare acoustique",e:"🎸"},{v:"guitare_el",l:"Guitare électrique",e:"⚡🎸"},{v:"cordes",l:"Cordes / Violons",e:"🎻"},{v:"cuivres",l:"Cuivres / Trompette",e:"🎺"},{v:"percus",l:"Percussions / Batterie",e:"🥁"},{v:"basse",l:"Basse / Contrebasse",e:"🎵"},{v:"synth",l:"Synthétiseurs / Pad",e:"🎛"},{v:"voix",l:"Voix / Chœurs",e:"🎤"}];
+            const MUS_TEMPO=[{v:"tres_lent",l:"Très lent — contemplatif",s:"< 70 BPM"},{v:"lent",l:"Lent et posé",s:"70–90 BPM"},{v:"modere",l:"Modéré — équilibré",s:"90–110 BPM"},{v:"entrainant",l:"Entraînant — dynamique",s:"110–130 BPM"},{v:"rapide",l:"Rapide — intense",s:"> 130 BPM"}];
+            const MUS_VOIX=[{v:"instrumental",l:"Instrumental uniquement"},{v:"atmospherique",l:"Voix atmosphérique / rare"},{v:"principale",l:"Voix principale avec paroles"}];
+            const m=brief.musique;
+            const Chip=({active,onClick,children})=>(
+              <button type="button" onClick={onClick} style={{padding:"5px 11px",borderRadius:20,border:`1.5px solid ${active?"#00B4D8":"#E5E5EA"}`,background:active?"#00B4D810":"#FAFAFA",cursor:"pointer",fontFamily:"'Inter'",fontSize:12,color:active?"#00B4D8":"#6E6E73",transition:"all .15s",whiteSpace:"nowrap"}}>
+                {children}
+              </button>
+            );
+            return(
+              <div style={{display:"flex",flexDirection:"column",gap:16,paddingTop:4}}>
+                <div style={{borderTop:"1px solid #E5E5EA",paddingTop:16}}>
+                  <Lbl>🎵 Ambiance musicale souhaitée</Lbl>
+                  <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginBottom:10}}>Guidez notre choix musical — plus vous êtes précis, plus la musique sera adaptée à votre vision.</p>
+
+                  <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    <div>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Ambiance principale <span style={{color:"#8E8E93",fontWeight:400,textTransform:"none"}}>(plusieurs choix)</span></p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {MUS_AMBIANCES.map(a=>(
+                          <Chip key={a.v} active={m.ambiances.includes(a.v)} onClick={()=>toggleMusique("ambiances",a.v)}>{a.e} {a.l}</Chip>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Genre musical</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {MUS_GENRES.map(g=>(
+                          <Chip key={g.v} active={m.genres.includes(g.v)} onClick={()=>toggleMusique("genres",g.v)}>{g.l}</Chip>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Instruments préférés</p>
+                      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                        {MUS_INSTRU.map(i=>(
+                          <Chip key={i.v} active={m.instruments.includes(i.v)} onClick={()=>toggleMusique("instruments",i.v)}>{i.e} {i.l}</Chip>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                      <div>
+                        <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Tempo / Rythme</p>
+                        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                          {MUS_TEMPO.map(t=>(
+                            <label key={t.v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setMusiqueField("tempo",t.v)}>
+                              <div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${m.tempo===t.v?"#00B4D8":"#C7C7CC"}`,background:m.tempo===t.v?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                                {m.tempo===t.v&&<div style={{width:6,height:6,borderRadius:"50%",background:"#FFFFFF"}}/>}
+                              </div>
+                              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{t.l} <span style={{color:"#8E8E93",fontSize:10}}>{t.s}</span></span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Présence vocale</p>
+                        <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                          {MUS_VOIX.map(v=>(
+                            <label key={v.v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setMusiqueField("voix",v.v)}>
+                              <div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${m.voix===v.v?"#00B4D8":"#C7C7CC"}`,background:m.voix===v.v?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                                {m.voix===v.v&&<div style={{width:6,height:6,borderRadius:"50%",background:"#FFFFFF"}}/>}
+                              </div>
+                              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{v.l}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <Lbl>Références / Inspiration libre</Lbl>
+                      <textarea className="input" rows={2} placeholder={"Ex : \"l'intro d'Interstellar\", \"Dior\", \"Aya Nakamura meets Hans Zimmer\"…"} value={m.inspiration} onChange={e=>setMusiqueField("inspiration",e.target.value)}/>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <button className="btn btn-primary" style={{alignSelf:"flex-end",padding:"11px 28px"}} disabled={saving||!brief.objective||!brief.target} onClick={submitBrief}>
             {saving?"Envoi en cours…":"✨ Envoyer mon brief"}
           </button>
@@ -3338,7 +3450,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                           return(
                             <td key={date} onClick={()=>openSlot(member.id,date)}
                               style={{padding:"4px",verticalAlign:"top",borderLeft:"1px solid #F2F2F7",background:isToday?"#00B4D806":"transparent",cursor:"pointer",minHeight:60,transition:"background .1s"}}
-                              onMouseEnter={e=>e.currentTarget.style.background=isToday?"#00B4D812":"#1A1A2A"}
+                              onMouseEnter={e=>e.currentTarget.style.background=isToday?"#00B4D812":"#F2F2F7"}
                               onMouseLeave={e=>e.currentTarget.style.background=isToday?"#00B4D806":"transparent"}
                             >
                               <div style={{display:"flex",flexDirection:"column",gap:2,minHeight:52}}>
