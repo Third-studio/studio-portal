@@ -7,9 +7,9 @@ import Login from "./Login";
 // ─────────────────────────────────────────────────────────────────────────────
 const FontLoader = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    body { background:#FFFFFF; color:#1D1D1F; font-family:'Plus Jakarta Sans',sans-serif; }
+    body { background:#FFFFFF; color:#1D1D1F; font-family:'Inter',sans-serif; }
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-track { background:#F5F5F7; }
     ::-webkit-scrollbar-thumb { background:#C7C7CC; border-radius:2px; }
@@ -20,19 +20,19 @@ const FontLoader = () => (
     .fadeUp  { animation:fadeUp .35s ease both; }
     .countUp { animation:countUp .4s cubic-bezier(.34,1.56,.64,1) both; }
 
-    .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s ease;white-space:nowrap; }
+    .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s ease;white-space:nowrap; }
     .btn:active { transform:scale(.97); }
     .btn:disabled { opacity:.4;cursor:not-allowed; }
-    .btn-primary { background:#007AFF;color:#FFFFFF; }
-    .btn-primary:hover:not(:disabled) { background:#0066CC; }
+    .btn-primary { background:#00B4D8;color:#FFFFFF; }
+    .btn-primary:hover:not(:disabled) { background:#0090B3; }
     .btn-ghost { background:transparent;color:#6E6E73;border:1.5px solid #E5E5EA; }
-    .btn-ghost:hover:not(:disabled) { border-color:#007AFF;color:#007AFF; }
+    .btn-ghost:hover:not(:disabled) { border-color:#00B4D8;color:#00B4D8; }
     .btn-green { background:#34C75918;color:#34C759;border:1px solid #34C75940; }
     .btn-green:hover:not(:disabled) { background:#34C75928; }
     .btn-red { background:#FF3B3018;color:#FF3B30;border:1px solid #FF3B3040; }
     .btn-red:hover:not(:disabled) { background:#FF3B3028; }
-    .btn-blue { background:#007AFF18;color:#007AFF;border:1px solid #007AFF40; }
-    .btn-blue:hover:not(:disabled) { background:#007AFF28; }
+    .btn-blue { background:#00B4D818;color:#00B4D8;border:1px solid #00B4D840; }
+    .btn-blue:hover:not(:disabled) { background:#00B4D828; }
     .btn-orange { background:#FF9F4318;color:#FF9500;border:1px solid #FF950040; }
     .btn-orange:hover:not(:disabled) { background:#FF950028; }
     .btn-purple { background:#AF52DE18;color:#AF52DE;border:1px solid #AF52DE40; }
@@ -41,26 +41,26 @@ const FontLoader = () => (
     .card { background:#FFFFFF;border:1px solid #E5E5EA;border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,0.06); }
     .card:hover { border-color:#D1D1D6;box-shadow:0 4px 16px rgba(0,0,0,0.10); }
 
-    .input { width:100%;background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:8px;padding:10px 14px;color:#1D1D1F;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;resize:none; }
-    .input:focus { border-color:#007AFF;box-shadow:0 0 0 3px rgba(0,122,255,0.12); }
+    .input { width:100%;background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:8px;padding:10px 14px;color:#1D1D1F;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;resize:none; }
+    .input:focus { border-color:#00B4D8;box-shadow:0 0 0 3px rgba(0,180,216,0.12); }
     .input::placeholder { color:#C7C7CC; }
     select.input { appearance:none;cursor:pointer; }
 
-    .tab { padding:7px 14px;border-radius:8px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;border:none;transition:all .15s; }
-    .tab.active { background:#007AFF;color:#FFFFFF;box-shadow:0 2px 8px rgba(0,122,255,0.3); }
+    .tab { padding:7px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border:none;transition:all .15s; }
+    .tab.active { background:#00B4D8;color:#FFFFFF;box-shadow:0 2px 8px rgba(0,180,216,0.3); }
     .tab:not(.active) { background:transparent;color:#6E6E73; }
     .tab:not(.active):hover { color:#1D1D1F;background:#F5F5F7; }
 
-    .nav-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:#6E6E73;border:1px solid transparent; }
+    .nav-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;font-size:13px;color:#6E6E73;border:1px solid transparent; }
     .nav-item:hover { background:#F2F2F7;color:#1D1D1F; }
-    .nav-item.active { background:rgba(0,122,255,0.08);color:#007AFF;border-color:rgba(0,122,255,0.2); }
+    .nav-item.active { background:rgba(0,180,216,0.08);color:#00B4D8;border-color:rgba(0,180,216,0.2); }
 
-    .sidebar-proj { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:#6E6E73;border:1px solid transparent; }
+    .sidebar-proj { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;font-size:12px;color:#6E6E73;border:1px solid transparent; }
     .sidebar-proj:hover { background:#F2F2F7;color:#1D1D1F; }
-    .sidebar-proj.active { background:rgba(0,122,255,0.08);color:#007AFF;border-color:rgba(0,122,255,0.2); }
+    .sidebar-proj.active { background:rgba(0,180,216,0.08);color:#00B4D8;border-color:rgba(0,180,216,0.2); }
 
     .progress-bar { height:3px;background:#E5E5EA;border-radius:2px;overflow:hidden; }
-    .progress-fill { height:100%;border-radius:2px;background:linear-gradient(90deg,#0066CC,#007AFF);transition:width .6s ease; }
+    .progress-fill { height:100%;border-radius:2px;background:linear-gradient(90deg,#0090B3,#00B4D8);transition:width .6s ease; }
 
     .check-item { display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:#FAFAFA;border-radius:8px;border:1px solid #E5E5EA;cursor:pointer;transition:all .15s;user-select:none; }
     .check-item:hover { border-color:#D1D1D6; }
@@ -75,26 +75,26 @@ const FontLoader = () => (
     .cal-day.available { background:#FAFAFA;border-color:#E5E5EA; }
     .cal-day.available:hover { border-color:#4ECDC4;background:#4ECDC410; }
     .cal-day.option-a  { background:#FF9F4318;border-color:#FF9F4344; }
-    .cal-day.option-b  { background:#007AFF18;border-color:#007AFF44; }
+    .cal-day.option-b  { background:#00B4D818;border-color:#00B4D844; }
     .cal-day.option-ab { background:#FF9F4318;border-color:#FF9F4344; }
     .cal-day.full      { background:#FF3B3012;border-color:#FF3B3033;cursor:not-allowed; }
-    .cal-day.confirmed-a { background:#007AFF12;border-color:#007AFF33; }
+    .cal-day.confirmed-a { background:#00B4D812;border-color:#00B4D833; }
     .cal-day.confirmed-b { background:#4ECDC412;border-color:#4ECDC433; }
     .cal-day.confirmed-ab { background:#FF3B3018;border-color:#FF3B3044;cursor:not-allowed; }
-    .cal-day.partial-a  { background:linear-gradient(135deg,#007AFF12 50%,#FAFAFA 50%);border-color:#007AFF33; }
+    .cal-day.partial-a  { background:linear-gradient(135deg,#00B4D812 50%,#FAFAFA 50%);border-color:#00B4D833; }
     .cal-day.partial-b  { background:linear-gradient(135deg,#4ECDC412 50%,#FAFAFA 50%);border-color:#4ECDC433; }
-    .cal-day.partial-ab { background:linear-gradient(135deg,#007AFF12 50%,#4ECDC412 50%);border-color:#6E6E7344; }
-    .cal-day.selected { border-color:#007AFF !important;background:#007AFF20 !important;box-shadow:0 0 0 2px #007AFF40; }
-    .cal-day.today { box-shadow:inset 0 0 0 2px #007AFF88; }
+    .cal-day.partial-ab { background:linear-gradient(135deg,#00B4D812 50%,#4ECDC412 50%);border-color:#6E6E7344; }
+    .cal-day.selected { border-color:#00B4D8 !important;background:#00B4D820 !important;box-shadow:0 0 0 2px #00B4D840; }
+    .cal-day.today { box-shadow:inset 0 0 0 2px #00B4D888; }
 
     .option-card { padding:12px 14px;border-radius:10px;border:2px solid #E5E5EA;cursor:pointer;transition:all .18s;background:#FAFAFA;display:flex;align-items:flex-start;gap:10px; }
     .option-card:hover { border-color:#D1D1D6;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-    .option-card.selected { border-color:#007AFF;background:rgba(0,122,255,0.06); }
+    .option-card.selected { border-color:#00B4D8;background:rgba(0,180,216,0.06); }
     .option-check { width:18px;height:18px;border-radius:50%;border:2px solid #C7C7CC;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s; }
-    .option-check.checked { background:#007AFF;border-color:#007AFF; }
+    .option-check.checked { background:#00B4D8;border-color:#00B4D8; }
 
     .toggle { width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;transition:all .2s;position:relative;flex-shrink:0; }
-    .toggle.on  { background:#007AFF; }
+    .toggle.on  { background:#00B4D8; }
     .toggle.off { background:#C7C7CC; }
     .toggle::after { content:'';position:absolute;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:all .2s;box-shadow:0 1px 3px rgba(0,0,0,0.15); }
     .toggle.on::after  { left:18px; }
@@ -103,46 +103,46 @@ const FontLoader = () => (
     .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px; }
     .modal { background:#FFFFFF;border:1px solid #E5E5EA;border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:fadeUp .25s ease;box-shadow:0 24px 64px rgba(0,0,0,0.12); }
 
-    .notif { position:fixed;bottom:24px;right:24px;z-index:200;background:#FFFFFF;border:1px solid #E5E5EA;border-radius:12px;padding:12px 18px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:#1D1D1F;display:flex;align-items:center;gap:8px;animation:fadeUp .3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.12); }
+    .notif { position:fixed;bottom:24px;right:24px;z-index:200;background:#FFFFFF;border:1px solid #E5E5EA;border-radius:12px;padding:12px 18px;font-family:'Inter',sans-serif;font-size:13px;color:#1D1D1F;display:flex;align-items:center;gap:8px;animation:fadeUp .3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.12); }
 
     .admin-input { background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:6px;padding:6px 10px;color:#1D1D1F;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;width:100%;text-align:right; }
-    .admin-input:focus { border-color:#007AFF; }
+    .admin-input:focus { border-color:#00B4D8; }
 
-    .tag { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase; }
-    .tag-brief       { background:#007AFF18;color:#007AFF; }
+    .tag { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase; }
+    .tag-brief       { background:#00B4D818;color:#00B4D8; }
     .tag-storyboard  { background:#FF950018;color:#FF9500; }
     .tag-review      { background:#FF9F4318;color:#FF9F43; }
     .tag-delivered   { background:#34C75918;color:#34C759; }
 
     .time-cell { background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:6px;padding:6px 8px;color:#1D1D1F;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;width:100%;text-align:center;transition:border-color .2s; }
-    .time-cell:focus { border-color:#007AFF; }
+    .time-cell:focus { border-color:#00B4D8; }
 
-    .step-dot { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .3s;font-family:'Plus Jakarta Sans',sans-serif; }
+    .step-dot { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .3s;font-family:'Inter',sans-serif; }
     .step-dot.done   { background:#34C759;color:#FFFFFF; }
-    .step-dot.active { background:#007AFF;color:#FFFFFF; }
+    .step-dot.active { background:#00B4D8;color:#FFFFFF; }
     .step-dot.todo   { background:#F2F2F7;color:#8E8E93;border:1px solid #E5E5EA; }
 
-    .price-range { background:linear-gradient(135deg,rgba(0,122,255,0.06),rgba(0,122,255,0.02));border:1px solid rgba(0,122,255,0.2);border-radius:12px;padding:24px;text-align:center; }
-    .discount-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;background:#34C75918;color:#34C759;border:1px solid #34C75940; }
-    .clickup-badge  { display:inline-flex;align-items:center;gap:5px;padding:3px 8px;background:#7B68EE18;border:1px solid #7B68EE44;border-radius:12px;font-family:'Plus Jakarta Sans',sans-serif;font-size:10px;color:#7B68EE;font-weight:600; }
+    .price-range { background:linear-gradient(135deg,rgba(0,180,216,0.06),rgba(0,180,216,0.02));border:1px solid rgba(0,180,216,0.2);border-radius:12px;padding:24px;text-align:center; }
+    .discount-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;background:#34C75918;color:#34C759;border:1px solid #34C75940; }
+    .clickup-badge  { display:inline-flex;align-items:center;gap:5px;padding:3px 8px;background:#7B68EE18;border:1px solid #7B68EE44;border-radius:12px;font-family:'Inter',sans-serif;font-size:10px;color:#7B68EE;font-weight:600; }
 
     .timeline-step { display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative; }
     .timeline-step::after { content:'';position:absolute;top:13px;left:50%;right:-50%;height:2px;background:#E5E5EA;z-index:0; }
     .timeline-step:last-child::after { display:none; }
-    .timeline-dot { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;z-index:1;font-family:'Plus Jakarta Sans',sans-serif; }
+    .timeline-dot { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;z-index:1;font-family:'Inter',sans-serif; }
     .dot-done   { background:#34C759;color:#FFFFFF; }
-    .dot-active { background:#007AFF;color:#FFFFFF;animation:pulse 1.8s infinite; }
+    .dot-active { background:#00B4D8;color:#FFFFFF;animation:pulse 1.8s infinite; }
     .dot-todo   { background:#F2F2F7;color:#8E8E93;border:1px solid #E5E5EA; }
 
-    .comment-bubble       { padding:10px 14px;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;line-height:1.5;max-width:80%; }
+    .comment-bubble       { padding:10px 14px;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;max-width:80%; }
     .comment-prod         { background:#F2F2F7;color:#1D1D1F;align-self:flex-start; }
-    .comment-client       { background:rgba(0,122,255,0.08);color:#1D1D1F;border:1px solid rgba(0,122,255,0.15);align-self:flex-end; }
+    .comment-client       { background:rgba(0,180,216,0.08);color:#1D1D1F;border:1px solid rgba(0,180,216,0.15);align-self:flex-end; }
     .comment-prestataire  { background:#E0F2F1;color:#1D1D1F;border:1px solid #4ECDC430;align-self:flex-start;white-space:pre-line; }
 
     .equip-item { display:flex;align-items:center;gap:8px;padding:8px 12px;background:#FAFAFA;border-radius:8px;border:1px solid #E5E5EA;transition:all .15s; }
-    .equip-item.included { border-color:rgba(0,122,255,0.3); }
-    .type-pill { padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:500;border:1.5px solid #E5E5EA;background:#FAFAFA;color:#6E6E73;transition:all .15s; }
-    .type-pill.selected { background:rgba(0,122,255,0.08);border-color:#007AFF;color:#007AFF; }
+    .equip-item.included { border-color:rgba(0,180,216,0.3); }
+    .type-pill { padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;border:1.5px solid #E5E5EA;background:#FAFAFA;color:#6E6E73;transition:all .15s; }
+    .type-pill.selected { background:rgba(0,180,216,0.08);border-color:#00B4D8;color:#00B4D8; }
     .type-pill:hover:not(.selected) { border-color:#D1D1D6;color:#1D1D1F; }
 
     /* ── RESPONSIVE ── */
@@ -288,16 +288,16 @@ function Notif({msg,color="#4ECDC4",onDone}){
   return <div className="notif"><span style={{color}}>✓</span> {msg}</div>;
 }
 function Lbl({children,style={}}){
-  return <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:5,...style}}>{children}</label>;
+  return <label style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:5,...style}}>{children}</label>;
 }
 function SH({icon,title,sub,right}){
   return(
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:32,height:32,borderRadius:8,background:"#007AFF18",border:"1px solid #007AFF30",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{icon}</div>
+        <div style={{width:32,height:32,borderRadius:8,background:"#00B4D818",border:"1px solid #00B4D830",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{icon}</div>
         <div>
-          <h3 style={{fontFamily:"'Montserrat'",fontSize:16,color:"#1D1D1F",letterSpacing:"0.05em"}}>{title}</h3>
-          {sub&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:1}}>{sub}</p>}
+          <h3 style={{fontFamily:"'Urbanist'",fontSize:16,color:"#1D1D1F",letterSpacing:"0.05em"}}>{title}</h3>
+          {sub&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:1}}>{sub}</p>}
         </div>
       </div>
       {right}
@@ -375,7 +375,7 @@ function Timeline({status}){
       {STATUS_STEPS.map((s,i)=>(
         <div key={s} className="timeline-step">
           <div className={`timeline-dot ${i<cur?"dot-done":i===cur?"dot-active":"dot-todo"}`}>{i<cur?"✓":i+1}</div>
-          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:i<=cur?"#1D1D1F":"#8E8E93",textAlign:"center"}}>{s}</span>
+          <span style={{fontFamily:"'Inter'",fontSize:9,color:i<=cur?"#1D1D1F":"#8E8E93",textAlign:"center"}}>{s}</span>
         </div>
       ))}
     </div>
@@ -387,29 +387,29 @@ function Timeline({status}){
 // ─────────────────────────────────────────────────────────────────────────────
 function PrestaireProposalCard({content}){
   let data;
-  try{ data=JSON.parse(content); }catch{ return <span style={{whiteSpace:"pre-line",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13}}>{content}</span>; }
-  if(data.type!=="prestataire_proposal") return <span style={{whiteSpace:"pre-line",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13}}>{content}</span>;
+  try{ data=JSON.parse(content); }catch{ return <span style={{whiteSpace:"pre-line",fontFamily:"'Inter',sans-serif",fontSize:13}}>{content}</span>; }
+  if(data.type!=="prestataire_proposal") return <span style={{whiteSpace:"pre-line",fontFamily:"'Inter',sans-serif",fontSize:13}}>{content}</span>;
   return(
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       {(data.prix||data.description)&&(
         <div style={{background:"#F5F5F7",borderRadius:8,padding:"12px 14px",border:"1px solid #4ECDC430"}}>
           {data.prix&&(
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:data.description?6:0,flexWrap:"wrap"}}>
-              <span style={{fontFamily:"'Montserrat'",fontSize:22,color:"#4ECDC4",letterSpacing:"0.04em"}}>{Number(data.prix).toLocaleString("fr-FR")} €</span>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>— proposition</span>
-              {data.non_concurrence&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",marginLeft:"auto"}}>✓ Clause non-concurrence acceptée</span>}
+              <span style={{fontFamily:"'Urbanist'",fontSize:22,color:"#4ECDC4",letterSpacing:"0.04em"}}>{Number(data.prix).toLocaleString("fr-FR")} €</span>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>— proposition</span>
+              {data.non_concurrence&&<span style={{fontFamily:"'Inter'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",marginLeft:"auto"}}>✓ Clause non-concurrence acceptée</span>}
             </div>
           )}
-          {data.description&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",fontStyle:"italic",lineHeight:1.5}}>{data.description}</p>}
+          {data.description&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",fontStyle:"italic",lineHeight:1.5}}>{data.description}</p>}
         </div>
       )}
-      {data.message&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{data.message}</p>}
-      {!data.prix&&data.non_concurrence&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",alignSelf:"flex-start"}}>✓ Clause non-concurrence acceptée</span>}
+      {data.message&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{data.message}</p>}
+      {!data.prix&&data.non_concurrence&&<span style={{fontFamily:"'Inter'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",alignSelf:"flex-start"}}>✓ Clause non-concurrence acceptée</span>}
       {(data.portfolio_urls||[]).length>0&&(
         <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>Portfolio :</span>
+          <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Portfolio :</span>
           {data.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(
-            <a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
+            <a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
           ):null;})}
         </div>
       )}
@@ -424,10 +424,10 @@ function CommentThread({comments,onAdd,role="prod"}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:320,overflowY:"auto",padding:"2px 0"}}>
-        {comments.length===0&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucun message.</p>}
+        {comments.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucun message.</p>}
         {comments.map(c=>(
           <div key={c.id} style={{display:"flex",flexDirection:"column",alignItems:c.role==="client"?"flex-end":"flex-start",gap:2}}>
-            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",paddingInline:4}}>
+            <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",paddingInline:4}}>
               {c.role==="prestataire"&&<span style={{color:"#4ECDC4",marginRight:4}}>🤝</span>}
               {c.author} · {fmtS(c.date)}
             </span>
@@ -451,14 +451,14 @@ function CommentThread({comments,onAdd,role="prod"}){
 // MODULE A — CLIENT PORTAL
 // ─────────────────────────────────────────────────────────────────────────────
 function FrameCard({frame,index}){
-  const colors=["#007AFF22","#4ECDC422","#7B9CFF22","#FF9F4322","#FF3B3022"];
+  const colors=["#00B4D822","#4ECDC422","#7B9CFF22","#FF9F4322","#FF3B3022"];
   return(
     <div style={{flex:"0 0 auto",width:150,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,overflow:"hidden",transition:"all .2s"}}>
       <div style={{height:90,background:colors[index%colors.length],display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,position:"relative"}}>
         {frame.visual}
-        <span style={{position:"absolute",top:5,left:7,fontFamily:"'Montserrat'",fontSize:10,color:"#8E8E93",letterSpacing:1}}>PLAN {index+1}</span>
+        <span style={{position:"absolute",top:5,left:7,fontFamily:"'Urbanist'",fontSize:10,color:"#8E8E93",letterSpacing:1}}>PLAN {index+1}</span>
       </div>
-      <div style={{padding:"7px 9px"}}><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73",lineHeight:1.4}}>{frame.desc}</p></div>
+      <div style={{padding:"7px 9px"}}><p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",lineHeight:1.4}}>{frame.desc}</p></div>
     </div>
   );
 }
@@ -487,7 +487,7 @@ function AIGenerator({project,onGenerated}){
         <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#8E8E93",lineHeight:1.6,whiteSpace:"pre-line"}}>{briefTxt}</p>
       </div>
       <textarea className="input" rows={3} placeholder="Instructions créatives : ambiance, angles, éléments visuels clés..." value={prompt} onChange={e=>setPrompt(e.target.value)}/>
-      {error&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#FF3B30"}}>{error}</p>}
+      {error&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#FF3B30"}}>{error}</p>}
       <button className="btn btn-primary" onClick={gen} disabled={loading||!prompt.trim()} style={{alignSelf:"flex-start",opacity:loading?.7:1}}>
         {loading?<><span style={{animation:"spin 1s linear infinite",display:"inline-block"}}>⟳</span> Génération...</>:"✦ Générer"}
       </button>
@@ -522,8 +522,8 @@ function ProdLivrables({project,onUpdate,onNotif}){
                 <div style={{width:30,height:30,borderRadius:7,background:sec.colorDim,border:`1px solid ${sec.colorBorder}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>{sec.icon}</div>
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sec.label}</span>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:sec.vis?sec.color:"#8E8E93",background:sec.vis?sec.colorDim:"#F2F2F7",border:`1px solid ${sec.vis?sec.colorBorder:"#E5E5EA"}`,borderRadius:8,padding:"1px 6px"}}>{sec.vis?"Visible client":"Interne"}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sec.label}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:9,color:sec.vis?sec.color:"#8E8E93",background:sec.vis?sec.colorDim:"#F2F2F7",border:`1px solid ${sec.vis?sec.colorBorder:"#E5E5EA"}`,borderRadius:8,padding:"1px 6px"}}>{sec.vis?"Visible client":"Interne"}</span>
                   </div>
                 </div>
               </div>
@@ -540,14 +540,14 @@ function ProdLivrables({project,onUpdate,onNotif}){
                 </div>
               </div>
             )}
-            {fs.length===0?<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#C7C7CC",textAlign:"center",padding:"8px 0"}}>Aucun fichier</p>:(
+            {fs.length===0?<p style={{fontFamily:"'Inter'",fontSize:12,color:"#C7C7CC",textAlign:"center",padding:"8px 0"}}>Aucun fichier</p>:(
               <div style={{display:"flex",flexDirection:"column",gap:5}}>
                 {fs.map(f=>(
                   <div key={f.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:"1px solid #E5E5EA"}}>
                     <div style={{width:5,height:5,borderRadius:"50%",background:sec.color,flexShrink:0}}/>
                     <div style={{flex:1,minWidth:0}}>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</p>
-                      {f.note&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{f.note}</p>}
+                      <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</p>
+                      {f.note&&<p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{f.note}</p>}
                     </div>
                     {safePortfolioUrl(f.url)&&<a href={safePortfolioUrl(f.url)} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",textDecoration:"none"}}>↗</a>}
                     <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>del(f.id)}>✕</button>
@@ -627,7 +627,7 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
 
       {/* Grid */}
       {items.length===0&&(
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>
+        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>
           Aucune image pour l'instant.<br/><span style={{fontSize:11}}>Collez des URLs ou uploadez des fichiers pour construire votre direction artistique.</span>
         </p>
       )}
@@ -640,10 +640,10 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
                 onError={e=>{e.target.style.display="none";}}/>}
               {/* Overlay */}
               <div style={{position:"absolute",inset:0,background:"rgba(8,8,15,0.75)",opacity:hoverId===item.id?1:0,transition:"opacity .18s",display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"8px"}}>
-                {item.caption&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#1D1D1F",lineHeight:1.4}}>{item.caption}</p>}
+                {item.caption&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#1D1D1F",lineHeight:1.4}}>{item.caption}</p>}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginTop:"auto"}}>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{item.addedBy}</span>
-                  <button style={{background:"#FF3B3018",border:"1px solid #FF3B3033",borderRadius:4,color:"#FF3B30",fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>remove(item.id)}>✕</button>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{item.addedBy}</span>
+                  <button style={{background:"#FF3B3018",border:"1px solid #FF3B3033",borderRadius:4,color:"#FF3B30",fontFamily:"'Inter'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>remove(item.id)}>✕</button>
                 </div>
               </div>
             </div>
@@ -716,7 +716,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
     <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:16}}>
       {/* Logo */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Montserrat'",fontSize:12,color:"#007AFF",letterSpacing:"0.08em",marginBottom:12}}>LOGO</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>LOGO</p>
         <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
           {charte.logoUrl&&(
             <img src={charte.logoUrl} alt="logo" style={{height:80,borderRadius:8,border:"1px solid #E5E5EA",background:"#F5F5F7",objectFit:"contain",padding:4}} onError={e=>{e.target.style.display="none";}}/>
@@ -732,7 +732,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
 
       {/* Couleurs */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Montserrat'",fontSize:12,color:"#007AFF",letterSpacing:"0.08em",marginBottom:12}}>PALETTE DE COULEURS</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>PALETTE DE COULEURS</p>
         <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
           {(charte.colors||[]).map((col,idx)=>(
             <div key={idx} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
@@ -764,7 +764,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
 
       {/* Typographies */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Montserrat'",fontSize:12,color:"#007AFF",letterSpacing:"0.08em",marginBottom:12}}>TYPOGRAPHIES</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>TYPOGRAPHIES</p>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {(charte.fonts||[]).map((font,idx)=>(
             <div key={idx} style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -778,7 +778,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
 
       {/* Notes */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Montserrat'",fontSize:12,color:"#007AFF",letterSpacing:"0.08em",marginBottom:12}}>NOTES / GUIDELINES</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>NOTES / GUIDELINES</p>
         <textarea
           className="input"
           rows={4}
@@ -826,7 +826,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
-          <div><h2 style={{fontFamily:"'Montserrat'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.04em"}}>{project.title}</h2></div>
+          <div><h2 style={{fontFamily:"'Urbanist'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.04em"}}>{project.title}</h2></div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
             {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#7B9CFF",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
@@ -854,17 +854,17 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                   <input className="input" placeholder="https://vimeo.com/..." value={statusMeta.replayUrl} onChange={e=>setStatusMeta(p=>({...p,replayUrl:e.target.value}))} style={{flex:1,borderColor:statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)?"#FF3B30":undefined}}/>
                   {statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)&&<a href={statusMeta.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗ Voir</a>}
                 </div>
-                {statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#FF3B30",marginTop:4}}>⚠ Domaine non autorisé — utilisez YouTube, Vimeo, Dropbox, Drive, WeTransfer ou Frame.io</p>}
+                {statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#FF3B30",marginTop:4}}>⚠ Domaine non autorisé — utilisez YouTube, Vimeo, Dropbox, Drive, WeTransfer ou Frame.io</p>}
               </div>
               {project.videoStatus&&(
-                <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF3B3018":"#007AFF18",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC433":project.videoStatus==="revision"?"#FF3B3033":"#007AFF33"}`}}>
+                <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF3B3018":"#00B4D818",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC433":project.videoStatus==="revision"?"#FF3B3033":"#00B4D833"}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:project.videoComment?6:0}}>
                     <span style={{fontSize:14}}>{project.videoStatus==="approved"?"✓":project.videoStatus==="revision"?"↩":"⏳"}</span>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:project.videoStatus==="approved"?"#4ECDC4":project.videoStatus==="revision"?"#FF3B30":"#007AFF"}}>
+                    <span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:project.videoStatus==="approved"?"#4ECDC4":project.videoStatus==="revision"?"#FF3B30":"#00B4D8"}}>
                       {project.videoStatus==="approved"?"Vidéo approuvée par le client":project.videoStatus==="revision"?"Révisions demandées":"En attente de validation"}
                     </span>
                   </div>
-                  {project.videoComment&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",paddingLeft:22}}>{project.videoComment}</p>}
+                  {project.videoComment&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",paddingLeft:22}}>{project.videoComment}</p>}
                 </div>
               )}
             </div>
@@ -885,17 +885,17 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
       {tab==="storyboards"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <h3 style={{fontFamily:"'Montserrat'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>STORYBOARDS</h3>
+            <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>STORYBOARDS</h3>
             <button className="btn btn-primary" onClick={()=>setShowGen(!showGen)}>{showGen?"✕ Fermer":"✦ Générer avec IA"}</button>
           </div>
           {showGen&&<div className="card fadeUp" style={{padding:16}}><AIGenerator project={project} onGenerated={addSB}/></div>}
           {project.storyboards.map(sb=>(
             <div key={sb.id} className="card fadeUp" style={{padding:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
-                <div><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{fmtS(sb.createdAt)}</span></div>
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{fmtS(sb.createdAt)}</span></div>
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
                   {sb.validationStatus==="approved"&&<span className="tag" style={{background:"#4ECDC422",color:"#4ECDC4"}}>✓ Approuvé</span>}
-                  {sb.validationStatus==="pending"&&<span className="tag" style={{background:"#007AFF22",color:"#007AFF"}}>⏳ En attente</span>}
+                  {sb.validationStatus==="pending"&&<span className="tag" style={{background:"#00B4D822",color:"#00B4D8"}}>⏳ En attente</span>}
                   {sb.validationStatus==="revision"&&<span className="tag" style={{background:"#FF3B3022",color:"#FF3B30"}}>↩ Révision</span>}
                   {sb.validationStatus!=="approved"&&<button className="btn btn-green" style={{fontSize:11}} onClick={()=>updSB(sb.id,"approved")}>Valider</button>}
                 </div>
@@ -919,25 +919,25 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
         return(
           <div style={{display:"flex",flexDirection:"column",gap:12}} className="fadeUp">
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <h3 style={{fontFamily:"'Montserrat'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>RÉSERVATIONS LIÉES</h3>
+              <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>RÉSERVATIONS LIÉES</h3>
               {onGoToCalendar&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={onGoToCalendar}>Voir dans le calendrier →</button>}
             </div>
-            {projBookings.length===0&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune réservation liée à ce projet.</p>}
+            {projBookings.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune réservation liée à ce projet.</p>}
             {projBookings.map(b=>(
               <div key={b.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                 <div style={{width:5,height:5,borderRadius:"50%",background:statusColor(b.status),flexShrink:0}}/>
                 <div style={{flex:1,minWidth:0}}>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:500,color:"#1D1D1F"}}>{b.client||b.client_name}</p>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{fmtS(b.date)} · Équipe {b.team} · {b.startTime||""}–{b.endTime||""}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:500,color:"#1D1D1F"}}>{b.client||b.client_name}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{fmtS(b.date)} · Équipe {b.team} · {b.startTime||""}–{b.endTime||""}</p>
                 </div>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:statusColor(b.status),background:statusColor(b.status)+"18",border:`1px solid ${statusColor(b.status)}30`,borderRadius:10,padding:"2px 8px"}}>
+                <span style={{fontFamily:"'Inter'",fontSize:11,color:statusColor(b.status),background:statusColor(b.status)+"18",border:`1px solid ${statusColor(b.status)}30`,borderRadius:10,padding:"2px 8px"}}>
                   {b.status==="confirmed"?`Confirmé (${b.confirmType||""})`:"Option"}
                 </span>
               </div>
             ))}
             {unlinked.length>0&&(
               <div className="card" style={{padding:16}}>
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:600,color:"#1D1D1F",marginBottom:10}}>Lier une réservation existante</p>
+                <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#1D1D1F",marginBottom:10}}>Lier une réservation existante</p>
                 <div style={{display:"flex",gap:8}}>
                   <select className="input" style={{flex:1}} value={linkingBookingId} onChange={e=>setLinkingBookingId(e.target.value)}>
                     <option value="">Choisir une réservation...</option>
@@ -1003,16 +1003,16 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
       <SH icon="▶" title="VALIDATION VIDÉO" sub="Visionnez et approuvez ou demandez des révisions"/>
 
       {!project.replayUrl&&(
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>Aucune vidéo partagée pour l'instant.<br/><span style={{fontSize:11}}>L'équipe vous notifiera dès qu'une version sera disponible.</span></p>
+        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>Aucune vidéo partagée pour l'instant.<br/><span style={{fontSize:11}}>L'équipe vous notifiera dès qu'une version sera disponible.</span></p>
       )}
 
       {project.replayUrl&&(
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {/* Statut actuel */}
           {project.videoStatus&&(
-            <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF9F4318":"#007AFF18",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC440":project.videoStatus==="revision"?"#FF9F4340":"#007AFF40"}`,display:"flex",alignItems:"center",gap:8}}>
+            <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF9F4318":"#00B4D818",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC440":project.videoStatus==="revision"?"#FF9F4340":"#00B4D840"}`,display:"flex",alignItems:"center",gap:8}}>
               <span style={{fontSize:16}}>{project.videoStatus==="approved"?"✓":project.videoStatus==="revision"?"↩":"⏳"}</span>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:project.videoStatus==="approved"?"#4ECDC4":project.videoStatus==="revision"?"#FF9F43":"#007AFF"}}>
+              <span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:project.videoStatus==="approved"?"#4ECDC4":project.videoStatus==="revision"?"#FF9F43":"#00B4D8"}}>
                 {project.videoStatus==="approved"?"Vous avez approuvé cette version":project.videoStatus==="revision"?"Révisions en cours de traitement":"En attente de votre validation"}
               </span>
             </div>
@@ -1025,14 +1025,14 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#0061FF"><path d="M6 2L0 6l6 4 6-4-6-4zm12 0l-6 4 6 4 6-4-6-4zM0 14l6 4 6-4-6-4-6 4zm18-4l-6 4 6 4 6-4-6-4zM6 19l6 4 6-4-6-4-6 4z"/></svg>
               </div>
               <div style={{textAlign:"center"}}>
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,fontWeight:600,color:"#1D1D1F",marginBottom:4}}>Dropbox Replay</p>
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",lineHeight:1.5}}>Ouvrez la vidéo dans Dropbox Replay pour laisser des commentaires horodatés directement sur la timeline.</p>
+                <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F",marginBottom:4}}>Dropbox Replay</p>
+                <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.5}}>Ouvrez la vidéo dans Dropbox Replay pour laisser des commentaires horodatés directement sur la timeline.</p>
               </div>
-              <a href={project.replayUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:"#0061FF",color:"#fff",fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,padding:"10px 22px",borderRadius:7,letterSpacing:"0.03em",display:"inline-flex",alignItems:"center",gap:8}}>
+              <a href={project.replayUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:"#0061FF",color:"#fff",fontFamily:"'Inter'",fontSize:13,fontWeight:600,padding:"10px 22px",borderRadius:7,letterSpacing:"0.03em",display:"inline-flex",alignItems:"center",gap:8}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M6 2L0 6l6 4 6-4-6-4zm12 0l-6 4 6 4 6-4-6-4zM0 14l6 4 6-4-6-4-6 4zm18-4l-6 4 6 4 6-4-6-4zM6 19l6 4 6-4-6-4-6 4z"/></svg>
                 Ouvrir dans Dropbox Replay
               </a>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#C7C7CC"}}>Puis revenez ici pour approuver ou demander des révisions.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#C7C7CC"}}>Puis revenez ici pour approuver ou demander des révisions.</p>
             </div>
           )}
 
@@ -1047,7 +1047,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
           {!embedUrl&&videoType==="other"&&(
             <div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,padding:"24px",display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
               <span style={{fontSize:32}}>▶</span>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",textAlign:"center"}}>Visualisez la vidéo sur la plateforme de revue</p>
+              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",textAlign:"center"}}>Visualisez la vidéo sur la plateforme de revue</p>
               <a href={project.replayUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{textDecoration:"none"}}>Ouvrir la vidéo →</a>
             </div>
           )}
@@ -1062,7 +1062,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
                 </div>
               ):(
                 <div style={{display:"flex",flexDirection:"column",gap:8,padding:"14px",background:"#F5F5F7",borderRadius:8,border:"1px solid #FF9F4330"}}>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:600,color:"#1D1D1F"}}>Décrivez les révisions souhaitées :</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#1D1D1F"}}>Décrivez les révisions souhaitées :</p>
                   <textarea className="input" rows={3} placeholder="Ex : La musique est trop forte au début, ajouter les sous-titres sur la partie 0:30–1:00…" value={revisionComment} onChange={e=>setRevisionComment(e.target.value)}/>
                   <div style={{display:"flex",gap:7}}>
                     <button className="btn btn-ghost" style={{flex:1,fontSize:12}} onClick={()=>setShowRevForm(false)}>Annuler</button>
@@ -1085,12 +1085,12 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
       {!isGuest&&(
         <div style={{marginTop:14,paddingTop:14,borderTop:"1px solid #E5E5EA"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showInvite?10:0}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}>👥 Accès invité</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>👥 Accès invité</p>
             <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowInvite(v=>!v)}>{showInvite?"✕ Fermer":"Inviter un collaborateur"}</button>
           </div>
           {showInvite&&(
             <div style={{background:"#F5F5F7",borderRadius:8,padding:14,border:"1px solid #E5E5EA",display:"flex",flexDirection:"column",gap:10}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>Génère un lien temporaire (30 jours) donnant accès uniquement à la validation vidéo — sans accès au brief, aux devis ni aux messages.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Génère un lien temporaire (30 jours) donnant accès uniquement à la validation vidéo — sans accès au brief, aux devis ni aux messages.</p>
               <div style={{display:"flex",gap:8}}>
                 <input className="input" placeholder="Nom du collaborateur (ex: Marie, Directrice Marketing)" value={inviteName} onChange={e=>setInviteName(e.target.value)} style={{flex:1}}/>
                 <button className="btn btn-primary" style={{whiteSpace:"nowrap",fontSize:12}} disabled={!inviteName.trim()} onClick={async()=>{
@@ -1112,7 +1112,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
                 return(
                   <div key={g.token} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:"1px solid #E5E5EA",flexWrap:"wrap"}}>
                     <div style={{flex:1,minWidth:0}}>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",fontWeight:500}}>{g.name}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:500}}>{g.name}</p>
                       <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#8E8E93",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{url}</p>
                     </div>
                     <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopiedToken(g.token);onNotif("Lien copié !");}}>
@@ -1179,10 +1179,10 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
 
   if(showIntake) return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div className="fadeUp" style={{background:"linear-gradient(135deg,rgba(0,122,255,0.06),rgba(175,82,222,0.03))",border:"1px solid rgba(0,122,255,0.12)",borderRadius:14,padding:"22px 24px"}}>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#AF52DE",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:6}}>Première étape</p>
-        <h2 style={{fontFamily:"'Montserrat'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:4,fontWeight:800}}>Votre brief de production</h2>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#6E6E73",lineHeight:1.6}}>Décrivez votre vision — plus vous partagez de détails, plus notre équipe pourra vous proposer une production qui vous ressemble.</p>
+      <div className="fadeUp" style={{background:"linear-gradient(135deg,rgba(0,180,216,0.06),rgba(175,82,222,0.03))",border:"1px solid rgba(0,180,216,0.12)",borderRadius:14,padding:"22px 24px"}}>
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#AF52DE",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:6}}>Première étape</p>
+        <h2 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:4,fontWeight:800}}>Votre brief de production</h2>
+        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",lineHeight:1.6}}>Décrivez votre vision — plus vous partagez de détails, plus notre équipe pourra vous proposer une production qui vous ressemble.</p>
       </div>
       <div className="card fadeUp" style={{padding:22}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -1203,7 +1203,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
           {serviceTypes.length>0&&(
             <div>
               <Lbl>Services additionnels dont vous avez besoin</Lbl>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginBottom:8}}>Sélectionnez les services complémentaires pour ce projet (lieu, traiteur, transport…)</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginBottom:8}}>Sélectionnez les services complémentaires pour ce projet (lieu, traiteur, transport…)</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                 {serviceTypes.filter(t=>t.actif!==false).map(t=>{
                   const sel=brief.services.includes(t.id);
@@ -1211,7 +1211,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
                     <div key={t.id} className={`option-card ${sel?"selected":""}`} style={{padding:"8px 14px",display:"flex",alignItems:"center",gap:8}} onClick={()=>toggleService(t.id)}>
                       <div className={`option-check ${sel?"checked":""}`}>{sel&&<span style={{color:"#FFFFFF",fontSize:10,fontWeight:700}}>✓</span>}</div>
                       <span style={{fontSize:16}}>{t.icone}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F"}}>{t.label}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F"}}>{t.label}</span>
                     </div>
                   );
                 })}
@@ -1228,10 +1228,10 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div className="fadeUp" style={{background:"linear-gradient(135deg,rgba(0,122,255,0.06),rgba(175,82,222,0.03))",border:"1px solid rgba(0,122,255,0.1)",borderRadius:14,padding:"20px 22px"}}>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#AF52DE",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:4}}>Votre projet</p>
-        <h2 style={{fontFamily:"'Montserrat'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:2,fontWeight:800}}>{project.title}</h2>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginBottom:12}}>En cours de production — notre équipe travaille pour vous ✨</p>
+      <div className="fadeUp" style={{background:"linear-gradient(135deg,rgba(0,180,216,0.06),rgba(175,82,222,0.03))",border:"1px solid rgba(0,180,216,0.1)",borderRadius:14,padding:"20px 22px"}}>
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#AF52DE",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:4}}>Votre projet</p>
+        <h2 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:2,fontWeight:800}}>{project.title}</h2>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:12}}>En cours de production — notre équipe travaille pour vous ✨</p>
         <Timeline status={project.status}/>
       </div>
       <div style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
@@ -1241,25 +1241,25 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
         <div className="card fadeUp" style={{padding:18}}>
           <SH icon="📊" title="AVANCEMENT"/>
           {(project.statusNote||project.deliveryDate||project.shootDate)&&(
-            <div style={{background:"#007AFF10",border:"1px solid #007AFF20",borderRadius:8,padding:"10px 14px",marginBottom:12}}>
-              {project.statusNote&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{project.statusNote}</p>}
+            <div style={{background:"#00B4D810",border:"1px solid #00B4D820",borderRadius:8,padding:"10px 14px",marginBottom:12}}>
+              {project.statusNote&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{project.statusNote}</p>}
               {project.shootDate&&(
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:project.statusNote?6:0,gap:8,flexWrap:"wrap"}}>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>🎬 Tournage prévu : {fmtD(project.shootDate)}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>🎬 Tournage prévu : {fmtD(project.shootDate)}</p>
                   <button className="btn btn-ghost" style={{fontSize:11,padding:"3px 10px",display:"flex",alignItems:"center",gap:5}} onClick={()=>downloadICS(`Tournage – ${project.title}`,project.shootDate,`Projet : ${project.title}\nThird-One Studio`)}>
                     <span>📅</span> Ajouter au calendrier
                   </button>
                 </div>
               )}
-              {project.deliveryDate&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:4}}>📅 Livraison prévue : {fmtD(project.deliveryDate)}</p>}
+              {project.deliveryDate&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>📅 Livraison prévue : {fmtD(project.deliveryDate)}</p>}
             </div>
           )}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {STATUS_STEPS.map((s,i)=>{const cur=STATUS_INDEX[project.status]??0,done=i<cur,act=i===cur;return(
-              <div key={s} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:act?"#007AFF10":done?"#4ECDC410":"#F5F5F7",border:`1px solid ${act?"#007AFF30":done?"#4ECDC430":"#E5E5EA"}`}}>
-                <div style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",background:done?"#4ECDC4":act?"#007AFF":"#F2F2F7",color:(done||act)?"#FFFFFF":"#8E8E93",fontWeight:700,fontSize:11,flexShrink:0}}>{done?"✓":i+1}</div>
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:act?"#007AFF":done?"#4ECDC4":"#8E8E93"}}>{s}</p>
-                {act&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73",marginLeft:"auto"}}>En cours</span>}
+              <div key={s} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",borderRadius:8,background:act?"#00B4D810":done?"#4ECDC410":"#F5F5F7",border:`1px solid ${act?"#00B4D830":done?"#4ECDC430":"#E5E5EA"}`}}>
+                <div style={{width:28,height:28,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",background:done?"#4ECDC4":act?"#00B4D8":"#F2F2F7",color:(done||act)?"#FFFFFF":"#8E8E93",fontWeight:700,fontSize:11,flexShrink:0}}>{done?"✓":i+1}</div>
+                <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:act?"#00B4D8":done?"#4ECDC4":"#8E8E93"}}>{s}</p>
+                {act&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginLeft:"auto"}}>En cours</span>}
               </div>
             );})}
           </div>
@@ -1267,18 +1267,18 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
       )}
       {tab==="storyboards"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {project.storyboards.length===0&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>Notre équipe prépare votre storyboard — il apparaîtra ici dès qu'il sera prêt. 🎞</p>}
+          {project.storyboards.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>Notre équipe prépare votre storyboard — il apparaîtra ici dès qu'il sera prêt. 🎞</p>}
           {project.storyboards.map(sb=>(
             <div key={sb.id} className="card fadeUp" style={{padding:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                <div><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>Reçu le {fmtS(sb.createdAt)}</span></div>
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Reçu le {fmtS(sb.createdAt)}</span></div>
                 {sb.validationStatus==="approved"&&<span className="tag" style={{background:"#4ECDC422",color:"#4ECDC4"}}>✓ Approuvé</span>}
                 {sb.validationStatus==="revision"&&<span className="tag" style={{background:"#FF3B3022",color:"#FF3B30"}}>↩ Révision en cours</span>}
               </div>
               <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>{sb.frames.map((f,i)=><FrameCard key={f.id} frame={f} index={i}/>)}</div>
               {sb.validationStatus==="pending"&&(
-                <div style={{marginTop:12,padding:"12px 14px",background:"#007AFF10",border:"1px solid #007AFF20",borderRadius:8,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>Votre avis nous est précieux — que pensez-vous de ce storyboard ?</p>
+                <div style={{marginTop:12,padding:"12px 14px",background:"#00B4D810",border:"1px solid #00B4D820",borderRadius:8,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                  <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>Votre avis nous est précieux — que pensez-vous de ce storyboard ?</p>
                   <div style={{display:"flex",gap:6}}>
                     <button className="btn btn-red" onClick={()=>valSB(sb.id,"revision")}>↩ Révision</button>
                     <button className="btn btn-green" onClick={()=>valSB(sb.id,"approved")}>✓ Approuver</button>
@@ -1295,11 +1295,11 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
       {tab==="livrables"&&(
         <div className="card fadeUp" style={{padding:18}}>
           <SH icon="✦" title="LIVRABLES FINAUX"/>
-          {finaux.length===0?<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Vos fichiers finaux apparaîtront ici dès que la production sera terminée. ✨</p>:(
+          {finaux.length===0?<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Vos fichiers finaux apparaîtront ici dès que la production sera terminée. ✨</p>:(
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {finaux.map(l=>(
                 <div key={l.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#F5F5F7",borderRadius:8,border:"1px solid #4ECDC430"}}>
-                  <div style={{flex:1}}><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{l.name}</p><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>Depuis le {fmtS(l.date)}</p></div>
+                  <div style={{flex:1}}><p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{l.name}</p><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>Depuis le {fmtS(l.date)}</p></div>
                   {safePortfolioUrl(l.url)&&<a href={safePortfolioUrl(l.url)} target="_blank" rel="noreferrer" className="btn btn-green" style={{textDecoration:"none",fontSize:11}}>⬇ Télécharger</a>}
                 </div>
               ))}
@@ -1346,7 +1346,7 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
   };
 
   // const statusColors={free:"#4ECDC4",option:"#FF9F43",confirmed:"#FF3B30"};
-  // const teamColors={A:"#007AFF",B:"#4ECDC4"};
+  // const teamColors={A:"#00B4D8",B:"#4ECDC4"};
 
   const alerts=bookings.filter(b=>b.status==="option"&&b.expiresAt&&new Date(b.expiresAt)-Date.now()<24*3600000&&new Date(b.expiresAt)>Date.now());
 
@@ -1356,9 +1356,9 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
         <div style={{background:"#FF9F4318",border:"1px solid #FF9F4340",borderRadius:8,padding:"10px 14px",display:"flex",gap:10,alignItems:"flex-start"}}>
           <span style={{color:"#FF9F43",fontSize:16}}>⚠️</span>
           <div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#FF9F43"}}>Options expirant dans moins de 24h</p>
+            <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#FF9F43"}}>Options expirant dans moins de 24h</p>
             {alerts.map(a=>(
-              <p key={a.id} style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#FF9F43",opacity:.8,marginTop:3}}>
+              <p key={a.id} style={{fontFamily:"'Inter'",fontSize:12,color:"#FF9F43",opacity:.8,marginTop:3}}>
                 {a.client} – Équipe {a.team} – {fmtS(a.date)} – expire dans {getCountdown(a.expiresAt)}
               </p>
             ))}
@@ -1369,14 +1369,14 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
       <div className="card" style={{padding:18}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
           <button className="btn btn-ghost" style={{padding:"6px 12px"}} onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()-1,1))}>←</button>
-          <h3 style={{fontFamily:"'Montserrat'",fontSize:20,color:"#1D1D1F",letterSpacing:"0.06em",textTransform:"capitalize"}}>{monthStr}</h3>
+          <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#1D1D1F",letterSpacing:"0.06em",textTransform:"capitalize"}}>{monthStr}</h3>
           <button className="btn btn-ghost" style={{padding:"6px 12px"}} onClick={()=>setMonth(new Date(month.getFullYear(),month.getMonth()+1,1))}>→</button>
         </div>
 
         {/* Day headers */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:4}}>
           {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d=>(
-            <div key={d} style={{textAlign:"center",fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",padding:"4px 0"}}>{d}</div>
+            <div key={d} style={{textAlign:"center",fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",padding:"4px 0"}}>{d}</div>
           ))}
         </div>
 
@@ -1391,9 +1391,9 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
             const{A,B}=getDayStatus(ds,bookings);
             return(
               <div key={i} className={`cal-day ${cls} ${isSel?"selected":""} ${isToday?"today":""}`} onClick={()=>handleDayClick(ds)}>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:600,color:"#1D1D1F"}}>{i+1}</span>
+                <span style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#1D1D1F"}}>{i+1}</span>
                 <div style={{display:"flex",gap:2}}>
-                  {A!=="free"&&<div style={{width:5,height:5,borderRadius:"50%",background:A==="confirmed"?"#007AFF":"#FF9F43"}}/>}
+                  {A!=="free"&&<div style={{width:5,height:5,borderRadius:"50%",background:A==="confirmed"?"#00B4D8":"#FF9F43"}}/>}
                   {B!=="free"&&<div style={{width:5,height:5,borderRadius:"50%",background:B==="confirmed"?"#4ECDC4":"#7B9CFF"}}/>}
                 </div>
               </div>
@@ -1403,10 +1403,10 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
 
         {/* Legend */}
         <div style={{display:"flex",flexWrap:"wrap",gap:12,marginTop:14,paddingTop:12,borderTop:"1px solid #E5E5EA"}}>
-          {[["#4ECDC4","Disponible"],["#FF9F43","Option (Éq.A)"],["#7B9CFF","Option (Éq.B)"],["#007AFF","Confirmé Éq.A"],["#4ECDC4","Confirmé Éq.B"],["#FF3B30","Complet"]].map(([c,l])=>(
+          {[["#4ECDC4","Disponible"],["#FF9F43","Option (Éq.A)"],["#7B9CFF","Option (Éq.B)"],["#00B4D8","Confirmé Éq.A"],["#4ECDC4","Confirmé Éq.B"],["#FF3B30","Complet"]].map(([c,l])=>(
             <div key={l} style={{display:"flex",alignItems:"center",gap:5}}>
               <div style={{width:8,height:8,borderRadius:2,background:c+"44",border:`1px solid ${c}66`}}/>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#6E6E73"}}>{l}</span>
+              <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{l}</span>
             </div>
           ))}
         </div>
@@ -1426,17 +1426,17 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
               const linkedProject=b.projectId?projects.find(p=>String(p.id)===String(b.projectId)):null;
               return(
               <div key={b.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA"}}>
-                <div style={{width:5,height:5,borderRadius:"50%",background:b.status==="confirmed"?(b.team==="A"?"#007AFF":"#4ECDC4"):"#FF9F43",flexShrink:0}}/>
+                <div style={{width:5,height:5,borderRadius:"50%",background:b.status==="confirmed"?(b.team==="A"?"#00B4D8":"#4ECDC4"):"#FF9F43",flexShrink:0}}/>
                 <div style={{flex:1,minWidth:0}}>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.client}</p>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{fmtS(b.date)} · Équipe {b.team}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.client}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{fmtS(b.date)} · Équipe {b.team}</p>
                 </div>
                 {linkedProject&&onGoToProject&&(
-                  <button onClick={()=>onGoToProject(b.projectId)} style={{background:"#007AFF18",border:"1px solid #007AFF30",borderRadius:6,padding:"2px 8px",color:"#007AFF",fontFamily:"'Plus Jakarta Sans'",fontSize:10,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                  <button onClick={()=>onGoToProject(b.projectId)} style={{background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:6,padding:"2px 8px",color:"#00B4D8",fontFamily:"'Inter'",fontSize:10,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                     📁 {linkedProject.title.slice(0,20)}{linkedProject.title.length>20?"…":""}
                   </button>
                 )}
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:b.status==="confirmed"?"#4ECDC4":"#FF9F43",background:b.status==="confirmed"?"#4ECDC418":"#FF9F4318",border:`1px solid ${b.status==="confirmed"?"#4ECDC430":"#FF9F4330"}`,borderRadius:10,padding:"2px 8px",flexShrink:0}}>
+                <span style={{fontFamily:"'Inter'",fontSize:11,color:b.status==="confirmed"?"#4ECDC4":"#FF9F43",background:b.status==="confirmed"?"#4ECDC418":"#FF9F4318",border:`1px solid ${b.status==="confirmed"?"#4ECDC430":"#FF9F4330"}`,borderRadius:10,padding:"2px 8px",flexShrink:0}}>
                   {b.status==="confirmed"?`Confirmé (${b.confirmType})`:`Option — ${b.expiresAt?getCountdown(b.expiresAt):"..."}`}
                 </span>
               </div>
@@ -1495,7 +1495,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
     onNotif("Option refusée");onClose();
   };
 
-  const teamColor=t=>t==="A"?"#007AFF":"#4ECDC4";
+  const teamColor=t=>t==="A"?"#00B4D8":"#4ECDC4";
 
   const slotLabel=(b)=>{
     const st=b.startTime||b.start_time;
@@ -1525,7 +1525,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{padding:24,maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-          <h3 style={{fontFamily:"'Montserrat'",fontSize:20,color:"#1D1D1F",letterSpacing:"0.05em"}}>{fmtD(date)}</h3>
+          <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#1D1D1F",letterSpacing:"0.05em"}}>{fmtD(date)}</h3>
           <button className="btn btn-ghost" style={{padding:"4px 10px"}} onClick={onClose}>✕</button>
         </div>
 
@@ -1537,15 +1537,15 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
             <div key={team} style={{marginBottom:14,padding:14,background:"#F5F5F7",borderRadius:8,border:`1px solid ${tc}22`}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:bs.length>0?10:0}}>
                 <div style={{width:8,height:8,borderRadius:"50%",background:statusDot(info?.status)}}/>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:tc}}>Équipe {team}</span>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>— {statusLabel(info)}</span>
+                <span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:tc}}>Équipe {team}</span>
+                <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>— {statusLabel(info)}</span>
               </div>
 
               {/* Available slots badges */}
               {(team==="A"?availA:availB).length>0&&(
                 <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:4,marginBottom:bs.length>0?8:0}}>
                   {(team==="A"?availA:availB).map(s=>(
-                    <span key={s.id} style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,padding:"2px 7px",borderRadius:4,background:"#4ECDC418",color:"#4ECDC4",border:"1px solid #4ECDC433"}}>
+                    <span key={s.id} style={{fontFamily:"'Inter'",fontSize:10,padding:"2px 7px",borderRadius:4,background:"#4ECDC418",color:"#4ECDC4",border:"1px solid #4ECDC433"}}>
                       {s.label} libre
                     </span>
                   ))}
@@ -1557,17 +1557,17 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
                 <div key={booking.id} style={{paddingLeft:12,paddingTop:8,borderTop:"1px solid #E5E5EA",marginTop:8}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
                     {slotLabel(booking)&&(
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,padding:"2px 7px",borderRadius:4,background:booking.status==="option"?"#FF9F4318":"#FF3B3018",color:booking.status==="option"?"#FF9F43":"#FF3B30",border:`1px solid ${booking.status==="option"?"#FF9F4333":"#FF3B3033"}`}}>
+                      <span style={{fontFamily:"'Inter'",fontSize:10,padding:"2px 7px",borderRadius:4,background:booking.status==="option"?"#FF9F4318":"#FF3B3018",color:booking.status==="option"?"#FF9F43":"#FF3B30",border:`1px solid ${booking.status==="option"?"#FF9F4333":"#FF3B3033"}`}}>
                         {slotLabel(booking)}
                       </span>
                     )}
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>
                       {booking.status==="option"?"option":"confirmé"}
                     </span>
                   </div>
-                  {isAdmin&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{booking.client||booking.client_name}</p>}
-                  {!isAdmin&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}>Date réservée</p>}
-                  {isAdmin&&(booking.note)&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:2}}>{booking.note}</p>}
+                  {isAdmin&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{booking.client||booking.client_name}</p>}
+                  {!isAdmin&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Date réservée</p>}
+                  {isAdmin&&(booking.note)&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>{booking.note}</p>}
                   {booking.status==="option"&&(booking.expiresAt||booking.expires_at)&&(
                     <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#FF9F43",marginTop:4}}>Expire dans : {getCountdown(booking.expiresAt||booking.expires_at)}</p>
                   )}
@@ -1580,13 +1580,13 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
                     <>
                       {confirmTarget===booking.id?(
                         <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:8}}>
-                          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:600,color:"#1D1D1F"}}>Confirmer via :</p>
+                          <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#1D1D1F"}}>Confirmer via :</p>
                           {["devis","acompte"].map(type=>(
-                            <div key={type} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:`1px solid ${confirmCheck[type]?"#007AFF40":"#E5E5EA"}`,cursor:"pointer"}} onClick={()=>setConfirmCheck(p=>({...p,[type]:!p[type]}))}>
-                              <div style={{width:16,height:16,borderRadius:4,border:`2px solid ${confirmCheck[type]?"#007AFF":"#C7C7CC"}`,background:confirmCheck[type]?"#007AFF":"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
+                            <div key={type} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:`1px solid ${confirmCheck[type]?"#00B4D840":"#E5E5EA"}`,cursor:"pointer"}} onClick={()=>setConfirmCheck(p=>({...p,[type]:!p[type]}))}>
+                              <div style={{width:16,height:16,borderRadius:4,border:`2px solid ${confirmCheck[type]?"#00B4D8":"#C7C7CC"}`,background:confirmCheck[type]?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center"}}>
                                 {confirmCheck[type]&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}
                               </div>
-                              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",textTransform:"capitalize"}}>{type==="devis"?"Devis signé":"Acompte reçu"}</span>
+                              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",textTransform:"capitalize"}}>{type==="devis"?"Devis signé":"Acompte reçu"}</span>
                             </div>
                           ))}
                           <div style={{display:"flex",gap:7}}>
@@ -1611,21 +1611,21 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
         {/* Add option form */}
         {teamsWithSlots.length>0&&(
           <div style={{paddingTop:14,borderTop:"1px solid #E5E5EA"}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginBottom:10}}>Poser une option :</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:10}}>Poser une option :</p>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {/* Team selector */}
               <div style={{display:"flex",gap:8}}>
                 {teamsWithSlots.map(t=>(
                   <div key={t} style={{flex:1,padding:"10px 12px",borderRadius:8,border:`2px solid ${form.team===t?teamColor(t):"#E5E5EA"}`,background:form.team===t?teamColor(t)+"12":"#F5F5F7",cursor:"pointer"}} onClick={()=>{const av=t==="A"?availA:availB;setForm(p=>({...p,team:t,slot:av[0]?.id||"matin"}));}}>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:teamColor(t),textAlign:"center"}}>Équipe {t}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:teamColor(t),textAlign:"center"}}>Équipe {t}</p>
                   </div>
                 ))}
               </div>
               {/* Slot selector */}
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
                 {currentAvailSlots.map(s=>(
-                  <div key={s.id} style={{flex:1,minWidth:80,padding:"8px 10px",borderRadius:7,border:`2px solid ${form.slot===s.id?"#0066CC":"#E5E5EA"}`,background:form.slot===s.id?"#0066CC12":"#F5F5F7",cursor:"pointer",textAlign:"center"}} onClick={()=>setForm(p=>({...p,slot:s.id}))}>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:600,color:form.slot===s.id?"#007AFF":"#6E6E73"}}>{s.label}</p>
+                  <div key={s.id} style={{flex:1,minWidth:80,padding:"8px 10px",borderRadius:7,border:`2px solid ${form.slot===s.id?"#0090B3":"#E5E5EA"}`,background:form.slot===s.id?"#0090B312":"#F5F5F7",cursor:"pointer",textAlign:"center"}} onClick={()=>setForm(p=>({...p,slot:s.id}))}>
+                    <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:form.slot===s.id?"#00B4D8":"#6E6E73"}}>{s.label}</p>
                     <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#8E8E93"}}>{s.start}–{s.end}</p>
                   </div>
                 ))}
@@ -1639,7 +1639,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
                 </select>
               </div>
               <input className="input" placeholder="Note (optionnel)" value={form.note} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>⏱ L'option expire automatiquement après 72h si non confirmée.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>⏱ L'option expire automatiquement après 72h si non confirmée.</p>
               <button className="btn btn-primary" onClick={addOption} disabled={!form.client.trim()}>Poser l'option</button>
             </div>
           </div>
@@ -1658,14 +1658,14 @@ function OrgModule({sheets,setSheets,onNotif}){
   const sel=sheets.find(s=>s.id===selId);
   const upd=updated=>setSheets(ss=>ss.map(s=>s.id===updated.id?updated:s));
   const pct=s=>{const t=CHECKLIST_FIXED.length+s.checklist.custom.length;if(!t)return 0;return Math.round((s.checklist.fixed.length+s.checklist.custom.filter(c=>c.done).length)/t*100);};
-  const tc=t=>t==="A"?"#007AFF":"#4ECDC4";
+  const tc=t=>t==="A"?"#00B4D8":"#4ECDC4";
 
   return(
     <div style={{display:"flex",gap:16,height:"calc(100vh - 120px)",overflow:"hidden"}}>
       <div style={{width:220,display:"flex",flexDirection:"column",gap:5,overflowY:"auto",flexShrink:0}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em"}}>Fiches</span>
-          <button style={{background:"#007AFF18",border:"1px solid #007AFF30",borderRadius:4,color:"#007AFF",fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>setShowNew(true)}>+ Nouveau</button>
+          <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em"}}>Fiches</span>
+          <button style={{background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:4,color:"#00B4D8",fontFamily:"'Inter'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>setShowNew(true)}>+ Nouveau</button>
         </div>
         {sheets.map(s=>(
           <div key={s.id} className={`sidebar-proj ${selId===s.id?"active":""}`} onClick={()=>setSelId(s.id)}>
@@ -1682,7 +1682,7 @@ function OrgModule({sheets,setSheets,onNotif}){
         ))}
       </div>
       <div style={{flex:1,overflowY:"auto"}}>
-        {sel?<SheetDetail sheet={sel} onUpdate={upd} onNotif={onNotif}/>:<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"40px 0"}}>Sélectionne une fiche</p>}
+        {sel?<SheetDetail sheet={sel} onUpdate={upd} onNotif={onNotif}/>:<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"40px 0"}}>Sélectionne une fiche</p>}
       </div>
       {showNew&&<NewSheetModal onClose={()=>setShowNew(false)} onCreate={s=>{setSheets(ss=>[...ss,s]);setSelId(s.id);setShowNew(false);onNotif("Fiche créée !");}}/>}
     </div>
@@ -1701,7 +1701,7 @@ function NewSheetModal({onClose,onCreate}){
   return(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
-        <h3 style={{fontFamily:"'Montserrat'",fontSize:20,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:18}}>NOUVELLE FICHE</h3>
+        <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:18}}>NOUVELLE FICHE</h3>
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div><Lbl>Titre</Lbl><input className="input" value={form.projectTitle} onChange={e=>s("projectTitle",e.target.value)} placeholder="Spot 30s – Marque X"/></div>
           <div><Lbl>Client</Lbl><input className="input" value={form.client} onChange={e=>s("client",e.target.value)} placeholder="Nom de l'entreprise"/></div>
@@ -1722,23 +1722,23 @@ function NewSheetModal({onClose,onCreate}){
 
 function SheetDetail({sheet,onUpdate,onNotif}){
   const[tab,setTab]=useState("info");
-  const tc=sheet.team==="A"?"#007AFF":"#4ECDC4";
+  const tc=sheet.team==="A"?"#00B4D8":"#4ECDC4";
   const tabs=[{k:"info",l:"Infos"},{k:"equip",l:`Matériel (${sheet.equipment.length})`},{k:"check",l:`Checklist (${Math.round((sheet.checklist.fixed.length+sheet.checklist.custom.filter(c=>c.done).length)/(CHECKLIST_FIXED.length+sheet.checklist.custom.length)*100)||0}%)`},{k:"time",l:"Feuille de temps"}];
   return(
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
       <div className="fadeUp" style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
         <div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <h2 style={{fontFamily:"'Montserrat'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>{sheet.projectTitle}</h2>
+            <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>{sheet.projectTitle}</h2>
             {sheet.clickupTaskId&&<span className="clickup-badge">✓ ClickUp</span>}
           </div>
           <div style={{display:"flex",gap:10,alignItems:"center",marginTop:2}}>
-            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>{sheet.client}</span>
-            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:tc,background:tc+"22",border:`1px solid ${tc}44`,borderRadius:10,padding:"1px 7px",fontWeight:600}}>Équipe {sheet.team}</span>
+            <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>{sheet.client}</span>
+            <span style={{fontFamily:"'Inter'",fontSize:11,color:tc,background:tc+"22",border:`1px solid ${tc}44`,borderRadius:10,padding:"1px 7px",fontWeight:600}}>Équipe {sheet.team}</span>
           </div>
         </div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          {sheet.dates.map((d,i)=><span key={i} style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#007AFF",background:"#007AFF18",border:"1px solid #007AFF30",borderRadius:5,padding:"2px 7px"}}>{fmtS(d)}</span>)}
+          {sheet.dates.map((d,i)=><span key={i} style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#00B4D8",background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:5,padding:"2px 7px"}}>{fmtS(d)}</span>)}
         </div>
       </div>
       <div style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
@@ -1766,8 +1766,8 @@ function SheetInfo({sheet,onUpdate,onNotif}){
         <div style={{display:"flex",flexDirection:"column",gap:5}}>
           {sheet.dates.map((d,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA"}}>
-              <span style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#007AFF",background:"#007AFF18",padding:"1px 6px",borderRadius:3}}>J{i+1}</span>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F"}}>{fmtD(d)}</span>
+              <span style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#00B4D8",background:"#00B4D818",padding:"1px 6px",borderRadius:3}}>J{i+1}</span>
+              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{fmtD(d)}</span>
             </div>
           ))}
         </div>
@@ -1825,14 +1825,14 @@ function SheetEquip({sheet,onUpdate}){
         <div style={{marginBottom:12}}><div className="progress-bar"><div className="progress-fill" style={{width:`${Math.min(100,(sheet.equipment.length/all.length)*100)}%`}}/></div></div>
         {cats.map(cat=>(
           <div key={cat} style={{marginBottom:14}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>{cat}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>{cat}</p>
             <div style={{display:"flex",flexDirection:"column",gap:4}}>
               {all.filter(e=>e.cat===cat).map(e=>{const on=sheet.equipment.includes(e.id);return(
                 <div key={e.id} className={`equip-item ${on?"included":""}`} onClick={()=>toggle(e.id)} style={{cursor:"pointer"}}>
-                  <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${on?"#007AFF":"#C7C7CC"}`,background:on?"#007AFF":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                  <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${on?"#00B4D8":"#C7C7CC"}`,background:on?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
                     {on&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}
                   </div>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:on?"#1D1D1F":"#6E6E73"}}>{e.label}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:12,color:on?"#1D1D1F":"#6E6E73"}}>{e.label}</span>
                 </div>
               );})}
             </div>
@@ -1840,8 +1840,8 @@ function SheetEquip({sheet,onUpdate}){
         ))}
         {(sheet._customEquip||[]).map(e=>(
           <div key={e.id} className="equip-item included" style={{marginBottom:4}}>
-            <div style={{width:16,height:16,borderRadius:3,background:"#007AFF",border:"2px solid #007AFF",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span></div>
-            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",flex:1}}>{e.label}</span>
+            <div style={{width:16,height:16,borderRadius:3,background:"#00B4D8",border:"2px solid #00B4D8",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}><span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span></div>
+            <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",flex:1}}>{e.label}</span>
             <button className="btn btn-red" style={{padding:"2px 6px",fontSize:10}} onClick={()=>onUpdate({...sheet,equipment:sheet.equipment.filter(x=>x!==e.id),_customEquip:(sheet._customEquip||[]).filter(x=>x.id!==e.id)})}>✕</button>
           </div>
         ))}
@@ -1868,31 +1868,31 @@ function SheetChecklist({sheet,onUpdate}){
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div className="card" style={{padding:14}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <span style={{fontFamily:"'Montserrat'",fontSize:16,color:"#1D1D1F",letterSpacing:"0.05em"}}>CHECKLIST PRÉ-TOURNAGE</span>
-          <span style={{fontFamily:"'JetBrains Mono'",fontSize:13,color:pct===100?"#4ECDC4":"#007AFF",fontWeight:600}}>{pct}%</span>
+          <span style={{fontFamily:"'Urbanist'",fontSize:16,color:"#1D1D1F",letterSpacing:"0.05em"}}>CHECKLIST PRÉ-TOURNAGE</span>
+          <span style={{fontFamily:"'JetBrains Mono'",fontSize:13,color:pct===100?"#4ECDC4":"#00B4D8",fontWeight:600}}>{pct}%</span>
         </div>
         <div className="progress-bar" style={{height:4,marginBottom:8}}><div className="progress-fill" style={{width:`${pct}%`,background:pct===100?"linear-gradient(90deg,#4ECDC4,#6EDDD8)":undefined}}/></div>
       </div>
       {phases.map(phase=>(
         <div key={phase} className="card" style={{padding:14}}>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>{phase==="Avant"?"⏰ ":phase==="Jour J"?"🎬 ":"✅ "}{phase}</p>
+          <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>{phase==="Avant"?"⏰ ":phase==="Jour J"?"🎬 ":"✅ "}{phase}</p>
           <div style={{display:"flex",flexDirection:"column",gap:5}}>
             {CHECKLIST_FIXED.filter(i=>i.phase===phase).map(item=>{const ch=sheet.checklist.fixed.includes(item.id);return(
               <div key={item.id} className={`check-item ${ch?"done":""}`} onClick={()=>tFixed(item.id)}>
                 <div className={`check-box ${ch?"checked":""}`}>{ch&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}</div>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:ch?"#6E6E73":"#1D1D1F",textDecoration:ch?"line-through":"none",flex:1}}>{item.label}</span>
+                <span style={{fontFamily:"'Inter'",fontSize:12,color:ch?"#6E6E73":"#1D1D1F",textDecoration:ch?"line-through":"none",flex:1}}>{item.label}</span>
               </div>
             );})}
           </div>
         </div>
       ))}
       <div className="card" style={{padding:14}}>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>✏️ Tâches spécifiques</p>
+        <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>✏️ Tâches spécifiques</p>
         <div style={{display:"flex",flexDirection:"column",gap:5,marginBottom:8}}>
           {sheet.checklist.custom.map(item=>(
             <div key={item.id} className={`check-item ${item.done?"done":""}`} onClick={()=>tCustom(item.id)}>
               <div className={`check-box ${item.done?"checked":""}`}>{item.done&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}</div>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:item.done?"#6E6E73":"#1D1D1F",textDecoration:item.done?"line-through":"none",flex:1}}>{item.label}</span>
+              <span style={{fontFamily:"'Inter'",fontSize:12,color:item.done?"#6E6E73":"#1D1D1F",textDecoration:item.done?"line-through":"none",flex:1}}>{item.label}</span>
               <button className="btn btn-red" style={{padding:"2px 6px",fontSize:10}} onClick={e=>{e.stopPropagation();delCustom(item.id);}}>✕</button>
             </div>
           ))}
@@ -1914,34 +1914,34 @@ function SheetTime({sheet,onUpdate}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
-        {[["Jours",sheet.timesheet.length,"#007AFF"],["Heures totales",`${totH.toFixed(1)}h`,"#4ECDC4"],["Moy./jour",sheet.timesheet.length?`${(totH/sheet.timesheet.length).toFixed(1)}h`:"—","#7B9CFF"]].map(([l,v,c])=>(
+        {[["Jours",sheet.timesheet.length,"#00B4D8"],["Heures totales",`${totH.toFixed(1)}h`,"#4ECDC4"],["Moy./jour",sheet.timesheet.length?`${(totH/sheet.timesheet.length).toFixed(1)}h`:"—","#7B9CFF"]].map(([l,v,c])=>(
           <div key={l} style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,padding:"10px 12px"}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{l}</p>
-            <p style={{fontFamily:"'Montserrat'",fontSize:22,color:c,letterSpacing:"0.05em"}}>{v}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{l}</p>
+            <p style={{fontFamily:"'Urbanist'",fontSize:22,color:c,letterSpacing:"0.05em"}}>{v}</p>
           </div>
         ))}
       </div>
       <div className="card" style={{padding:14}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-          <span style={{fontFamily:"'Montserrat'",fontSize:15,color:"#1D1D1F",letterSpacing:"0.05em"}}>FEUILLE DE TEMPS</span>
+          <span style={{fontFamily:"'Urbanist'",fontSize:15,color:"#1D1D1F",letterSpacing:"0.05em"}}>FEUILLE DE TEMPS</span>
           <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={add}>+ Ligne</button>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:5}}>
           {sheet.timesheet.map(r=>{const h=calcH(r.start,r.end);return(
             <div key={r.id} style={{display:"grid",gridTemplateColumns:"100px 1fr 65px 65px 50px 1fr 28px",gap:5,alignItems:"center"}}>
               <input type="date" className="time-cell" value={r.date} onChange={e=>upd(r.id,"date",e.target.value)}/>
-              <input className="time-cell" style={{fontFamily:"'Plus Jakarta Sans'"}} value={r.member} onChange={e=>upd(r.id,"member",e.target.value)}/>
+              <input className="time-cell" style={{fontFamily:"'Inter'"}} value={r.member} onChange={e=>upd(r.id,"member",e.target.value)}/>
               <input type="time" className="time-cell" value={r.start} onChange={e=>upd(r.id,"start",e.target.value)}/>
               <input type="time" className="time-cell" value={r.end}   onChange={e=>upd(r.id,"end",e.target.value)}/>
               <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:h>10?"#FF9F43":"#4ECDC4",textAlign:"center",fontWeight:600}}>{h.toFixed(1)}h</span>
-              <input className="time-cell" style={{fontFamily:"'Plus Jakarta Sans'"}} placeholder="Note..." value={r.notes} onChange={e=>upd(r.id,"notes",e.target.value)}/>
+              <input className="time-cell" style={{fontFamily:"'Inter'"}} placeholder="Note..." value={r.notes} onChange={e=>upd(r.id,"notes",e.target.value)}/>
               <button className="btn btn-red" style={{padding:"3px 5px",fontSize:10}} onClick={()=>del(r.id)}>✕</button>
             </div>
           );})}
         </div>
         {sheet.timesheet.some(r=>calcH(r.start,r.end)>10)&&(
           <div style={{marginTop:10,padding:"8px 12px",background:"#FF9F4318",border:"1px solid #FF9F4340",borderRadius:7}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#FF9F43"}}>⚠️ Journée(s) dépassant 10h détectée(s) — valider les heures supplémentaires.</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#FF9F43"}}>⚠️ Journée(s) dépassant 10h détectée(s) — valider les heures supplémentaires.</p>
           </div>
         )}
       </div>
@@ -1970,7 +1970,7 @@ function ClientEstimationWidget({pricing,clientData}){
           <div key={l} style={{display:"flex",alignItems:"center",flex:i<3?1:"none"}}>
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
               <div className={`step-dot ${i<step?"done":i===step?"active":"todo"}`}>{i<step?"✓":i+1}</div>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:i===step?"#007AFF":i<step?"#4ECDC4":"#8E8E93",whiteSpace:"nowrap"}}>{l}</span>
+              <span style={{fontFamily:"'Inter'",fontSize:9,color:i===step?"#00B4D8":i<step?"#4ECDC4":"#8E8E93",whiteSpace:"nowrap"}}>{l}</span>
             </div>
             {i<3&&<div style={{flex:1,height:2,background:i<step?"#4ECDC4":"#E5E5EA",marginBottom:14}}/>}
           </div>
@@ -1981,8 +1981,8 @@ function ClientEstimationWidget({pricing,clientData}){
           {pricing.prestations.map(p=>(
             <div key={p.id} className={`option-card ${form.prestationId===p.id?"selected":""}`} onClick={()=>s("prestationId",p.id)}>
               <div className={`option-check ${form.prestationId===p.id?"checked":""}`}>{form.prestationId===p.id&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}</div>
-              <div><div style={{display:"flex",alignItems:"center",gap:7}}><span>{p.icon}</span><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{p.label}</span></div>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:2}}>{p.minDays===p.maxDays?`${p.minDays}j`:`${p.minDays}–${p.maxDays}j`} recommandés</p></div>
+              <div><div style={{display:"flex",alignItems:"center",gap:7}}><span>{p.icon}</span><span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{p.label}</span></div>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>{p.minDays===p.maxDays?`${p.minDays}j`:`${p.minDays}–${p.maxDays}j`} recommandés</p></div>
             </div>
           ))}
           <button className="btn btn-primary" style={{alignSelf:"flex-end",marginTop:4}} disabled={!form.prestationId} onClick={()=>setStep(1)}>Suivant →</button>
@@ -1994,13 +1994,13 @@ function ClientEstimationWidget({pricing,clientData}){
             {Object.entries(pricing.teams).map(([id,t])=>(
               <div key={id} className={`option-card ${form.team===id?"selected":""}`} onClick={()=>s("team",id)}>
                 <div className={`option-check ${form.team===id?"checked":""}`}>{form.team===id&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}</div>
-                <div><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{t.description}</p></div>
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{t.description}</p></div>
               </div>
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center"}}>
             <button className="btn btn-ghost" style={{padding:"8px 14px",fontSize:18}} onClick={()=>s("days",Math.max(prest?.minDays||1,form.days-1))}>−</button>
-            <div style={{textAlign:"center"}}><span style={{fontFamily:"'Montserrat'",fontSize:36,color:"#007AFF"}}>{form.days}</span><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginLeft:5}}>jour{form.days>1?"s":""}</span></div>
+            <div style={{textAlign:"center"}}><span style={{fontFamily:"'Urbanist'",fontSize:36,color:"#00B4D8"}}>{form.days}</span><span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginLeft:5}}>jour{form.days>1?"s":""}</span></div>
             <button className="btn btn-ghost" style={{padding:"8px 14px",fontSize:18}} onClick={()=>s("days",Math.min(prest?.maxDays||10,form.days+1))}>+</button>
           </div>
           <div style={{display:"flex",gap:8,justifyContent:"space-between"}}><button className="btn btn-ghost" onClick={()=>setStep(0)}>← Retour</button><button className="btn btn-primary" onClick={()=>setStep(2)}>Suivant →</button></div>
@@ -2012,7 +2012,7 @@ function ClientEstimationWidget({pricing,clientData}){
             <div key={opt.id} className={`option-card ${on?"selected":""}`} onClick={()=>tog(opt.id)}>
               <div className={`option-check ${on?"checked":""}`}>{on&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}</div>
               <div style={{flex:1,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{opt.icon}</span><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:500,color:"#1D1D1F"}}>{opt.label}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{opt.icon}</span><span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:500,color:"#1D1D1F"}}>{opt.label}</span></div>
               </div>
             </div>
           );})}
@@ -2022,14 +2022,14 @@ function ClientEstimationWidget({pricing,clientData}){
       {step===3&&result&&(
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           <div className="price-range countUp">
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Estimation indicative</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Estimation indicative</p>
             <div style={{display:"flex",alignItems:"baseline",justifyContent:"center",gap:10}}>
-              <span style={{fontFamily:"'Montserrat'",fontSize:38,color:"#007AFF",letterSpacing:"0.03em"}}>{fmtEur(result.min)}</span>
+              <span style={{fontFamily:"'Urbanist'",fontSize:38,color:"#00B4D8",letterSpacing:"0.03em"}}>{fmtEur(result.min)}</span>
               <span style={{color:"#6E6E73",fontSize:16}}>→</span>
-              <span style={{fontFamily:"'Montserrat'",fontSize:38,color:"#007AFF",letterSpacing:"0.03em"}}>{fmtEur(result.max)}</span>
+              <span style={{fontFamily:"'Urbanist'",fontSize:38,color:"#00B4D8",letterSpacing:"0.03em"}}>{fmtEur(result.max)}</span>
             </div>
             {result.discount>0&&<div style={{marginTop:6}}><span className="discount-badge">✓ Tarif préférentiel appliqué</span></div>}
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:10}}>Estimation indicative — devis personnalisé sur demande</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:10}}>Estimation indicative — devis personnalisé sur demande</p>
           </div>
           <button className="btn btn-ghost" style={{justifyContent:"center"}} onClick={()=>{setStep(0);setForm({prestationId:"",team:"A",days:1,options:[]});setResult(null);}}>Nouvelle estimation</button>
         </div>
@@ -2064,8 +2064,8 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
             <SH icon="💰" title="TARIFS JOURNÉE ÉQUIPE"/>
             {Object.entries(pricing.teams).map(([id,t])=>(
               <div key={id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"9px 12px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA",marginBottom:6}}>
-                <div><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{t.description}</p></div>
-                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:90}} type="number" value={t.dayRate} onChange={e=>setTeam(id,e.target.value)}/><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>€/j</span></div>
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{t.description}</p></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:90}} type="number" value={t.dayRate} onChange={e=>setTeam(id,e.target.value)}/><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>€/j</span></div>
               </div>
             ))}
           </div>
@@ -2073,7 +2073,7 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
             <SH icon="✖" title="MULTIPLICATEURS" sub="1.0 = normal · 1.2 = +20% · 0.9 = -10%"/>
             {pricing.prestations.map(p=>(
               <div key={p.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"7px 12px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA",marginBottom:5}}>
-                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{p.icon}</span><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F"}}>{p.label}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{p.icon}</span><span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{p.label}</span></div>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <input className="admin-input" style={{width:65}} type="number" step="0.05" min="0.5" max="2" value={p.mult} onChange={e=>setMult(p.id,e.target.value)}/>
                   <span style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:p.mult>1?"#FF9F43":p.mult<1?"#4ECDC4":"#6E6E73",width:40,textAlign:"right"}}>{p.mult>1?`+${Math.round((p.mult-1)*100)}%`:p.mult<1?`-${Math.round((1-p.mult)*100)}%`:"="}</span>
@@ -2085,8 +2085,8 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
             <SH icon="⚙" title="OPTIONS"/>
             {pricing.options.map(o=>(
               <div key={o.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"7px 12px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA",marginBottom:5}}>
-                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{o.icon}</span><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F"}}>{o.label}</span><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:"#8E8E93",background:"#F2F2F7",border:"1px solid #E5E5EA",borderRadius:7,padding:"0 5px"}}>{o.unit}</span></div>
-                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:80}} type="number" value={o.price} onChange={e=>setOpt(o.id,e.target.value)}/><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>€</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{o.icon}</span><span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{o.label}</span><span style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",background:"#F2F2F7",border:"1px solid #E5E5EA",borderRadius:7,padding:"0 5px"}}>{o.unit}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:80}} type="number" value={o.price} onChange={e=>setOpt(o.id,e.target.value)}/><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>€</span></div>
               </div>
             ))}
           </div>
@@ -2094,8 +2094,8 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
             <SH icon="↔" title="MARGE FOURCHETTE" sub="Amplitude de la fourchette affichée au client"/>
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <input className="admin-input" style={{width:70}} type="number" min="5" max="30" value={pricing.rangeMargin} onChange={e=>setPricing(p=>({...p,rangeMargin:Number(e.target.value)}))}/>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>%</span>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>→ pour 3 000€ : {fmtEur(3000*(1-pricing.rangeMargin/200))} – {fmtEur(3000*(1+pricing.rangeMargin/200))}</span>
+              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>%</span>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>→ pour 3 000€ : {fmtEur(3000*(1-pricing.rangeMargin/200))} – {fmtEur(3000*(1+pricing.rangeMargin/200))}</span>
             </div>
           </div>
         </div>
@@ -2103,18 +2103,18 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
       {tab==="clients"&&(
         <div className="card" style={{padding:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div><SH icon="👥" title="CLIENTS & REMISES"/><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:-10,marginBottom:10}}>Les remises sont invisibles côté client. Active le simulateur client par client.</p></div>
+            <div><SH icon="👥" title="CLIENTS & REMISES"/><p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:-10,marginBottom:10}}>Les remises sont invisibles côté client. Active le simulateur client par client.</p></div>
             <button className="btn btn-primary" style={{fontSize:11,flexShrink:0}} onClick={()=>setShowAddClient(!showAddClient)}>{showAddClient?"✕":"+ Ajouter"}</button>
           </div>
           {showAddClient&&(
-            <div style={{background:"#F5F5F7",border:"1px solid #007AFF30",borderRadius:8,padding:12,marginBottom:12,display:"flex",flexDirection:"column",gap:7}}>
+            <div style={{background:"#F5F5F7",border:"1px solid #00B4D830",borderRadius:8,padding:12,marginBottom:12,display:"flex",flexDirection:"column",gap:7}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
                 <input className="input" placeholder="Nom *" value={nf.name} onChange={e=>setNf(p=>({...p,name:e.target.value}))}/>
                 <input className="input" placeholder="Email" value={nf.email} onChange={e=>setNf(p=>({...p,email:e.target.value}))}/>
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
                 <select className="input" value={nf.type} onChange={e=>setNf(p=>({...p,type:e.target.value}))}>{["PME","Institutionnel","Agence"].map(t=><option key={t}>{t}</option>)}</select>
-                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" type="number" min="0" max="50" value={nf.discount} onChange={e=>setNf(p=>({...p,discount:e.target.value}))}/><span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>% remise</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" type="number" min="0" max="50" value={nf.discount} onChange={e=>setNf(p=>({...p,discount:e.target.value}))}/><span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>% remise</span></div>
               </div>
               <div style={{display:"flex",justifyContent:"flex-end",gap:7}}><button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAddClient(false)}>Annuler</button><button className="btn btn-primary" style={{fontSize:11}} onClick={addClient}>Ajouter</button></div>
             </div>
@@ -2124,18 +2124,18 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
               <div key={c.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",alignItems:"center",gap:7}}>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:500,color:"#1D1D1F"}}>{c.name}</p>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:(typeColors[c.type]||"#6E6E73"),background:(typeColors[c.type]||"#6E6E73")+"22",border:`1px solid ${(typeColors[c.type]||"#6E6E73")}44`,borderRadius:7,padding:"0 5px"}}>{c.type}</span>
+                    <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:500,color:"#1D1D1F"}}>{c.name}</p>
+                    <span style={{fontFamily:"'Inter'",fontSize:9,color:(typeColors[c.type]||"#6E6E73"),background:(typeColors[c.type]||"#6E6E73")+"22",border:`1px solid ${(typeColors[c.type]||"#6E6E73")}44`,borderRadius:7,padding:"0 5px"}}>{c.type}</span>
                   </div>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{c.email}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{c.email}</p>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{display:"flex",alignItems:"center",gap:5}}>
                     <input className="admin-input" style={{width:50}} type="number" min="0" max="50" value={c.discount} onChange={e=>updDiscount(c.id,e.target.value)}/>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>%</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>%</span>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:5,borderLeft:"1px solid #E5E5EA",paddingLeft:8}}>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:c.simulatorEnabled?"#4ECDC4":"#8E8E93"}}>Simulateur</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:c.simulatorEnabled?"#4ECDC4":"#8E8E93"}}>Simulateur</span>
                     <button className={`toggle ${c.simulatorEnabled?"on":"off"}`} onClick={()=>togSim(c.id)}/>
                   </div>
                 </div>
@@ -2147,19 +2147,19 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
       {tab==="historique"&&(
         <div className="card" style={{padding:16}}>
           <SH icon="📊" title="ESTIMATIONS REÇUES"/>
-          {estimates.length===0?<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune estimation</p>:(
+          {estimates.length===0?<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune estimation</p>:(
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {estimates.map(e=>(
                 <div key={e.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                   <div style={{flex:1,minWidth:0}}>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.client} — {e.prestation}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.client} — {e.prestation}</p>
                     <div style={{display:"flex",gap:8,marginTop:2}}>
-                      <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#007AFF",fontWeight:600}}>{fmtEur(e.min)} – {fmtEur(e.max)}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>Éq.{e.team} · {e.days}j · {fmtS(e.date)}</span>
+                      <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#00B4D8",fontWeight:600}}>{fmtEur(e.min)} – {fmtEur(e.max)}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>Éq.{e.team} · {e.days}j · {fmtS(e.date)}</span>
                     </div>
                   </div>
                   <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:statusColor[e.status],background:statusColor[e.status]+"22",border:`1px solid ${statusColor[e.status]}44`,borderRadius:10,padding:"1px 7px"}}>{statusLabel[e.status]}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,color:statusColor[e.status],background:statusColor[e.status]+"22",border:`1px solid ${statusColor[e.status]}44`,borderRadius:10,padding:"1px 7px"}}>{statusLabel[e.status]}</span>
                     {e.status==="en_attente"&&<><button className="btn btn-green" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>setEstimates(es=>es.map(x=>x.id===e.id?{...x,status:"devis"}:x))}>→ Devis</button><button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>setEstimates(es=>es.map(x=>x.id===e.id?{...x,status:"refuse"}:x))}>✕</button></>}
                   </div>
                 </div>
@@ -2188,7 +2188,7 @@ const POST_STATUSES = [
   { id:"draft",    label:"Brouillon",   color:"#8E8E93", bg:"#8E8E9322" },
   { id:"review",   label:"À valider",   color:"#FF9F43", bg:"#FF9F4322" },
   { id:"approved", label:"Validé",      color:"#4ECDC4", bg:"#4ECDC422" },
-  { id:"published",label:"Publié",      color:"#007AFF", bg:"#007AFF22" },
+  { id:"published",label:"Publié",      color:"#00B4D8", bg:"#00B4D822" },
 ];
 
 // INIT_POSTS removed
@@ -2227,14 +2227,14 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:10 }}>
         <div>
-          <h2 style={{ fontFamily:"'Montserrat'", fontSize:26, color:"#1D1D1F", letterSpacing:"0.04em" }}>COMMUNITY MANAGEMENT</h2>
-          <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#6E6E73", marginTop:2 }}>Planification, captions et validation des posts</p>
+          <h2 style={{ fontFamily:"'Urbanist'", fontSize:26, color:"#1D1D1F", letterSpacing:"0.04em" }}>COMMUNITY MANAGEMENT</h2>
+          <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginTop:2 }}>Planification, captions et validation des posts</p>
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           {pendingReview > 0 && (
             <div style={{ background:"#FF9F4318", border:"1px solid #FF9F4340", borderRadius:8, padding:"6px 12px", display:"flex", alignItems:"center", gap:6 }}>
               <span style={{ color:"#FF9F43", fontSize:14 }}>⏳</span>
-              <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#FF9F43", fontWeight:600 }}>{pendingReview} en attente de validation</span>
+              <span style={{ fontFamily:"'Inter'", fontSize:12, color:"#FF9F43", fontWeight:600 }}>{pendingReview} en attente de validation</span>
             </div>
           )}
           <button className="btn btn-primary" onClick={() => setShowNewPost(true)}>+ Nouveau post</button>
@@ -2248,8 +2248,8 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
           return (
             <div key={s.id} style={{ background:"#FFFFFF", border:`1px solid ${s.color}33`, borderRadius:8, padding:"10px 14px", cursor:"pointer" }}
               onClick={() => setFilterStatus(filterStatus === s.id ? "all" : s.id)}>
-              <p style={{ fontFamily:"'Montserrat'", fontSize:26, color:s.color, letterSpacing:"0.05em" }}>{count}</p>
-              <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:"#6E6E73" }}>{s.label}</p>
+              <p style={{ fontFamily:"'Urbanist'", fontSize:26, color:s.color, letterSpacing:"0.05em" }}>{count}</p>
+              <p style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73" }}>{s.label}</p>
             </div>
           );
         })}
@@ -2277,7 +2277,7 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
       {/* LIST VIEW */}
       {view === "list" && (
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-          {filtered.length === 0 && <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:13, color:"#8E8E93", textAlign:"center", padding:"30px 0" }}>Aucun post trouvé</p>}
+          {filtered.length === 0 && <p style={{ fontFamily:"'Inter'", fontSize:13, color:"#8E8E93", textAlign:"center", padding:"30px 0" }}>Aucun post trouvé</p>}
           {filtered.map(post => (
             <CMPostRow key={post.id} post={post} netData={netData(post.network)} stData={stData(post.status)}
               projectTitle={getProjectTitle(post.projectId)}
@@ -2322,12 +2322,12 @@ function CMCalendarView({ posts, postsByDate, netData, stData, onEdit, getProjec
     <div className="card" style={{ padding:18 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
         <button className="btn btn-ghost" style={{ padding:"5px 11px" }} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth()-1, 1))}>←</button>
-        <h3 style={{ fontFamily:"'Montserrat'", fontSize:20, color:"#1D1D1F", letterSpacing:"0.06em", textTransform:"capitalize" }}>{monthStr}</h3>
+        <h3 style={{ fontFamily:"'Urbanist'", fontSize:20, color:"#1D1D1F", letterSpacing:"0.06em", textTransform:"capitalize" }}>{monthStr}</h3>
         <button className="btn btn-ghost" style={{ padding:"5px 11px" }} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth()+1, 1))}>→</button>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3, marginBottom:4 }}>
         {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d => (
-          <div key={d} style={{ textAlign:"center", fontFamily:"'Plus Jakarta Sans'", fontSize:10, color:"#8E8E93", padding:"3px 0" }}>{d}</div>
+          <div key={d} style={{ textAlign:"center", fontFamily:"'Inter'", fontSize:10, color:"#8E8E93", padding:"3px 0" }}>{d}</div>
         ))}
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3 }}>
@@ -2339,10 +2339,10 @@ function CMCalendarView({ posts, postsByDate, netData, stData, onEdit, getProjec
           return (
             <div key={i} style={{
               minHeight:80, background:"#F5F5F7", borderRadius:7,
-              border:`1px solid ${isToday?"#007AFF66":"#E5E5EA"}`,
+              border:`1px solid ${isToday?"#00B4D866":"#E5E5EA"}`,
               padding:"5px 4px", display:"flex", flexDirection:"column", gap:2,
             }}>
-              <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, fontWeight:600, color:isToday?"#007AFF":"#6E6E73", marginBottom:2 }}>{i+1}</span>
+              <span style={{ fontFamily:"'Inter'", fontSize:11, fontWeight:600, color:isToday?"#00B4D8":"#6E6E73", marginBottom:2 }}>{i+1}</span>
               {dayPosts.slice(0,3).map(post => {
                 const n = netData(post.network);
                 const s = stData(post.status);
@@ -2351,7 +2351,7 @@ function CMCalendarView({ posts, postsByDate, netData, stData, onEdit, getProjec
                     style={{ background:n.color+"22", border:`1px solid ${n.color}44`, borderRadius:4, padding:"2px 5px", cursor:"pointer", transition:"all .15s" }}>
                     <div style={{ display:"flex", alignItems:"center", gap:3 }}>
                       <span style={{ fontSize:9 }}>{n.icon}</span>
-                      <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:9, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
+                      <span style={{ fontFamily:"'Inter'", fontSize:9, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", flex:1 }}>
                         {post.caption.slice(0,28)}…
                       </span>
                     </div>
@@ -2360,7 +2360,7 @@ function CMCalendarView({ posts, postsByDate, netData, stData, onEdit, getProjec
                 );
               })}
               {dayPosts.length > 3 && (
-                <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:9, color:"#8E8E93", textAlign:"center" }}>+{dayPosts.length-3}</span>
+                <span style={{ fontFamily:"'Inter'", fontSize:9, color:"#8E8E93", textAlign:"center" }}>+{dayPosts.length-3}</span>
               )}
             </div>
           );
@@ -2379,16 +2379,16 @@ function CMPostRow({ post, netData, stData, projectTitle, onEdit, onDelete, onSt
       </div>
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
-          <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, fontWeight:600, color:netData.color }}>{netData.label}</span>
-          <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:"#8E8E93" }}>· {projectTitle}</span>
+          <span style={{ fontFamily:"'Inter'", fontSize:12, fontWeight:600, color:netData.color }}>{netData.label}</span>
+          <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93" }}>· {projectTitle}</span>
           <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:"#8E8E93" }}>{fmtS(post.scheduledAt)}</span>
         </div>
-        <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#6E6E73", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
           {post.caption.slice(0,80)}…
         </p>
       </div>
       <div style={{ display:"flex", gap:6, alignItems:"center", flexShrink:0 }}>
-        <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:stData.color, background:stData.bg, border:`1px solid ${stData.color}44`, borderRadius:10, padding:"2px 8px" }}>
+        <span style={{ fontFamily:"'Inter'", fontSize:11, color:stData.color, background:stData.bg, border:`1px solid ${stData.color}44`, borderRadius:10, padding:"2px 8px" }}>
           {stData.label}
         </span>
         {post.status === "draft" && <button className="btn btn-orange" style={{ fontSize:10, padding:"3px 8px" }} onClick={() => onStatusChange("review")}>→ Envoyer</button>}
@@ -2439,7 +2439,7 @@ Génère UNIQUEMENT la caption (200 mots max), avec emojis adaptés et hashtags 
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{ padding:24, maxWidth:620 }} onClick={e => e.stopPropagation()}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:18 }}>
-          <h3 style={{ fontFamily:"'Montserrat'", fontSize:20, color:"#1D1D1F", letterSpacing:"0.05em" }}>
+          <h3 style={{ fontFamily:"'Urbanist'", fontSize:20, color:"#1D1D1F", letterSpacing:"0.05em" }}>
             {post ? "MODIFIER LE POST" : "NOUVEAU POST"}
           </h3>
           <button className="btn btn-ghost" style={{ padding:"4px 10px" }} onClick={onClose}>✕</button>
@@ -2456,7 +2456,7 @@ Génère UNIQUEMENT la caption (200 mots max), avec emojis adaptés et hashtags 
                     background:form.network===n.id?n.color+"18":"#F5F5F7", cursor:"pointer", transition:"all .15s",
                     display:"flex", alignItems:"center", gap:5 }}>
                   <span>{n.icon}</span>
-                  <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:form.network===n.id?n.color:"#6E6E73", fontWeight:500 }}>{n.label}</span>
+                  <span style={{ fontFamily:"'Inter'", fontSize:12, color:form.network===n.id?n.color:"#6E6E73", fontWeight:500 }}>{n.label}</span>
                 </div>
               ))}
             </div>
@@ -2498,10 +2498,10 @@ Génère UNIQUEMENT la caption (200 mots max), avec emojis adaptés et hashtags 
                 {aiLoading ? <span style={{ animation:"spin 1s linear infinite", display:"inline-block" }}>⟳</span> : "✦ Générer avec IA"}
               </button>
             </div>
-            {aiError && <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:"#FF3B30", marginBottom:4 }}>{aiError}</p>}
+            {aiError && <p style={{ fontFamily:"'Inter'", fontSize:11, color:"#FF3B30", marginBottom:4 }}>{aiError}</p>}
             <textarea className="input" rows={5} placeholder={`Rédigez votre caption ${net.label}...`} value={form.caption} onChange={e => s("caption", e.target.value)}/>
             <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
-              <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:10, color:"#8E8E93" }}>
+              <span style={{ fontFamily:"'Inter'", fontSize:10, color:"#8E8E93" }}>
                 {form.network==="twitter"?"280":"2200"} caractères max
               </span>
               <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:form.caption.length>2000?"#FF3B30":"#8E8E93" }}>
@@ -2527,14 +2527,14 @@ Génère UNIQUEMENT la caption (200 mots max), avec emojis adaptés et hashtags 
           {/* Preview */}
           {form.caption && (
             <div style={{ background:"#F5F5F7", border:`1px solid ${net.color}33`, borderRadius:10, padding:14 }}>
-              <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:10, color:net.color, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8 }}>
+              <p style={{ fontFamily:"'Inter'", fontSize:10, color:net.color, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8 }}>
                 {net.icon} Aperçu {net.label}
               </p>
-              <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:13, color:"#1D1D1F", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{form.caption}</p>
+              <p style={{ fontFamily:"'Inter'", fontSize:13, color:"#1D1D1F", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{form.caption}</p>
               {form.assetName && (
                 <div style={{ marginTop:10, padding:"8px 10px", background:"#F2F2F7", borderRadius:7, border:"1px solid #E5E5EA", display:"flex", alignItems:"center", gap:8 }}>
                   <span style={{ fontSize:14 }}>🎬</span>
-                  <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:"#6E6E73" }}>{form.assetName}</span>
+                  <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73" }}>{form.assetName}</span>
                 </div>
               )}
             </div>
@@ -2576,9 +2576,9 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-      <div style={{ background:"linear-gradient(135deg,#007AFF10,#7B9CFF08)", border:"1px solid #007AFF20", borderRadius:10, padding:"14px 18px" }}>
-        <h2 style={{ fontFamily:"'Montserrat'", fontSize:22, color:"#1D1D1F", letterSpacing:"0.04em" }}>CONTENU À VALIDER</h2>
-        <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#6E6E73", marginTop:2 }}>
+      <div style={{ background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)", border:"1px solid #00B4D820", borderRadius:10, padding:"14px 18px" }}>
+        <h2 style={{ fontFamily:"'Urbanist'", fontSize:22, color:"#1D1D1F", letterSpacing:"0.04em" }}>CONTENU À VALIDER</h2>
+        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginTop:2 }}>
           {toValidate.length > 0 ? `${toValidate.length} post${toValidate.length>1?"s":""} en attente de votre validation` : "Aucun contenu en attente"}
         </p>
       </div>
@@ -2586,7 +2586,7 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
       {/* À valider */}
       {toValidate.length > 0 && (
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          <h3 style={{ fontFamily:"'Montserrat'", fontSize:16, color:"#FF9F43", letterSpacing:"0.05em" }}>⏳ EN ATTENTE</h3>
+          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#FF9F43", letterSpacing:"0.05em" }}>⏳ EN ATTENTE</h3>
           {toValidate.map(post => (
             <CMClientPostCard key={post.id} post={post} netData={netData(post.network)}
               projectTitle={projects.find(p=>p.id===post.projectId)?.title||""}
@@ -2600,7 +2600,7 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
       {/* Approuvés */}
       {approved.length > 0 && (
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-          <h3 style={{ fontFamily:"'Montserrat'", fontSize:16, color:"#4ECDC4", letterSpacing:"0.05em" }}>✓ VALIDÉS</h3>
+          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#4ECDC4", letterSpacing:"0.05em" }}>✓ VALIDÉS</h3>
           {approved.map(post => <CMClientPostMini key={post.id} post={post} netData={netData(post.network)} projects={projects}/>)}
         </div>
       )}
@@ -2608,7 +2608,7 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
       {/* Publiés */}
       {published.length > 0 && (
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-          <h3 style={{ fontFamily:"'Montserrat'", fontSize:16, color:"#007AFF", letterSpacing:"0.05em" }}>✦ PUBLIÉS</h3>
+          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#00B4D8", letterSpacing:"0.05em" }}>✦ PUBLIÉS</h3>
           {published.map(post => <CMClientPostMini key={post.id} post={post} netData={netData(post.network)} projects={projects}/>)}
         </div>
       )}
@@ -2626,8 +2626,8 @@ function CMClientPostCard({ post, netData, projectTitle, onApprove, onRevision }
         </div>
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:13, fontWeight:600, color:netData.color }}>{netData.label}</span>
-            <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:"#8E8E93" }}>· {projectTitle}</span>
+            <span style={{ fontFamily:"'Inter'", fontSize:13, fontWeight:600, color:netData.color }}>{netData.label}</span>
+            <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93" }}>· {projectTitle}</span>
           </div>
           <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:"#8E8E93" }}>Prévu le {fmtS(post.scheduledAt)}</span>
         </div>
@@ -2637,18 +2637,18 @@ function CMClientPostCard({ post, netData, projectTitle, onApprove, onRevision }
       {post.assetName && (
         <div style={{ background:"#F5F5F7", border:"1px solid #E5E5EA", borderRadius:7, padding:"8px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:8 }}>
           <span>🎬</span>
-          <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#6E6E73" }}>{post.assetName}</span>
+          <span style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73" }}>{post.assetName}</span>
         </div>
       )}
 
       {/* Caption */}
       <div style={{ background:"#F5F5F7", border:`1px solid ${netData.color}22`, borderRadius:8, padding:12, marginBottom:12 }}>
-        <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:13, color:"#1D1D1F", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{post.caption}</p>
+        <p style={{ fontFamily:"'Inter'", fontSize:13, color:"#1D1D1F", lineHeight:1.6, whiteSpace:"pre-wrap" }}>{post.caption}</p>
       </div>
 
       {/* Validation */}
       <div style={{ borderTop:"1px solid #E5E5EA", paddingTop:12 }}>
-        <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#6E6E73", marginBottom:8 }}>Votre commentaire (optionnel pour approbation, requis pour révision) :</p>
+        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginBottom:8 }}>Votre commentaire (optionnel pour approbation, requis pour révision) :</p>
         <textarea className="input" rows={2} placeholder="Ex : Parfait ! ou Modifiez le ton, trop formel..." value={comment} onChange={e => setComment(e.target.value)}/>
         <div style={{ display:"flex", gap:8, marginTop:8, justifyContent:"flex-end" }}>
           <button className="btn btn-red" onClick={() => onRevision(comment)} disabled={!comment.trim()}>↩ Demander révision</button>
@@ -2664,12 +2664,12 @@ function CMClientPostMini({ post, netData, projects }) {
     <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:"#FFFFFF", borderRadius:8, border:"1px solid #E5E5EA" }}>
       <span style={{ fontSize:16 }}>{netData.icon}</span>
       <div style={{ flex:1, minWidth:0 }}>
-        <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{post.caption.slice(0,60)}…</p>
-        <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:10, color:"#8E8E93" }}>{netData.label} · {fmtS(post.scheduledAt)}</p>
+        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{post.caption.slice(0,60)}…</p>
+        <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#8E8E93" }}>{netData.label} · {fmtS(post.scheduledAt)}</p>
       </div>
       {post.comment && (
         <div style={{ background:"#4ECDC410", border:"1px solid #4ECDC430", borderRadius:6, padding:"3px 8px", maxWidth:160 }}>
-          <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:10, color:"#4ECDC4", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>"{post.comment}"</p>
+          <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#4ECDC4", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>"{post.comment}"</p>
         </div>
       )}
     </div>
@@ -2735,20 +2735,20 @@ function J2AlertBanner({projects,clients}){
         ].filter(l=>l!==undefined);
         const mailto=`mailto:${client?.email||""}?subject=${encodeURIComponent(`Rappel tournage – ${project.title} – ${fmtD(date)}`)}&body=${encodeURIComponent(bodyLines.join("\n"))}`;
         return(
-          <div key={project.id} style={{background:"linear-gradient(135deg,#007AFF18,#FF9F4310)",border:"2px solid #007AFF40",borderRadius:10,padding:"14px 18px",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
+          <div key={project.id} style={{background:"linear-gradient(135deg,#00B4D818,#FF9F4310)",border:"2px solid #00B4D840",borderRadius:10,padding:"14px 18px",display:"flex",alignItems:"center",gap:14,flexWrap:"wrap"}}>
             <div style={{fontSize:28}}>{emoji||"🎬"}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                <span style={{fontFamily:"'Montserrat'",fontSize:16,color:"#007AFF",letterSpacing:"0.05em"}}>J-2 — TOURNAGE</span>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",fontWeight:600}}>{project.title}</span>
-                {client&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>· {client.name}</span>}
+                <span style={{fontFamily:"'Urbanist'",fontSize:16,color:"#00B4D8",letterSpacing:"0.05em"}}>J-2 — TOURNAGE</span>
+                <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:600}}>{project.title}</span>
+                {client&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>· {client.name}</span>}
               </div>
               {weather?(
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:3}}>
+                <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:3}}>
                   {label} · {Math.round(weather.tmin||22)}°–{Math.round(weather.tmax||28)}°C
                   {weather.rain>1?<span style={{color:"#7B9CFF"}}> · 🌧 {weather.rain?.toFixed(1)} mm prévus</span>:null}
                 </p>
-              ):<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:2}}>Météo indisponible</p>}
+              ):<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Météo indisponible</p>}
             </div>
             <a href={mailto} style={{textDecoration:"none"}} title={client?.email?"Envoyer à "+client.email:"Email client non renseigné"}>
               <button className="btn btn-primary" style={{fontSize:12,whiteSpace:"nowrap"}}>📧 Envoyer le rappel</button>
@@ -2765,7 +2765,7 @@ function J2AlertBanner({projects,clients}){
 function AdminDashboard({ projects, clients, assignments, onSelectProject, onSectionChange, bookings=[], onGoToCalendar, teamMembers=[] }) {
   const [sortBy, setSortBy] = useState("tournage");
 
-  const statusColor = s => ({brief:"#7B9CFF",storyboard:"#007AFF",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#6E6E73");
+  const statusColor = s => ({brief:"#7B9CFF",storyboard:"#00B4D8",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#6E6E73");
   const statusLabel = s => ({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
   const deliveryColor = date => { const diff=(new Date(date+"T12:00:00")-new Date())/86400000; return diff<0?"#FF3B30":diff<=7?"#FF9F43":"#4ECDC4"; };
 
@@ -2798,8 +2798,8 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
       {/* Header */}
       <div>
-        <h2 style={{ fontFamily:"'Montserrat'", fontSize:28, color:"#1D1D1F", letterSpacing:"0.04em" }}>TABLEAU DE BORD</h2>
-        <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:12, color:"#6E6E73", marginTop:2 }}>Vue d ensemble de tous vos projets et clients</p>
+        <h2 style={{ fontFamily:"'Urbanist'", fontSize:28, color:"#1D1D1F", letterSpacing:"0.04em" }}>TABLEAU DE BORD</h2>
+        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginTop:2 }}>Vue d ensemble de tous vos projets et clients</p>
       </div>
 
       {/* Stats globales */}
@@ -2807,20 +2807,20 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
         {[
           { label:"Total projets", value:totalProjects, color:"#1D1D1F" },
           { label:"En brief", value:byStatus("brief"), color:"#7B9CFF" },
-          { label:"Storyboard", value:byStatus("storyboard"), color:"#007AFF" },
+          { label:"Storyboard", value:byStatus("storyboard"), color:"#00B4D8" },
           { label:"En tournage", value:byStatus("tournage"), color:"#FF9F43" },
           { label:"Livrés", value:byStatus("livraison"), color:"#4ECDC4" },
         ].map(({ label, value, color }) => (
           <div key={label} style={{ background:"#FFFFFF", border:`1px solid ${color}33`, borderRadius:8, padding:"12px 14px" }}>
-            <p style={{ fontFamily:"'Montserrat'", fontSize:28, color, letterSpacing:"0.05em" }}>{value}</p>
-            <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:10, color:"#6E6E73", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</p>
+            <p style={{ fontFamily:"'Urbanist'", fontSize:28, color, letterSpacing:"0.05em" }}>{value}</p>
+            <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#6E6E73", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</p>
           </div>
         ))}
       </div>
 
       {/* Tri */}
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-        <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:"#8E8E93", textTransform:"uppercase", letterSpacing:"0.08em" }}>Trier par</span>
+        <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93", textTransform:"uppercase", letterSpacing:"0.08em" }}>Trier par</span>
         <div style={{ display:"flex", gap:4, background:"#F5F5F7", padding:3, borderRadius:7, border:"1px solid #E5E5EA" }}>
           {[
             { key:"tournage", label:"📅 Date tournage" },
@@ -2838,12 +2838,12 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       {Object.entries(grouped).map(([clientName, clientProjects]) => (
         <div key={clientName}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-            <div style={{ width:32, height:32, borderRadius:"50%", background:"#007AFF22", border:"1px solid #007AFF44", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Montserrat'", fontSize:14, color:"#007AFF", flexShrink:0 }}>
+            <div style={{ width:32, height:32, borderRadius:"50%", background:"#00B4D822", border:"1px solid #00B4D844", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Urbanist'", fontSize:14, color:"#00B4D8", flexShrink:0 }}>
               {clientName[0]}
             </div>
             <div>
-              <h3 style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:14, fontWeight:600, color:"#1D1D1F" }}>{clientName}</h3>
-              <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:"#8E8E93" }}>{clientProjects.length} projet{clientProjects.length>1?"s":""}</p>
+              <h3 style={{ fontFamily:"'Inter'", fontSize:14, fontWeight:600, color:"#1D1D1F" }}>{clientName}</h3>
+              <p style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93" }}>{clientProjects.length} projet{clientProjects.length>1?"s":""}</p>
             </div>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:6, paddingLeft:42 }}>
@@ -2855,8 +2855,8 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
               >
                 <div style={{ width:8, height:8, borderRadius:"50%", background:statusColor(p.status), flexShrink:0 }}/>
                 <div style={{ flex:1, minWidth:0 }}>
-                  <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:13, fontWeight:500, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.title}</p>
-                  <p style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:10, color:"#8E8E93", marginTop:1 }}>Créé le {p.createdAt ? new Date(p.createdAt+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}) : "—"}</p>
+                  <p style={{ fontFamily:"'Inter'", fontSize:13, fontWeight:500, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.title}</p>
+                  <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#8E8E93", marginTop:1 }}>Créé le {p.createdAt ? new Date(p.createdAt+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}) : "—"}</p>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
                   {p.deliveryDate&&(
@@ -2865,7 +2865,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                     </span>
                   )}
                   {assignments.filter(a=>a.projectId===p.id).length>0&&(
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",whiteSpace:"nowrap"}}>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",whiteSpace:"nowrap"}}>
                       👥 {assignments.filter(a=>a.projectId===p.id).length}
                     </span>
                   )}
@@ -2874,7 +2874,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                       <div style={{ height:"100%", width:`${p.progress||0}%`, background:statusColor(p.status), borderRadius:2, transition:"width .5s" }}/>
                     </div>
                   </div>
-                  <span style={{ fontFamily:"'Plus Jakarta Sans'", fontSize:11, color:statusColor(p.status), background:statusColor(p.status)+"22", border:`1px solid ${statusColor(p.status)}44`, borderRadius:10, padding:"2px 8px", whiteSpace:"nowrap" }}>
+                  <span style={{ fontFamily:"'Inter'", fontSize:11, color:statusColor(p.status), background:statusColor(p.status)+"22", border:`1px solid ${statusColor(p.status)}44`, borderRadius:10, padding:"2px 8px", whiteSpace:"nowrap" }}>
                     {statusLabel(p.status)}
                   </span>
                   <span style={{ color:"#8E8E93", fontSize:12 }}>→</span>
@@ -2886,7 +2886,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       ))}
 
       {projects.length === 0 && (
-        <div style={{ textAlign:"center", padding:"40px 0", color:"#8E8E93", fontFamily:"'Plus Jakarta Sans'", fontSize:13 }}>
+        <div style={{ textAlign:"center", padding:"40px 0", color:"#8E8E93", fontFamily:"'Inter'", fontSize:13 }}>
           Aucun projet pour l instant. Crée ton premier projet dans la section Projets.
         </div>
       )}
@@ -2901,11 +2901,11 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
         return(
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <h3 style={{fontFamily:"'Montserrat'",fontSize:20,color:"#007AFF",letterSpacing:"0.06em"}}>PROCHAINES RÉSERVATIONS</h3>
+              <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#00B4D8",letterSpacing:"0.06em"}}>PROCHAINES RÉSERVATIONS</h3>
               {onGoToCalendar&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={onGoToCalendar}>Voir le calendrier →</button>}
             </div>
             {upcoming.length===0?(
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>Aucune réservation à venir</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>Aucune réservation à venir</p>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {upcoming.map(b=>{
@@ -2917,13 +2917,13 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                   return(
                     <div key={b.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#FFFFFF",borderRadius:8,border:"1px solid #E5E5EA",flexWrap:"wrap"}}>
                       <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#1D1D1F",minWidth:90}}>{dateStr}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,fontWeight:600,color:teamColor,background:teamColor+"18",border:`1px solid ${teamColor}30`,borderRadius:8,padding:"1px 7px",flexShrink:0}}>Éq.{b.team}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",flex:1,minWidth:80}}>{clientName}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:statusColor2,background:statusColor2+"18",border:`1px solid ${statusColor2}30`,borderRadius:8,padding:"1px 7px",flexShrink:0}}>
+                      <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:600,color:teamColor,background:teamColor+"18",border:`1px solid ${teamColor}30`,borderRadius:8,padding:"1px 7px",flexShrink:0}}>Éq.{b.team}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",flex:1,minWidth:80}}>{clientName}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:10,color:statusColor2,background:statusColor2+"18",border:`1px solid ${statusColor2}30`,borderRadius:8,padding:"1px 7px",flexShrink:0}}>
                         {b.status==="confirmed"?"Confirmé":"Option"}
                       </span>
                       {linkedProject&&(
-                        <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",flexShrink:0}}>
+                        <span style={{fontFamily:"'Inter'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",flexShrink:0}}>
                           📁 {linkedProject.title}
                         </span>
                       )}
@@ -2941,13 +2941,13 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
         const recent=[...projects]
           .sort((a,b2)=>(b2.createdAt||"").localeCompare(a.createdAt||""))
           .slice(0,5);
-        const statusColor2=s=>({brief:"#7B9CFF",storyboard:"#007AFF",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#6E6E73");
+        const statusColor2=s=>({brief:"#7B9CFF",storyboard:"#00B4D8",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#6E6E73");
         const statusLabel2=s=>({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
         return(
           <div>
-            <h3 style={{fontFamily:"'Montserrat'",fontSize:20,color:"#007AFF",letterSpacing:"0.06em",marginBottom:12}}>ACTIVITÉ RÉCENTE</h3>
+            <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#00B4D8",letterSpacing:"0.06em",marginBottom:12}}>ACTIVITÉ RÉCENTE</h3>
             {recent.length===0?(
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>Aucun projet</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>Aucun projet</p>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {recent.map(p=>{
@@ -2957,15 +2957,15 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                     <div key={p.id} style={{display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:"#FFFFFF",borderRadius:8,border:"1px solid #E5E5EA"}}>
                       <div style={{flex:1,minWidth:0}}>
                         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
-                          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
-                          {clientName&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#6E6E73",flexShrink:0}}>{clientName}</span>}
+                          <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
+                          {clientName&&<span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",flexShrink:0}}>{clientName}</span>}
                         </div>
                         <div style={{display:"flex",alignItems:"center",gap:8}}>
-                          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:sc,background:sc+"22",border:`1px solid ${sc}44`,borderRadius:8,padding:"1px 6px"}}>{statusLabel2(p.status)}</span>
+                          <span style={{fontFamily:"'Inter'",fontSize:10,color:sc,background:sc+"22",border:`1px solid ${sc}44`,borderRadius:8,padding:"1px 6px"}}>{statusLabel2(p.status)}</span>
                           <div style={{flex:1,height:3,background:"#F2F2F7",borderRadius:2,overflow:"hidden",maxWidth:80}}>
                             <div style={{height:"100%",width:`${p.progress||0}%`,background:sc,borderRadius:2}}/>
                           </div>
-                          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{p.progress||0}%</span>
+                          <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{p.progress||0}%</span>
                         </div>
                       </div>
                       <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",flexShrink:0}} onClick={()=>{onSelectProject(p.id);onSectionChange("projets");}}>→</button>
@@ -2981,7 +2981,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       {/* ── 1c. Stats équipe ──────────────────────────────────────────────── */}
       {teamMembers&&teamMembers.length>0&&(
         <div>
-          <h3 style={{fontFamily:"'Montserrat'",fontSize:20,color:"#007AFF",letterSpacing:"0.06em",marginBottom:12}}>STATS ÉQUIPE</h3>
+          <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#00B4D8",letterSpacing:"0.06em",marginBottom:12}}>STATS ÉQUIPE</h3>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
             {[
               {label:"Membres Équipe A",value:teamMembers.filter(m=>m.team==="A").length,color:"#7B9CFF"},
@@ -2989,8 +2989,8 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
               {label:"Projets assignés",value:projects.filter(p=>assignments.some(a=>a.projectId===p.id)).length,color:"#B47FFF"},
             ].map(({label,value,color})=>(
               <div key={label} style={{background:"#FFFFFF",border:`1px solid ${color}33`,borderRadius:8,padding:"12px 14px"}}>
-                <p style={{fontFamily:"'Montserrat'",fontSize:28,color,letterSpacing:"0.05em"}}>{value}</p>
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</p>
+                <p style={{fontFamily:"'Urbanist'",fontSize:28,color,letterSpacing:"0.05em"}}>{value}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em"}}>{label}</p>
               </div>
             ))}
           </div>
@@ -3011,7 +3011,7 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
   const[roleOnProject,setRoleOnProject]=useState("");
   const[saving,setSaving]=useState(false);
   const available=teamMembers.filter(m=>!assignedIds.includes(m.id));
-  const MEMBER_COLORS=["#007AFF","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF3B30"];
+  const MEMBER_COLORS=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF3B30"];
   const assign=async()=>{
     if(!selMember)return;
     setSaving(true);
@@ -3034,7 +3034,7 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
           {(available.length>0||showAdd)&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(!showAdd)}>{showAdd?"✕":"+ Assigner"}</button>}
         </div>
         {showAdd&&(
-          <div style={{background:"#F5F5F7",border:"1px solid #007AFF30",borderRadius:8,padding:12,marginBottom:12,display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{background:"#F5F5F7",border:"1px solid #00B4D830",borderRadius:8,padding:12,marginBottom:12,display:"flex",flexDirection:"column",gap:8}}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
               <div><Lbl>Membre</Lbl><select className="input" value={selMember} onChange={e=>setSelMember(e.target.value)}><option value="">Choisir...</option>{available.map(m=><option key={m.id} value={m.id}>{m.nom} ({m.role})</option>)}</select></div>
               <div><Lbl>Rôle sur ce projet</Lbl><input className="input" placeholder="Cadreur principal..." value={roleOnProject} onChange={e=>setRoleOnProject(e.target.value)}/></div>
@@ -3043,7 +3043,7 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
           </div>
         )}
         {projectAssignments.length===0?(
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>
             {teamMembers.length===0?"Créez des membres dans Planning → Gérer l'équipe.":"Aucun membre assigné à ce projet."}
           </p>
         ):(
@@ -3054,12 +3054,12 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
               const col=member.color||MEMBER_COLORS[idx%MEMBER_COLORS.length];
               return(
                 <div key={a.id} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA"}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:13,color:col,flexShrink:0}}>{member.nom[0]}</div>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:13,color:col,flexShrink:0}}>{member.nom[0]}</div>
                   <div style={{flex:1}}>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{member.nom}</p>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>{a.roleOnProject||member.role}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{member.nom}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{a.roleOnProject||member.role}</p>
                   </div>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:member.team==="A"?"#007AFF":"#4ECDC4",background:member.team==="A"?"#007AFF18":"#4ECDC418",border:`1px solid ${member.team==="A"?"#007AFF30":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{member.team||"?"}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,color:member.team==="A"?"#00B4D8":"#4ECDC4",background:member.team==="A"?"#00B4D818":"#4ECDC418",border:`1px solid ${member.team==="A"?"#00B4D830":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{member.team||"?"}</span>
                   <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>remove(a)}>✕</button>
                 </div>
               );
@@ -3122,7 +3122,7 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-        <h3 style={{fontFamily:"'Montserrat'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>NOTES DE RÉUNION</h3>
+        <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>NOTES DE RÉUNION</h3>
         <button className="btn btn-primary" style={{fontSize:11}} onClick={()=>setShowAdd(!showAdd)}>{showAdd?"✕ Fermer":"+ Nouvelle note"}</button>
       </div>
       {showAdd&&(
@@ -3138,27 +3138,27 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
           </div>
         </div>
       )}
-      {notes.length===0&&!showAdd&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune note de réunion</p>}
+      {notes.length===0&&!showAdd&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune note de réunion</p>}
       {[...notes].sort((a,b)=>b.date.localeCompare(a.date)).map(note=>(
         <div key={note.id} className="card fadeUp" style={{padding:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,flexWrap:"wrap",gap:6}}>
             <div>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{fmtD(note.date)}</p>
-              {note.participants&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73",marginTop:2}}>👥 {note.participants}</p>}
+              <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{fmtD(note.date)}</p>
+              {note.participants&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>👥 {note.participants}</p>}
             </div>
             <div style={{display:"flex",gap:6}}>
               <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 9px"}} onClick={()=>exportPDF(note)}>↓ PDF</button>
               <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>del(note.id)}>✕</button>
             </div>
           </div>
-          {note.content&&<div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:7,padding:12,marginBottom:8}}><p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{note.content}</p></div>}
+          {note.content&&<div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:7,padding:12,marginBottom:8}}><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{note.content}</p></div>}
           {note.decisions&&(
             <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:7,padding:10}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#4ECDC4",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>✓ Décisions</p>
+              <p style={{fontFamily:"'Inter'",fontSize:10,color:"#4ECDC4",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>✓ Décisions</p>
               {note.decisions.split("\n").filter(Boolean).map((dec,i)=>(
                 <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start",marginBottom:3}}>
                   <span style={{color:"#4ECDC4",fontSize:11,marginTop:1,flexShrink:0}}>→</span>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F"}}>{dec}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{dec}</p>
                 </div>
               ))}
             </div>
@@ -3185,16 +3185,16 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
   const[editSlot,setEditSlot]=useState(null);
   const[slotForm,setSlotForm]=useState({type:"tournage",projectId:"",startTime:"09:00",endTime:"17:00",note:""});
   const[showAddMember,setShowAddMember]=useState(false);
-  const[memberForm,setMemberForm]=useState({nom:"",role:"cadreur",email:"",team:"A",color:"#007AFF"});
+  const[memberForm,setMemberForm]=useState({nom:"",role:"cadreur",email:"",team:"A",color:"#00B4D8"});
 
   const SLOT_TYPES=[
-    {id:"tournage",  label:"Tournage",  color:"#007AFF"},
+    {id:"tournage",  label:"Tournage",  color:"#00B4D8"},
     {id:"montage",   label:"Montage",   color:"#7B9CFF"},
     {id:"reunion",   label:"Réunion",   color:"#FF9F43"},
     {id:"post-prod", label:"Post-prod", color:"#B47FFF"},
   ];
   const MEMBER_ROLES=["cadreur","monteur","chef de projet","alternant","photographe"];
-  const MEMBER_COLORS=["#007AFF","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF3B30"];
+  const MEMBER_COLORS=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF3B30"];
 
   const weekDays=Array.from({length:7},(_,i)=>{
     const d=new Date(weekStart);d.setDate(d.getDate()+i);
@@ -3242,9 +3242,9 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
   const addMember=async()=>{
     if(!memberForm.nom.trim())return;
     const{data}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
-    if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#007AFF"}]);
+    if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8"}]);
     onNotif("Membre ajouté !");
-    setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#007AFF"});
+    setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#00B4D8"});
     setShowAddMember(false);
   };
   const deleteMember=async(id)=>{
@@ -3259,8 +3259,8 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
         <div>
-          <h2 style={{fontFamily:"'Montserrat'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.04em"}}>PLANNING ÉQUIPE</h2>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:2}}>
+          <h2 style={{fontFamily:"'Urbanist'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.04em"}}>PLANNING ÉQUIPE</h2>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>
             {view==="planning"?weekLabel:`${teamMembers.length} membre${teamMembers.length>1?"s":""} dans l'équipe`}
           </p>
         </div>
@@ -3284,17 +3284,17 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
             {SLOT_TYPES.map(t=>(
               <div key={t.id} style={{display:"flex",alignItems:"center",gap:5}}>
                 <div style={{width:10,height:10,borderRadius:2,background:t.color+"44",border:`1px solid ${t.color}66`}}/>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>{t.label}</span>
+                <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{t.label}</span>
               </div>
             ))}
             <div style={{display:"flex",alignItems:"center",gap:5}}>
               <div style={{width:10,height:10,borderRadius:2,background:"#4ECDC444",border:"1px solid #4ECDC466"}}/>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>Tournage confirmé</span>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>Tournage confirmé</span>
             </div>
           </div>
           {teamMembers.length===0?(
             <div className="card" style={{padding:40,textAlign:"center"}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,color:"#8E8E93"}}>Aucun membre configuré.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:14,color:"#8E8E93"}}>Aucun membre configuré.</p>
               <button className="btn btn-primary" style={{marginTop:12}} onClick={()=>setView("equipe")}>+ Ajouter des membres</button>
             </div>
           ):(
@@ -3302,16 +3302,16 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
               <table style={{width:"100%",borderCollapse:"collapse",minWidth:700,background:"#FFFFFF"}}>
                 <thead>
                   <tr>
-                    <th style={{width:130,padding:"10px 12px",textAlign:"left",fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:"1px solid #E5E5EA",position:"sticky",left:0,background:"#F7F7F7",zIndex:2}}>Membre</th>
+                    <th style={{width:130,padding:"10px 12px",textAlign:"left",fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:"1px solid #E5E5EA",position:"sticky",left:0,background:"#F7F7F7",zIndex:2}}>Membre</th>
                     {weekDays.map(date=>{
                       const isToday=date===isoToday();
                       const dn=new Date(date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short"});
                       const dd=new Date(date+"T12:00:00").getDate();
                       const bks=bookingsFor(date);
                       return(
-                        <th key={date} style={{padding:"8px 4px",textAlign:"center",fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:isToday?"#007AFF":"#6E6E73",borderBottom:"1px solid #E5E5EA",borderLeft:"1px solid #E5E5EA",background:isToday?"#007AFF10":"#F7F7F7",minWidth:110}}>
+                        <th key={date} style={{padding:"8px 4px",textAlign:"center",fontFamily:"'Inter'",fontSize:11,color:isToday?"#00B4D8":"#6E6E73",borderBottom:"1px solid #E5E5EA",borderLeft:"1px solid #E5E5EA",background:isToday?"#00B4D810":"#F7F7F7",minWidth:110}}>
                           <div style={{textTransform:"capitalize",fontSize:10}}>{dn}</div>
-                          <div style={{fontFamily:"'Montserrat'",fontSize:18,letterSpacing:"0.05em"}}>{dd}</div>
+                          <div style={{fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.05em"}}>{dd}</div>
                           {bks.map(b=><div key={b.id} style={{background:"#4ECDC418",border:"1px solid #4ECDC440",borderRadius:3,padding:"1px 5px",margin:"2px auto",fontSize:9,color:"#4ECDC4",display:"inline-block",whiteSpace:"nowrap"}}>📅 Éq.{b.team}</div>)}
                         </th>
                       );
@@ -3320,15 +3320,15 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                 </thead>
                 <tbody>
                   {teamMembers.map(member=>{
-                    const col=member.color||"#007AFF";
+                    const col=member.color||"#00B4D8";
                     return(
                       <tr key={member.id} style={{borderBottom:"1px solid #F2F2F7"}}>
                         <td style={{padding:"8px 10px",borderRight:"1px solid #E5E5EA",position:"sticky",left:0,background:"#FFFFFF",zIndex:1,verticalAlign:"top"}}>
                           <div style={{display:"flex",alignItems:"center",gap:7}}>
-                            <div style={{width:26,height:26,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:12,color:col,flexShrink:0}}>{member.nom[0]}</div>
+                            <div style={{width:26,height:26,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:12,color:col,flexShrink:0}}>{member.nom[0]}</div>
                             <div>
-                              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,fontWeight:600,color:"#1D1D1F",whiteSpace:"nowrap"}}>{member.nom}</p>
-                              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:"#8E8E93"}}>{member.role}</p>
+                              <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",whiteSpace:"nowrap"}}>{member.nom}</p>
+                              <p style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93"}}>{member.role}</p>
                             </div>
                           </div>
                         </td>
@@ -3337,16 +3337,16 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                           const isToday=date===isoToday();
                           return(
                             <td key={date} onClick={()=>openSlot(member.id,date)}
-                              style={{padding:"4px",verticalAlign:"top",borderLeft:"1px solid #F2F2F7",background:isToday?"#007AFF06":"transparent",cursor:"pointer",minHeight:60,transition:"background .1s"}}
-                              onMouseEnter={e=>e.currentTarget.style.background=isToday?"#007AFF12":"#1A1A2A"}
-                              onMouseLeave={e=>e.currentTarget.style.background=isToday?"#007AFF06":"transparent"}
+                              style={{padding:"4px",verticalAlign:"top",borderLeft:"1px solid #F2F2F7",background:isToday?"#00B4D806":"transparent",cursor:"pointer",minHeight:60,transition:"background .1s"}}
+                              onMouseEnter={e=>e.currentTarget.style.background=isToday?"#00B4D812":"#1A1A2A"}
+                              onMouseLeave={e=>e.currentTarget.style.background=isToday?"#00B4D806":"transparent"}
                             >
                               <div style={{display:"flex",flexDirection:"column",gap:2,minHeight:52}}>
                                 {daySlots.map(slot=>(
                                   <div key={slot.id} onClick={e=>openEditSlot(slot,e)}
                                     style={{background:typeColor(slot.type)+"22",border:`1px solid ${typeColor(slot.type)}44`,borderRadius:4,padding:"2px 5px",cursor:"pointer"}}>
                                     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:2}}>
-                                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:typeColor(slot.type),fontWeight:600,lineHeight:1.4,flex:1,wordBreak:"break-word"}}>
+                                      <span style={{fontFamily:"'Inter'",fontSize:9,color:typeColor(slot.type),fontWeight:600,lineHeight:1.4,flex:1,wordBreak:"break-word"}}>
                                         {slot.startTime&&slot.endTime?`${slot.startTime}–${slot.endTime} `:""}{slot.projectId?projTitle(slot.projectId):SLOT_TYPES.find(t=>t.id===slot.type)?.label||slot.type}
                                       </span>
                                       <button onClick={e=>{e.stopPropagation();deleteSlot(slot.id);}} style={{background:"none",border:"none",color:"#8E8E93",cursor:"pointer",fontSize:9,lineHeight:1,padding:0,flexShrink:0,marginTop:1}}>✕</button>
@@ -3370,7 +3370,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
       {view==="equipe"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <h3 style={{fontFamily:"'Montserrat'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>MEMBRES DE L'ÉQUIPE</h3>
+            <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>MEMBRES DE L'ÉQUIPE</h3>
             <button className="btn btn-primary" style={{fontSize:11}} onClick={()=>setShowAddMember(!showAddMember)}>{showAddMember?"✕ Fermer":"+ Ajouter"}</button>
           </div>
           {showAddMember&&(
@@ -3390,19 +3390,19 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
             </div>
           )}
           {teamMembers.length===0?(
-            <div style={{textAlign:"center",padding:"30px 0",color:"#8E8E93",fontFamily:"'Plus Jakarta Sans'",fontSize:13}}>Aucun membre. Ajoutez votre équipe.</div>
+            <div style={{textAlign:"center",padding:"30px 0",color:"#8E8E93",fontFamily:"'Inter'",fontSize:13}}>Aucun membre. Ajoutez votre équipe.</div>
           ):(
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               {teamMembers.map((m,idx)=>{
                 const col=m.color||MEMBER_COLORS[idx%MEMBER_COLORS.length];
                 return(
                   <div key={m.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#FFFFFF",borderRadius:8,border:"1px solid #E5E5EA"}}>
-                    <div style={{width:34,height:34,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:15,color:col,flexShrink:0}}>{m.nom[0]}</div>
+                    <div style={{width:34,height:34,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:15,color:col,flexShrink:0}}>{m.nom[0]}</div>
                     <div style={{flex:1}}>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{m.nom}</p>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>{m.role}{m.email?` · ${m.email}`:""}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{m.nom}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{m.role}{m.email?` · ${m.email}`:""}</p>
                     </div>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:m.team==="A"?"#007AFF":"#4ECDC4",background:m.team==="A"?"#007AFF18":"#4ECDC418",border:`1px solid ${m.team==="A"?"#007AFF30":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{m.team}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:m.team==="A"?"#00B4D8":"#4ECDC4",background:m.team==="A"?"#00B4D818":"#4ECDC418",border:`1px solid ${m.team==="A"?"#00B4D830":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{m.team}</span>
                     <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>deleteMember(m.id)}>✕</button>
                   </div>
                 );
@@ -3416,14 +3416,14 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
         <div className="modal-overlay" onClick={()=>{setSlotModal(null);setEditSlot(null);}}>
           <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-              <h3 style={{fontFamily:"'Montserrat'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.05em"}}>{editSlot?"MODIFIER LE CRÉNEAU":"NOUVEAU CRÉNEAU"}</h3>
+              <h3 style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.05em"}}>{editSlot?"MODIFIER LE CRÉNEAU":"NOUVEAU CRÉNEAU"}</h3>
               <button className="btn btn-ghost" style={{padding:"4px 10px"}} onClick={()=>{setSlotModal(null);setEditSlot(null);}}>✕</button>
             </div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginBottom:14}}>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:14}}>
               {teamMembers.find(m=>m.id===slotModal.memberId)?.nom} · {fmtD(slotModal.date)}
             </p>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <div><Lbl>Type</Lbl><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{SLOT_TYPES.map(t=><button key={t.id} onClick={()=>setSlotForm(p=>({...p,type:t.id}))} style={{padding:"5px 12px",borderRadius:6,border:`2px solid ${slotForm.type===t.id?t.color:"#E5E5EA"}`,background:slotForm.type===t.id?t.color+"22":"#F5F5F7",cursor:"pointer",fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:slotForm.type===t.id?t.color:"#6E6E73",transition:"all .15s"}}>{t.label}</button>)}</div></div>
+              <div><Lbl>Type</Lbl><div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{SLOT_TYPES.map(t=><button key={t.id} onClick={()=>setSlotForm(p=>({...p,type:t.id}))} style={{padding:"5px 12px",borderRadius:6,border:`2px solid ${slotForm.type===t.id?t.color:"#E5E5EA"}`,background:slotForm.type===t.id?t.color+"22":"#F5F5F7",cursor:"pointer",fontFamily:"'Inter'",fontSize:12,color:slotForm.type===t.id?t.color:"#6E6E73",transition:"all .15s"}}>{t.label}</button>)}</div></div>
               <div><Lbl>Projet (optionnel)</Lbl><select className="input" value={slotForm.projectId} onChange={e=>setSlotForm(p=>({...p,projectId:e.target.value}))}><option value="">— Aucun —</option>{projects.map(p=><option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <div><Lbl>Début</Lbl><input type="time" className="input" value={slotForm.startTime} onChange={e=>setSlotForm(p=>({...p,startTime:e.target.value}))}/></div>
@@ -3466,21 +3466,21 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
     const busy=slots>=5;
     const sel=selectedTeam===team;
     return(
-      <div onClick={()=>setSelectedTeam(sel?null:team)} style={{flex:1,background:sel?"#007AFF15":"#F5F5F7",border:`1px solid ${sel?"#007AFF":"#E5E5EA"}`,borderRadius:8,padding:"12px 14px",cursor:"pointer",transition:"all .15s"}}>
+      <div onClick={()=>setSelectedTeam(sel?null:team)} style={{flex:1,background:sel?"#00B4D815":"#F5F5F7",border:`1px solid ${sel?"#00B4D8":"#E5E5EA"}`,borderRadius:8,padding:"12px 14px",cursor:"pointer",transition:"all .15s"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <span style={{fontFamily:"'Montserrat'",fontSize:16,color:sel?"#007AFF":"#1D1D1F",letterSpacing:"0.06em"}}>ÉQUIPE {team}</span>
-          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,padding:"2px 7px",borderRadius:4,background:busy?"#FF9F4322":"#4ECDC422",color:busy?"#FF9F43":"#4ECDC4",fontWeight:600}}>{busy?"Chargée":"Disponible"}</span>
+          <span style={{fontFamily:"'Urbanist'",fontSize:16,color:sel?"#00B4D8":"#1D1D1F",letterSpacing:"0.06em"}}>ÉQUIPE {team}</span>
+          <span style={{fontFamily:"'Inter'",fontSize:10,padding:"2px 7px",borderRadius:4,background:busy?"#FF9F4322":"#4ECDC422",color:busy?"#FF9F43":"#4ECDC4",fontWeight:600}}>{busy?"Chargée":"Disponible"}</span>
         </div>
         <div style={{display:"flex",flexWrap:"wrap",gap:5,marginBottom:6}}>
           {members.map(m=>(
             <div key={m.id} style={{display:"flex",alignItems:"center",gap:4,background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:4,padding:"3px 7px"}}>
-              <div style={{width:16,height:16,borderRadius:"50%",background:m.color||"#007AFF",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{m.nom[0]}</div>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#1D1D1F"}}>{m.nom.split(" ")[0]}</span>
+              <div style={{width:16,height:16,borderRadius:"50%",background:m.color||"#00B4D8",display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,fontWeight:700,color:"#FFFFFF",flexShrink:0}}>{m.nom[0]}</div>
+              <span style={{fontFamily:"'Inter'",fontSize:10,color:"#1D1D1F"}}>{m.nom.split(" ")[0]}</span>
             </div>
           ))}
-          {members.length===0&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>Aucun membre</span>}
+          {members.length===0&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Aucun membre</span>}
         </div>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{slots} créneau{slots!==1?"x":""} dans les 30 prochains jours</p>
+        <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{slots} créneau{slots!==1?"x":""} dans les 30 prochains jours</p>
       </div>
     );
   };
@@ -3497,7 +3497,7 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
     <div style={{position:"fixed",inset:0,background:"#000000AA",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div className="card fadeUp" style={{width:"100%",maxWidth:500,padding:28,background:"#FFFFFF"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
-          <h2 style={{fontFamily:"'Montserrat'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.05em"}}>NOUVEAU PROJET</h2>
+          <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.05em"}}>NOUVEAU PROJET</h2>
           <button style={{background:"none",border:"none",color:"#8E8E93",cursor:"pointer",fontSize:18,lineHeight:1}} onClick={onClose}>✕</button>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -3632,10 +3632,10 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
-      <div style={{background:"linear-gradient(135deg,#007AFF10,#7B9CFF08)",border:"1px solid #007AFF20",borderRadius:10,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
+      <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:10,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:10}}>
         <div>
-          <h2 style={{fontFamily:"'Montserrat'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>COMPTES CLIENTS</h2>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:2}}>{clients.length} compte{clients.length!==1?"s":""} — gestion des accès et identifiants</p>
+          <h2 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>COMPTES CLIENTS</h2>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>{clients.length} compte{clients.length!==1?"s":""} — gestion des accès et identifiants</p>
         </div>
         <button className="btn btn-primary" onClick={()=>{setTab(tab==="nouveau"?"liste":"nouveau");setEditId(null);setForm(emptyForm);}}>
           {tab==="nouveau"?"✕ Annuler":"+ Nouveau compte"}
@@ -3645,7 +3645,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
       {showPass&&createdPass&&(
         <div className="fadeUp" style={{background:"#4ECDC415",border:"1px solid #4ECDC444",borderRadius:8,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#4ECDC4"}}>✓ Compte créé — transmettez ce mot de passe au client</p>
+            <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#4ECDC4"}}>✓ Compte créé — transmettez ce mot de passe au client</p>
             <p style={{fontFamily:"'JetBrains Mono'",fontSize:14,color:"#1D1D1F",marginTop:4,letterSpacing:"0.05em"}}>{createdPass}</p>
           </div>
           <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>{setShowPass(false);setCreatedPass(null);}}>✕</button>
@@ -3658,19 +3658,19 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
       {/* Comptes en attente de validation */}
       {clients.filter(c=>!c.isActive).length>0&&(
         <div style={{background:"#FF9F4310",border:"1px solid #FF9F4340",borderRadius:10,padding:"14px 18px"}}>
-          <p style={{fontFamily:"'Montserrat'",fontSize:15,color:"#FF9F43",letterSpacing:"0.06em",marginBottom:10}}>
+          <p style={{fontFamily:"'Urbanist'",fontSize:15,color:"#FF9F43",letterSpacing:"0.06em",marginBottom:10}}>
             ⏳ EN ATTENTE DE VALIDATION — {clients.filter(c=>!c.isActive).length} compte{clients.filter(c=>!c.isActive).length>1?"s":""}
           </p>
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             {clients.filter(c=>!c.isActive).map(c=>(
               <div key={c.id} style={{background:"#FFFFFF",border:"1px solid #FF9F4330",borderRadius:8,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:"#FF9F4320",border:"1px solid #FF9F4340",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:14,color:"#FF9F43",flexShrink:0}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:"#FF9F4320",border:"1px solid #FF9F4340",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:14,color:"#FF9F43",flexShrink:0}}>
                     {(c.name||"?")[0].toUpperCase()}
                   </div>
                   <div>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{c.name}</p>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{c.email}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{c.name}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{c.email}</p>
                   </div>
                 </div>
                 <div style={{display:"flex",gap:8}}>
@@ -3685,23 +3685,23 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
 
       {/* Comptes actifs */}
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {clients.filter(c=>c.isActive).length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#8E8E93",fontFamily:"'Plus Jakarta Sans'",fontSize:13}}>Aucun compte client actif — créez le premier ci-dessus</div>}
+        {clients.filter(c=>c.isActive).length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#8E8E93",fontFamily:"'Inter'",fontSize:13}}>Aucun compte client actif — créez le premier ci-dessus</div>}
         {clients.filter(c=>c.isActive).map(c=>(
           <div key={c.id} className="card fadeUp" style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:38,height:38,borderRadius:"50%",background:"#007AFF20",border:"1px solid #007AFF40",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:16,color:"#007AFF",flexShrink:0}}>
+              <div style={{width:38,height:38,borderRadius:"50%",background:"#00B4D820",border:"1px solid #00B4D840",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:16,color:"#00B4D8",flexShrink:0}}>
                 {(c.name||"?")[0].toUpperCase()}
               </div>
               <div>
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{c.name}</p>
-                <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{c.email}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{c.name}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{c.email}</p>
               </div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E5E5EA",color:"#6E6E73"}}>{c.type}</span>
-              {c.discount>0&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#007AFF20",color:"#007AFF"}}>-{c.discount}%</span>}
-              {c.simulatorEnabled&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
-              <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#E5E5EA"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#8E8E93",cursor:"pointer"}}>◆ Shortone</button>
+              <span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E5E5EA",color:"#6E6E73"}}>{c.type}</span>
+              {c.discount>0&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#00B4D820",color:"#00B4D8"}}>-{c.discount}%</span>}
+              {c.simulatorEnabled&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
+              <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#E5E5EA"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#8E8E93",cursor:"pointer"}}>◆ Shortone</button>
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
               <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
               <button className={`btn ${c.isActive?"btn-red":"btn-green"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>{c.isActive?"Suspendre":"Réactiver"}</button>
@@ -3718,7 +3718,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
 // ROOT APP
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS PANEL
-const ACCENT_COLORS={or:"#007AFF",cyan:"#4ECDC4",bleu:"#7B9CFF",violet:"#B47FFF",rouge:"#FF3B30"};
+const ACCENT_COLORS={or:"#00B4D8",cyan:"#4ECDC4",bleu:"#7B9CFF",violet:"#B47FFF",rouge:"#FF3B30"};
 const DEFAULT_SETTINGS={fontSize:"normale",density:"normale",accent:"or",contrast:false};
 
 function SettingsPanel({settings,onChange,onClose,user,onLogout}){
@@ -3730,7 +3730,7 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
       <div style={{position:"fixed",top:0,right:0,height:"100vh",width:320,background:"#F5F5F7",borderLeft:"1px solid #E5E5EA",zIndex:999,display:"flex",flexDirection:"column",boxShadow:"-8px 0 40px #00000066"}}>
         {/* Header */}
         <div style={{padding:"18px 20px",borderBottom:"1px solid #E5E5EA",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <span style={{fontFamily:"'Montserrat'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.06em"}}>PARAMÈTRES</span>
+          <span style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.06em"}}>PARAMÈTRES</span>
           <button onClick={onClose} style={{background:"none",border:"none",color:"#8E8E93",cursor:"pointer",fontSize:18,lineHeight:1}}>✕</button>
         </div>
 
@@ -3738,38 +3738,38 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
 
           {/* Profil */}
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:40,height:40,borderRadius:"50%",background:ACCENT_COLORS[settings.accent]+"22",border:`1px solid ${ACCENT_COLORS[settings.accent]}40`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:18,color:ACCENT_COLORS[settings.accent],flexShrink:0}}>
+            <div style={{width:40,height:40,borderRadius:"50%",background:ACCENT_COLORS[settings.accent]+"22",border:`1px solid ${ACCENT_COLORS[settings.accent]}40`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:18,color:ACCENT_COLORS[settings.accent],flexShrink:0}}>
               {(user?.email||"?")[0].toUpperCase()}
             </div>
             <div style={{minWidth:0}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.email||"—"}</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:1}}>Connecté</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.email||"—"}</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:1}}>Connecté</p>
             </div>
           </div>
 
           {/* Taille de police */}
           <div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Taille du texte</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Taille du texte</p>
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
               {[["petite","A"],["normale","A"],["grande","A"],["tres-grande","A"]].map(([k,l],i)=>(
-                <button key={k} onClick={()=>S("fontSize",k)} style={{padding:"8px 4px",background:settings.fontSize===k?ACCENT_COLORS[settings.accent]+"22":"#FFFFFF",border:`1px solid ${settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#E5E5EA"}`,borderRadius:7,color:settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#6E6E73",fontFamily:"'Plus Jakarta Sans'",fontSize:[11,13,16,19][i],fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+                <button key={k} onClick={()=>S("fontSize",k)} style={{padding:"8px 4px",background:settings.fontSize===k?ACCENT_COLORS[settings.accent]+"22":"#FFFFFF",border:`1px solid ${settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#E5E5EA"}`,borderRadius:7,color:settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#6E6E73",fontFamily:"'Inter'",fontSize:[11,13,16,19][i],fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
                   {l}
                 </button>
               ))}
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginTop:4}}>
               {["Petite","Normale","Grande","XL"].map((l,i)=>(
-                <span key={l} style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:"#8E8E93",textAlign:"center"}}>{l}</span>
+                <span key={l} style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",textAlign:"center"}}>{l}</span>
               ))}
             </div>
           </div>
 
           {/* Densité */}
           <div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Densité de l'interface</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Densité de l'interface</p>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
               {Object.entries(densityLabel).map(([k,l])=>(
-                <button key={k} onClick={()=>S("density",k)} style={{padding:"8px 6px",background:settings.density===k?ACCENT_COLORS[settings.accent]+"22":"#FFFFFF",border:`1px solid ${settings.density===k?ACCENT_COLORS[settings.accent]:"#E5E5EA"}`,borderRadius:7,color:settings.density===k?ACCENT_COLORS[settings.accent]:"#6E6E73",fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
+                <button key={k} onClick={()=>S("density",k)} style={{padding:"8px 6px",background:settings.density===k?ACCENT_COLORS[settings.accent]+"22":"#FFFFFF",border:`1px solid ${settings.density===k?ACCENT_COLORS[settings.accent]:"#E5E5EA"}`,borderRadius:7,color:settings.density===k?ACCENT_COLORS[settings.accent]:"#6E6E73",fontFamily:"'Inter'",fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
                   {l}
                 </button>
               ))}
@@ -3778,20 +3778,20 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
 
           {/* Couleur d'accent */}
           <div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Couleur d'accent</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Couleur d'accent</p>
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               {Object.entries(ACCENT_COLORS).map(([k,v])=>(
                 <button key={k} onClick={()=>S("accent",k)} style={{width:32,height:32,borderRadius:"50%",background:v,border:`3px solid ${settings.accent===k?"#1D1D1F":"transparent"}`,cursor:"pointer",transition:"all .15s",boxShadow:settings.accent===k?`0 0 12px ${v}66`:"none"}}/>
               ))}
             </div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:6,textTransform:"capitalize"}}>{settings.accent}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:6,textTransform:"capitalize"}}>{settings.accent}</p>
           </div>
 
           {/* Contraste */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",fontWeight:600}}>Contraste élevé</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:2}}>Améliore la lisibilité</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:600}}>Contraste élevé</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Améliore la lisibilité</p>
             </div>
             <button onClick={()=>S("contrast",!settings.contrast)} className={`toggle ${settings.contrast?"on":""}`}/>
           </div>
@@ -3800,7 +3800,7 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
 
         {/* Footer — déconnexion */}
         <div style={{padding:"16px 20px",borderTop:"1px solid #E5E5EA"}}>
-          <button onClick={onLogout} style={{width:"100%",padding:"10px",background:"#FF3B3018",border:"1px solid #FF3B3030",borderRadius:8,color:"#FF3B30",fontFamily:"'Plus Jakarta Sans'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}
+          <button onClick={onLogout} style={{width:"100%",padding:"10px",background:"#FF3B3018",border:"1px solid #FF3B3030",borderRadius:8,color:"#FF3B30",fontFamily:"'Inter'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}
             onMouseEnter={e=>e.currentTarget.style.background="#FF3B3028"} onMouseLeave={e=>e.currentTarget.style.background="#FF3B3018"}>
             ↩ Se déconnecter
           </button>
@@ -3837,20 +3837,20 @@ function GuestView(){
   const guestName=project?(project.brief?.guests||[]).find(g=>g.token===token)?.name:"";
 
   if(state==="loading")return(
-    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,backgroundImage:"radial-gradient(ellipse at 50% 0%,#0066CC10 0%,transparent 60%)"}}>
-      <img src="/logo192.png" alt="Third-One Studio" style={{height:40,filter:"invert(1) brightness(0.85)",opacity:0.7}}/>
-      <div style={{width:28,height:28,border:"2px solid #007AFF40",borderTopColor:"#007AFF",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>
+    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:14,backgroundImage:"radial-gradient(ellipse at 50% 0%,#0090B310 0%,transparent 60%)"}}>
+      <img src="/logo192.png" alt="Third-One Studio" style={{height:40}}/>
+      <div style={{width:28,height:28,border:"2px solid #00B4D840",borderTopColor:"#00B4D8",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>
     </div>
   );
 
   if(state==="invalid"||state==="expired")return(
-    <div style={{minHeight:"100vh",background:"#FFFFFF",backgroundImage:"radial-gradient(ellipse at 50% 0%,#0066CC10 0%,transparent 60%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0,padding:24,fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
-      <img src="/logo192.png" alt="Third-One Studio" style={{height:44,filter:"invert(1) brightness(0.85)",marginBottom:32,opacity:0.7}}/>
-      <div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:14,padding:"36px 32px",maxWidth:400,width:"100%",textAlign:"center",boxShadow:"0 0 60px #0066CC06"}}>
+    <div style={{minHeight:"100vh",background:"#FFFFFF",backgroundImage:"radial-gradient(ellipse at 50% 0%,#0090B310 0%,transparent 60%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:0,padding:24,fontFamily:"'Inter',sans-serif"}}>
+      <img src="/logo192.png" alt="Third-One Studio" style={{height:44,marginBottom:32}}/>
+      <div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:14,padding:"36px 32px",maxWidth:400,width:"100%",textAlign:"center",boxShadow:"0 0 60px #0090B306"}}>
         <div style={{width:56,height:56,borderRadius:"50%",background:state==="expired"?"#FF9F4318":"#FF3B3018",border:`1px solid ${state==="expired"?"#FF9F4340":"#FF3B3040"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,margin:"0 auto 16px"}}>
           {state==="expired"?"⏰":"🔒"}
         </div>
-        <p style={{fontFamily:"'Montserrat'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:8}}>
+        <p style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:8}}>
           {state==="expired"?"Lien expiré":"Lien invalide"}
         </p>
         <p style={{fontSize:13,color:"#6E6E73",lineHeight:1.6}}>
@@ -3862,13 +3862,13 @@ function GuestView(){
   );
 
   return(
-    <div style={{minHeight:"100vh",background:"#FFFFFF",backgroundImage:"radial-gradient(ellipse at 50% 0%,#0066CC12 0%,transparent 55%)",fontFamily:"'Plus Jakarta Sans',sans-serif"}}>
+    <div style={{minHeight:"100vh",background:"#FFFFFF",backgroundImage:"radial-gradient(ellipse at 50% 0%,#0090B312 0%,transparent 55%)",fontFamily:"'Inter',sans-serif"}}>
       {/* Header */}
       <div style={{borderBottom:"1px solid #1A1A28",background:"#FFFFFFcc",backdropFilter:"blur(12px)",position:"sticky",top:0,zIndex:10,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-        <img src="/logo192.png" alt="Third-One Studio" style={{height:32,filter:"invert(1) brightness(0.85)"}}/>
+        <img src="/logo192.png" alt="Third-One Studio" style={{height:32}}/>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {guestName&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}>Bonjour, <span style={{color:"#6E6E73",fontWeight:600}}>{guestName}</span></span>}
-          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,padding:"3px 8px",borderRadius:4,background:"#0066CC18",color:"#0066CC",border:"1px solid #0066CC33",letterSpacing:"0.05em",textTransform:"uppercase"}}>Accès invité</span>
+          {guestName&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Bonjour, <span style={{color:"#6E6E73",fontWeight:600}}>{guestName}</span></span>}
+          <span style={{fontFamily:"'Inter'",fontSize:10,padding:"3px 8px",borderRadius:4,background:"#0090B318",color:"#0090B3",border:"1px solid #0090B333",letterSpacing:"0.05em",textTransform:"uppercase"}}>Accès invité</span>
         </div>
       </div>
 
@@ -3876,8 +3876,8 @@ function GuestView(){
       <div style={{maxWidth:700,margin:"0 auto",padding:"32px 20px 48px"}}>
         {/* Project header */}
         <div style={{marginBottom:24}}>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Validation vidéo</p>
-          <h1 style={{fontFamily:"'Montserrat'",fontSize:32,color:"#1D1D1F",letterSpacing:"0.04em",lineHeight:1}}>{project.title}</h1>
+          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Validation vidéo</p>
+          <h1 style={{fontFamily:"'Urbanist'",fontSize:32,color:"#1D1D1F",letterSpacing:"0.04em",lineHeight:1}}>{project.title}</h1>
         </div>
 
         <VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif} isGuest={true}/>
@@ -3908,7 +3908,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
   const [lastFetch,setLastFetch]=useState(null);
 
   const niches=["Tous","Fitness","Beauty","Tech","Food","Voyage","Business","Lifestyle","Finance"];
-  const nicheColors={"Fitness":"#4ECDC4","Beauty":"#FF3B30","Tech":"#7B9CFF","Food":"#FF9F43","Voyage":"#B47FFF","Business":"#007AFF","Lifestyle":"#FF6B9D","Finance":"#4ECDC4"};
+  const nicheColors={"Fitness":"#4ECDC4","Beauty":"#FF3B30","Tech":"#7B9CFF","Food":"#FF9F43","Voyage":"#B47FFF","Business":"#00B4D8","Lifestyle":"#FF6B9D","Finance":"#4ECDC4"};
 
   useEffect(()=>{
     supabase.from("trends").select("*").eq("active",true).order("fetched_at",{ascending:false})
@@ -3939,7 +3939,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
     setScanning(false);
   };
 
-  const statusColor=s=>({brief:"#7B9CFF",storyboard:"#007AFF",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#6E6E73");
+  const statusColor=s=>({brief:"#7B9CFF",storyboard:"#00B4D8",tournage:"#FF9F43",montage:"#B47FFF",livraison:"#4ECDC4"}[s]||"#6E6E73");
   const statusLabel=s=>({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
   const PIPELINE=["brief","storyboard","tournage","montage","livraison"];
 
@@ -3959,10 +3959,10 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
       {/* Header */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
         <div>
-          <h2 style={{fontFamily:"'Montserrat'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.05em",display:"flex",alignItems:"center",gap:8}}>
+          <h2 style={{fontFamily:"'Urbanist'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.05em",display:"flex",alignItems:"center",gap:8}}>
             <span style={{background:"linear-gradient(135deg,#00d4ff,#8b5cf6)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>◆</span> SHORTONE.STUDIO
           </h2>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:2}}>Radar tendances IA & production de contenu social media</p>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>Radar tendances IA & production de contenu social media</p>
         </div>
         {/* Sub-tabs */}
         <div style={{display:"flex",gap:4,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,padding:3}}>
@@ -3976,13 +3976,13 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
       {/* ── RADAR ── */}
       {view==="radar"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {trendsLoading&&<div style={{textAlign:"center",padding:"30px 0",fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block",marginRight:8}}>⟳</span>Chargement des tendances...</div>}
+          {trendsLoading&&<div style={{textAlign:"center",padding:"30px 0",fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block",marginRight:8}}>⟳</span>Chargement des tendances...</div>}
           {/* Stats */}
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-            {[{v:trends[0]?.growth||"—",l:"Top croissance",c:"#4ECDC4"},{v:`${trends.length}`,l:"Tendances actives",c:"#B47FFF"},{v:`${[...new Set(trends.map(t=>t.niche))].length||6}`,l:"Niches suivies",c:"#007AFF"}].map(s=>(
+            {[{v:trends[0]?.growth||"—",l:"Top croissance",c:"#4ECDC4"},{v:`${trends.length}`,l:"Tendances actives",c:"#B47FFF"},{v:`${[...new Set(trends.map(t=>t.niche))].length||6}`,l:"Niches suivies",c:"#00B4D8"}].map(s=>(
               <div key={s.l} style={{flex:"1 1 80px",minWidth:80,background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:"12px 14px"}}>
-                <div style={{fontFamily:"'Montserrat'",fontSize:22,color:s.c,letterSpacing:"0.04em"}}>{s.v}</div>
-                <div style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73",marginTop:2}}>{s.l}</div>
+                <div style={{fontFamily:"'Urbanist'",fontSize:22,color:s.c,letterSpacing:"0.04em"}}>{s.v}</div>
+                <div style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>{s.l}</div>
               </div>
             ))}
           </div>
@@ -3990,38 +3990,38 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
           {/* Niche filter + scan */}
           <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
             {niches.map(n=>(
-              <button key={n} onClick={()=>setNicheFilter(n)} style={{background:nicheFilter===n?(nicheColors[n]||"#007AFF"):"#FFFFFF",border:`1px solid ${nicheFilter===n?(nicheColors[n]||"#007AFF"):"#E5E5EA"}`,borderRadius:999,color:nicheFilter===n?"#FFFFFF":"#6E6E73",fontFamily:"'Plus Jakarta Sans'",fontWeight:600,fontSize:11,padding:"4px 13px",cursor:"pointer",transition:"all .15s"}}>
+              <button key={n} onClick={()=>setNicheFilter(n)} style={{background:nicheFilter===n?(nicheColors[n]||"#00B4D8"):"#FFFFFF",border:`1px solid ${nicheFilter===n?(nicheColors[n]||"#00B4D8"):"#E5E5EA"}`,borderRadius:999,color:nicheFilter===n?"#FFFFFF":"#6E6E73",fontFamily:"'Inter'",fontWeight:600,fontSize:11,padding:"4px 13px",cursor:"pointer",transition:"all .15s"}}>
                 {n}
               </button>
             ))}
             {isAdmin&&(
-              <button onClick={runScan} disabled={scanning} style={{marginLeft:"auto",background:scanning?"#00d4ff22":"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:scanning?"1px solid #00d4ff":"none",borderRadius:8,color:scanning?"#00d4ff":"#fff",fontFamily:"'Plus Jakarta Sans'",fontWeight:700,fontSize:12,padding:"6px 16px",cursor:scanning?"not-allowed":"pointer",transition:"all .15s",opacity:scanning?.7:1}}>
+              <button onClick={runScan} disabled={scanning} style={{marginLeft:"auto",background:scanning?"#00d4ff22":"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:scanning?"1px solid #00d4ff":"none",borderRadius:8,color:scanning?"#00d4ff":"#fff",fontFamily:"'Inter'",fontWeight:700,fontSize:12,padding:"6px 16px",cursor:scanning?"not-allowed":"pointer",transition:"all .15s",opacity:scanning?.7:1}}>
                 {scanning?"⟳ Scan en cours...":"⚡ Scanner les tendances"}
               </button>
             )}
           </div>
-          {lastFetch&&<div style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>Dernière mise à jour : {new Date(lastFetch).toLocaleDateString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})}</div>}
+          {lastFetch&&<div style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>Dernière mise à jour : {new Date(lastFetch).toLocaleDateString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})}</div>}
 
           {/* Trend cards */}
           {filteredTrends.map(t=>(
             <div key={t.id} style={cardStyle(expanded===t.id)}>
               <div onClick={()=>setExpanded(expanded===t.id?null:t.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",cursor:"pointer",gap:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",minWidth:0,flex:1}}>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontWeight:700,fontSize:14,color:"#1D1D1F",whiteSpace:"nowrap"}}>{t.tag}</span>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,fontWeight:700,color:"#4ECDC4",background:"#4ECDC418",border:"1px solid #4ECDC430",borderRadius:999,padding:"2px 8px",whiteSpace:"nowrap"}}>{t.growth}</span>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",whiteSpace:"nowrap"}}>{t.platform} · {t.views}</span>
+                  <span style={{fontFamily:"'Inter'",fontWeight:700,fontSize:14,color:"#1D1D1F",whiteSpace:"nowrap"}}>{t.tag}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:"#4ECDC4",background:"#4ECDC418",border:"1px solid #4ECDC430",borderRadius:999,padding:"2px 8px",whiteSpace:"nowrap"}}>{t.growth}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",whiteSpace:"nowrap"}}>{t.platform} · {t.views}</span>
                 </div>
                 <span style={{color:"#8E8E93",fontSize:10,transform:expanded===t.id?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
               </div>
               {expanded===t.id&&(
                 <div style={{padding:"0 16px 16px",borderTop:"1px solid #E5E5EA",paddingTop:14,display:"flex",flexDirection:"column",gap:14}}>
                   <div>
-                    <div style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:"#007AFF",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:6}}>Pourquoi ça explose</div>
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",lineHeight:1.6,margin:0}}>{t.why}</p>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#00B4D8",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:6}}>Pourquoi ça explose</div>
+                    <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6,margin:0}}>{t.why}</p>
                   </div>
-                  <div style={{borderLeft:"3px solid #00d4ff",paddingLeft:12,fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontStyle:"italic",color:"#6666AA"}}>"{t.hook}"</div>
+                  <div style={{borderLeft:"3px solid #00d4ff",paddingLeft:12,fontFamily:"'Inter'",fontSize:12,fontStyle:"italic",color:"#6666AA"}}>"{t.hook}"</div>
                   <div>
-                    <div style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:"#007AFF",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Shotlist — {t.plans.length} plans</div>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#00B4D8",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Shotlist — {t.plans.length} plans</div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(52px,1fr))",gap:6}}>
                       {t.plans.map((p,i)=>{
                         const cols=["#7B9CFF","#4ECDC4","#FF9F43","#B47FFF","#FF3B30"];
@@ -4030,13 +4030,13 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                             <div style={{aspectRatio:"9/16",borderRadius:6,background:cols[i]+"18",border:`1px solid ${cols[i]}30`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                               <div style={{width:14,height:14,borderRadius:3,background:cols[i]+"60"}}/>
                             </div>
-                            <div style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:"#8E8E93",textAlign:"center"}}>{p}</div>
+                            <div style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",textAlign:"center"}}>{p}</div>
                           </div>
                         );
                       })}
                     </div>
                   </div>
-                  <button onClick={()=>onCreateFromTrend(t)} style={{width:"100%",padding:"10px",background:"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:"none",borderRadius:8,color:"#fff",fontFamily:"'Plus Jakarta Sans'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"opacity .15s"}}
+                  <button onClick={()=>onCreateFromTrend(t)} style={{width:"100%",padding:"10px",background:"linear-gradient(135deg,#00d4ff,#8b5cf6)",border:"none",borderRadius:8,color:"#fff",fontFamily:"'Inter'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"opacity .15s"}}
                     onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
                     ✦ Créer une mission depuis cette tendance
                   </button>
@@ -4052,7 +4052,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {projects.length===0?(
             <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:"40px 20px",textAlign:"center"}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93"}}>Aucune mission en cours — détecte une tendance dans le Radar pour commencer.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucune mission en cours — détecte une tendance dans le Radar pour commencer.</p>
               <button className="btn btn-primary" style={{marginTop:12,fontSize:12}} onClick={()=>setView("radar")}>⚡ Aller au Radar</button>
             </div>
           ):(
@@ -4062,12 +4062,12 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                 <div key={status}>
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <div style={{width:8,height:8,borderRadius:"50%",background:statusColor(status)}}/>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:statusColor(status),fontWeight:700,textTransform:"uppercase",letterSpacing:".08em"}}>{statusLabel(status)}</span>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93",marginLeft:2}}>{col.length}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,color:statusColor(status),fontWeight:700,textTransform:"uppercase",letterSpacing:".08em"}}>{statusLabel(status)}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",marginLeft:2}}>{col.length}</span>
                   </div>
                   {col.length===0?(
                     <div style={{background:"#F5F5F7",border:"1px dashed #E5E5EA",borderRadius:8,padding:"10px 14px"}}>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#333350",textAlign:"center"}}>Aucune mission</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#333350",textAlign:"center"}}>Aucune mission</p>
                     </div>
                   ):(
                     <div style={{display:"flex",flexDirection:"column",gap:6}}>
@@ -4077,15 +4077,15 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                           onMouseEnter={e=>e.currentTarget.style.background="#F2F2F7"}
                           onMouseLeave={e=>e.currentTarget.style.background="#FFFFFF"}>
                           <div>
-                            <div style={{fontFamily:"'Plus Jakarta Sans'",fontWeight:600,fontSize:13,color:"#1D1D1F"}}>{p.title}</div>
-                            <div style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:2}}>{clientName(p.clientId)}</div>
+                            <div style={{fontFamily:"'Inter'",fontWeight:600,fontSize:13,color:"#1D1D1F"}}>{p.title}</div>
+                            <div style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>{clientName(p.clientId)}</div>
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <div style={{width:60,height:3,background:"#F2F2F7",borderRadius:99}}>
                               <div style={{height:"100%",width:`${p.progress}%`,background:statusColor(p.status),borderRadius:99}}/>
                             </div>
-                            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#8E8E93"}}>{p.progress}%</span>
-                            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:10,color:"#6E6E73"}}>→</span>
+                            <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{p.progress}%</span>
+                            <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>→</span>
                           </div>
                         </div>
                       ))}
@@ -4111,7 +4111,7 @@ function ClientWelcomePage({client,projects,onGoTo}){
     {icon:"📲",k:"cm",title:"Mes contenus",desc:"Publications planifiées pour vos réseaux"},
     {icon:"💬",k:"projets",title:"Messagerie",desc:"Échangez avec votre équipe"},
   ];
-  const statusColor=s=>({brief:"#007AFF",storyboard:"#FF9500",tournage:"#FF9F43",montage:"#AF52DE",livraison:"#34C759"}[s]||"#6E6E73");
+  const statusColor=s=>({brief:"#00B4D8",storyboard:"#FF9500",tournage:"#FF9F43",montage:"#AF52DE",livraison:"#34C759"}[s]||"#6E6E73");
   const statusLabel=s=>({brief:"Brief en cours",storyboard:"Storyboard",tournage:"En tournage",montage:"Montage",livraison:"Livré ✓"}[s]||s);
   const statusIcon=s=>({brief:"✏️",storyboard:"🎞",tournage:"🎬",montage:"✂️",livraison:"✅"}[s]||"📌");
   const topProjects=projects.slice(0,3);
@@ -4120,29 +4120,29 @@ function ClientWelcomePage({client,projects,onGoTo}){
     <div style={{display:"flex",flexDirection:"column",gap:28}} className="fadeUp">
 
       {/* Hero */}
-      <div style={{background:"linear-gradient(135deg,rgba(0,122,255,0.07) 0%,rgba(175,82,222,0.04) 50%,rgba(0,122,255,0.03) 100%)",border:"1px solid rgba(0,122,255,0.12)",borderRadius:16,padding:"28px 30px",position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,borderRadius:"50%",background:"rgba(0,122,255,0.04)",border:"1px solid rgba(0,122,255,0.08)",pointerEvents:"none"}}/>
+      <div style={{background:"linear-gradient(135deg,rgba(0,180,216,0.07) 0%,rgba(175,82,222,0.04) 50%,rgba(0,180,216,0.03) 100%)",border:"1px solid rgba(0,180,216,0.12)",borderRadius:16,padding:"28px 30px",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,borderRadius:"50%",background:"rgba(0,180,216,0.04)",border:"1px solid rgba(0,180,216,0.08)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:10,right:40,width:60,height:60,borderRadius:"50%",background:"rgba(175,82,222,0.04)",border:"1px solid rgba(175,82,222,0.08)",pointerEvents:"none"}}/>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#007AFF",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8,fontWeight:700}}>Votre espace de création</p>
-        <h1 style={{fontFamily:"'Montserrat'",fontSize:34,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:6,lineHeight:1.15,fontWeight:800}}>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8,fontWeight:700}}>Votre espace de création</p>
+        <h1 style={{fontFamily:"'Urbanist'",fontSize:34,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:6,lineHeight:1.15,fontWeight:800}}>
           Bonjour, {prenom} 👋
         </h1>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,color:"#6E6E73",lineHeight:1.6,maxWidth:480}}>
+        <p style={{fontFamily:"'Inter'",fontSize:14,color:"#6E6E73",lineHeight:1.6,maxWidth:480}}>
           Tout ce qu'il vous faut pour suivre votre production, valider vos contenus et rester en contact avec notre équipe.
         </p>
       </div>
 
       {/* Raccourcis */}
       <div>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12,fontWeight:700}}>Accès rapide</p>
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12,fontWeight:700}}>Accès rapide</p>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
           {shortcuts.map(c=>(
             <button key={c.title} onClick={()=>onGoTo(c.k)} style={{background:"#FFFFFF",border:"1.5px solid #E5E5EA",borderRadius:12,padding:"16px 14px",textAlign:"left",cursor:"pointer",transition:"border-color .2s,box-shadow .2s",width:"100%",boxShadow:"0 2px 6px rgba(0,0,0,0.04)"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor="#007AFF";e.currentTarget.style.boxShadow="0 4px 16px rgba(0,122,255,0.1)";}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor="#00B4D8";e.currentTarget.style.boxShadow="0 4px 16px rgba(0,180,216,0.1)";}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor="#E5E5EA";e.currentTarget.style.boxShadow="0 2px 6px rgba(0,0,0,0.04)";}}>
               <div style={{fontSize:24,marginBottom:10}}>{c.icon}</div>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:700,color:"#1D1D1F",marginBottom:4}}>{c.title}</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",lineHeight:1.5}}>{c.desc}</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:"#1D1D1F",marginBottom:4}}>{c.title}</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",lineHeight:1.5}}>{c.desc}</p>
             </button>
           ))}
         </div>
@@ -4151,15 +4151,15 @@ function ClientWelcomePage({client,projects,onGoTo}){
       {/* Projets en cours */}
       <div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700}}>Vos projets en cours</p>
+          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700}}>Vos projets en cours</p>
           {projects.length>0&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>onGoTo("projets")}>Voir tout →</button>}
         </div>
         {projects.length===0?(
           <div style={{background:"#FAFAFA",border:"1.5px dashed #E5E5EA",borderRadius:14,padding:"36px 24px",textAlign:"center"}}>
             <div style={{fontSize:40,marginBottom:14}}>🎬</div>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,color:"#1D1D1F",fontWeight:600,marginBottom:6}}>Votre première production commence ici</p>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginBottom:20,lineHeight:1.6}}>Contactez-nous pour lancer votre projet.<br/>Notre équipe vous accompagne de A à Z.</p>
-            <a href="mailto:contact@thirdone.studio" style={{background:"#007AFF",color:"#FFFFFF",border:"none",borderRadius:10,padding:"11px 24px",fontSize:12,fontWeight:700,cursor:"pointer",letterSpacing:"0.04em",textTransform:"uppercase",textDecoration:"none",display:"inline-block",boxShadow:"0 4px 12px rgba(0,122,255,0.3)"}}>Démarrer un projet →</a>
+            <p style={{fontFamily:"'Inter'",fontSize:14,color:"#1D1D1F",fontWeight:600,marginBottom:6}}>Votre première production commence ici</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:20,lineHeight:1.6}}>Contactez-nous pour lancer votre projet.<br/>Notre équipe vous accompagne de A à Z.</p>
+            <a href="mailto:contact@thirdone.studio" style={{background:"#00B4D8",color:"#FFFFFF",border:"none",borderRadius:10,padding:"11px 24px",fontSize:12,fontWeight:700,cursor:"pointer",letterSpacing:"0.04em",textTransform:"uppercase",textDecoration:"none",display:"inline-block",boxShadow:"0 4px 12px rgba(0,180,216,0.3)"}}>Démarrer un projet →</a>
           </div>
         ):(
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -4172,13 +4172,13 @@ function ClientWelcomePage({client,projects,onGoTo}){
                   onMouseLeave={e=>{e.currentTarget.style.borderColor="#E5E5EA";e.currentTarget.style.boxShadow="0 2px 6px rgba(0,0,0,0.04)";}}>
                   <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:12}}>
                     <div style={{flex:1,minWidth:0}}>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,fontWeight:700,color:"#1D1D1F",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:700,color:"#1D1D1F",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
                       <div style={{display:"flex",alignItems:"center",gap:6}}>
                         <span style={{fontSize:12}}>{statusIcon(p.status)}</span>
-                        <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:sc,fontWeight:600}}>{statusLabel(p.status)}</span>
+                        <span style={{fontFamily:"'Inter'",fontSize:11,color:sc,fontWeight:600}}>{statusLabel(p.status)}</span>
                       </div>
                     </div>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:700,color:sc,flexShrink:0}}>{pct}%</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:sc,flexShrink:0}}>{pct}%</span>
                   </div>
                   <div style={{height:4,background:"#F2F2F7",borderRadius:4,overflow:"hidden"}}>
                     <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${sc}99,${sc})`,borderRadius:4,transition:"width .8s"}}/>
@@ -4193,10 +4193,10 @@ function ClientWelcomePage({client,projects,onGoTo}){
       {/* Contact */}
       <div style={{background:"#FFFFFF",border:"1.5px solid #E5E5EA",borderRadius:12,padding:"18px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12,boxShadow:"0 2px 8px rgba(0,0,0,0.04)"}}>
         <div>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:700,color:"#1D1D1F",marginBottom:2}}>Une question ? Nous sommes là pour vous.</p>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>Notre équipe répond sous 24h.</p>
+          <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:"#1D1D1F",marginBottom:2}}>Une question ? Nous sommes là pour vous.</p>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Notre équipe répond sous 24h.</p>
         </div>
-        <a href="mailto:contact@thirdone.studio" style={{background:"transparent",border:"1.5px solid rgba(0,122,255,0.3)",borderRadius:8,padding:"8px 16px",color:"#007AFF",fontFamily:"'Plus Jakarta Sans'",fontSize:12,fontWeight:600,textDecoration:"none",cursor:"pointer",whiteSpace:"nowrap"}}>Nous écrire →</a>
+        <a href="mailto:contact@thirdone.studio" style={{background:"transparent",border:"1.5px solid rgba(0,180,216,0.3)",borderRadius:8,padding:"8px 16px",color:"#00B4D8",fontFamily:"'Inter'",fontSize:12,fontWeight:600,textDecoration:"none",cursor:"pointer",whiteSpace:"nowrap"}}>Nous écrire →</a>
       </div>
     </div>
   );
@@ -4285,13 +4285,13 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
   const filtered=filterType==="all"?prestataires:prestataires.filter(p=>p.service_type_id===filterType);
   const tLabel=id=>serviceTypes.find(t=>t.id===id)?.label||"";
   const tIcon=id=>serviceTypes.find(t=>t.id===id)?.icone||"🔧";
-  const statColor=s=>({envoyé:"#007AFF",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF3B30"}[s]||"#6E6E73");
+  const statColor=s=>({envoyé:"#00B4D8",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF3B30"}[s]||"#6E6E73");
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp" style={{background:"linear-gradient(135deg,#4ECDC412,#7B9CFF08)",border:"1px solid #4ECDC425",borderRadius:10,padding:"16px 20px"}}>
-        <h2 style={{fontFamily:"'Montserrat'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.04em"}}>ESPACE PRESTATAIRES</h2>
-        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:2}}>Annuaire, types de services et missions envoyées depuis les fiches projet.</p>
+        <h2 style={{fontFamily:"'Urbanist'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.04em"}}>ESPACE PRESTATAIRES</h2>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>Annuaire, types de services et missions envoyées depuis les fiches projet.</p>
       </div>
       <div style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8}}>
         {[{k:"annuaire",l:"Annuaire"},{k:"types",l:"Types de services"},{k:"missions",l:`Missions (${missions.length})`}].map(t=>(
@@ -4311,13 +4311,13 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
           </div>
           <div className="card" style={{padding:18}}>
             <SH icon="🏷️" title="TYPES EXISTANTS"/>
-            {serviceTypes.length===0&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}>Aucun type — ajoutez-en un ci-dessus.</p>}
+            {serviceTypes.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Aucun type — ajoutez-en un ci-dessus.</p>}
             <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
               {serviceTypes.map(t=>(
                 <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                   <span style={{fontSize:18}}>{t.icone}</span>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",flex:1}}>{t.label}</span>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{prestataires.filter(p=>p.service_type_id===t.id).length} prestataire(s)</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",flex:1}}>{t.label}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{prestataires.filter(p=>p.service_type_id===t.id).length} prestataire(s)</span>
                   <button className="btn btn-red" style={{padding:"4px 10px",fontSize:11}} onClick={()=>deleteType(t.id)}>Supprimer</button>
                 </div>
               ))}
@@ -4353,7 +4353,7 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
             </div>
           </div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}>Filtrer :</span>
+            <span style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Filtrer :</span>
             <button className={`type-pill ${filterType==="all"?"selected":""}`} onClick={()=>setFilterType("all")}>Tous ({prestataires.length})</button>
             {serviceTypes.map(t=>(
               <button key={t.id} className={`type-pill ${filterType===t.id?"selected":""}`} onClick={()=>setFilterType(t.id)}>
@@ -4361,7 +4361,7 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
               </button>
             ))}
           </div>
-          {filtered.length===0&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93",textAlign:"center",padding:20}}>Aucun prestataire{filterType!=="all"?" pour ce type":""}.</p>}
+          {filtered.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",textAlign:"center",padding:20}}>Aucun prestataire{filterType!=="all"?" pour ce type":""}.</p>}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {filtered.map(p=>(
               <div key={p.id} className="card fadeUp" style={{padding:16}}>
@@ -4369,17 +4369,17 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}}>
                       <span style={{fontSize:16}}>{tIcon(p.service_type_id)}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{p.nom}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73",background:"#F2F2F7",padding:"2px 8px",borderRadius:10}}>{tLabel(p.service_type_id)}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{p.nom}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",background:"#F2F2F7",padding:"2px 8px",borderRadius:10}}>{tLabel(p.service_type_id)}</span>
                     </div>
                     <div style={{display:"flex",gap:14,flexWrap:"wrap"}}>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>✉ {p.email}</span>
-                      {p.telephone&&<span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>📞 {p.telephone}</span>}
+                      <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>✉ {p.email}</span>
+                      {p.telephone&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>📞 {p.telephone}</span>}
                     </div>
-                    {p.description&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93",marginTop:4}}>{p.description}</p>}
+                    {p.description&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginTop:4}}>{p.description}</p>}
                     {(p.portfolio_urls||[]).length>0&&(
                       <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {p.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
+                        {p.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
                       </div>
                     )}
                   </div>
@@ -4398,9 +4398,9 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
       {accessModal&&(
         <div className="modal-overlay" onClick={()=>setAccessModal(null)}>
           <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
-            <h3 style={{fontFamily:"'Montserrat'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:4}}>CRÉER UN ACCÈS PARTENAIRE</h3>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginBottom:16}}>{accessModal.nom} — {accessModal.email}</p>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93",marginBottom:12}}>Le partenaire pourra se connecter sur thirdone.studio avec son email et ce mot de passe. Il accèdera à un espace dédié pour voir et répondre à ses missions.</p>
+            <h3 style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:4}}>CRÉER UN ACCÈS PARTENAIRE</h3>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:16}}>{accessModal.nom} — {accessModal.email}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginBottom:12}}>Le partenaire pourra se connecter sur thirdone.studio avec son email et ce mot de passe. Il accèdera à un espace dédié pour voir et répondre à ses missions.</p>
             <div style={{marginBottom:16}}>
               <Lbl>Mot de passe initial</Lbl>
               <input className="input" type="password" value={accessPass} onChange={e=>setAccessPass(e.target.value)} placeholder="Minimum 6 caractères"/>
@@ -4420,8 +4420,8 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
           </div>
           {missions.length===0&&!loadingMissions&&(
             <div className="card" style={{padding:30,textAlign:"center"}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93"}}>Aucune mission envoyée.</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93",marginTop:6}}>Envoyez des missions depuis l'onglet "Prestataires" d'une fiche projet.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucune mission envoyée.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginTop:6}}>Envoyez des missions depuis l'onglet "Prestataires" d'une fiche projet.</p>
             </div>
           )}
           {missions.map(m=>{
@@ -4433,18 +4433,18 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:8}}>
                   <div style={{flex:1}}>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{prest?.nom||"Prestataire inconnu"}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#6E6E73"}}>→ {proj?.title||"Projet inconnu"}</span>
-                      <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{prest?.nom||"Prestataire inconnu"}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>→ {proj?.title||"Projet inconnu"}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
                     </div>
                     {m.brief_extrait&&<p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#8E8E93",background:"#F5F5F7",padding:"8px 12px",borderRadius:6,whiteSpace:"pre-line",marginBottom:8}}>{m.brief_extrait}</p>}
                     {m.message_dispo&&(
                       <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:8,padding:"10px 14px",marginBottom:8}}>
-                        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#4ECDC4",fontWeight:600,marginBottom:4}}>Réponse reçue</p>
-                        <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F"}}>{m.message_dispo}</p>
+                        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#4ECDC4",fontWeight:600,marginBottom:4}}>Réponse reçue</p>
+                        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F"}}>{m.message_dispo}</p>
                       </div>
                     )}
-                    <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>Envoyé le {m.created_at?new Date(m.created_at).toLocaleDateString("fr-FR"):"-"}{m.responded_at&&` · Réponse le ${new Date(m.responded_at).toLocaleDateString("fr-FR")}`}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Envoyé le {m.created_at?new Date(m.created_at).toLocaleDateString("fr-FR"):"-"}{m.responded_at&&` · Réponse le ${new Date(m.responded_at).toLocaleDateString("fr-FR")}`}</p>
                   </div>
                   <div style={{display:"flex",gap:6,flexDirection:"column",alignItems:"flex-end"}}>
                     {m.statut==="envoyé"&&(
@@ -4537,11 +4537,11 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
     onNotif("Lien copié !");
   };
 
-  const statColor=s=>({envoyé:"#007AFF",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF3B30"}[s]||"#6E6E73");
+  const statColor=s=>({envoyé:"#00B4D8",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF3B30"}[s]||"#6E6E73");
 
   if(briefServices.length===0)return(
     <div className="card" style={{padding:24,textAlign:"center",display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
-      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93"}}>Le client n'a pas encore coché de services prestataires dans son brief.</p>
+      <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Le client n'a pas encore coché de services prestataires dans son brief.</p>
       <button className="btn btn-ghost" style={{fontSize:11}} disabled={refreshing} onClick={refreshBrief}>{refreshing?"↻ Actualisation...":"↻ Actualiser le brief"}</button>
     </div>
   );
@@ -4553,7 +4553,7 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
       </div>
       {matchingTypes.length===0&&(
         <div className="card" style={{padding:18}}>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73"}}>Services cochés par le client mais aucun type correspondant dans l'annuaire. Vérifiez les types de services.</p>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Services cochés par le client mais aucun type correspondant dans l'annuaire. Vérifiez les types de services.</p>
         </div>
       )}
       {matchingTypes.map(type=>{
@@ -4562,22 +4562,22 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
           <div key={type.id} className="card" style={{padding:16}}>
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
               <span style={{fontSize:20}}>{type.icone}</span>
-              <span style={{fontFamily:"'Montserrat'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>{type.label}</span>
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{prests.length} prestataire(s) disponible(s)</span>
+              <span style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>{type.label}</span>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{prests.length} prestataire(s) disponible(s)</span>
             </div>
-            {prests.length===0&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}>Aucun prestataire pour ce type — ajoutez-en dans l'espace Prestataires.</p>}
+            {prests.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Aucun prestataire pour ce type — ajoutez-en dans l'espace Prestataires.</p>}
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {prests.map(p=>{
                 const mission=missionsForProject.find(m=>m.prestataire_id===p.id);
                 return(
-                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:`1px solid ${mission?"#007AFF40":"#E5E5EA"}`,flexWrap:"wrap"}}>
+                  <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:`1px solid ${mission?"#00B4D840":"#E5E5EA"}`,flexWrap:"wrap"}}>
                     <div style={{flex:1}}>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{p.nom}</p>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>{p.email}{p.telephone?` · ${p.telephone}`:""}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{p.nom}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{p.email}{p.telephone?` · ${p.telephone}`:""}</p>
                     </div>
                     {mission?(
                       <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
-                        <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,fontWeight:600,color:statColor(mission.statut),background:statColor(mission.statut)+"22",border:`1px solid ${statColor(mission.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{mission.statut}</span>
+                        <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:statColor(mission.statut),background:statColor(mission.statut)+"22",border:`1px solid ${statColor(mission.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{mission.statut}</span>
                         {mission.statut==="envoyé"&&(
                           <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>copyLink(mission.token)}>{copied===mission.token?"✓ Copié !":"🔗 Lien"}</button>
                         )}
@@ -4603,10 +4603,10 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
               return(
                 <div key={m.id} style={{padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:6}}>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F"}}>{prest?.nom||"—"}</span>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",padding:"2px 8px",borderRadius:10}}>{m.statut}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F"}}>{prest?.nom||"—"}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",padding:"2px 8px",borderRadius:10}}>{m.statut}</span>
                   </div>
-                  {m.message_dispo&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:4,whiteSpace:"pre-line"}}>{m.message_dispo}</p>}
+                  {m.message_dispo&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4,whiteSpace:"pre-line"}}>{m.message_dispo}</p>}
                 </div>
               );
             })}
@@ -4676,17 +4676,17 @@ function PartenaireView({user,userProfile,onLogout}){
     setSavingPortfolio(false);showNotif("Portfolio mis à jour !");
   };
 
-  const statColor=s=>({envoyé:"#007AFF",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF3B30"}[s]||"#6E6E73");
+  const statColor=s=>({envoyé:"#00B4D8",répondu:"#7B9CFF",accepté:"#4ECDC4",refusé:"#FF3B30"}[s]||"#6E6E73");
   const tLabel=id=>serviceTypes.find(t=>t.id===id)?.label||"";
   const tIcon=id=>serviceTypes.find(t=>t.id===id)?.icone||"🤝";
 
-  if(loading)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><FontLoader/><p style={{color:"#0066CC",fontFamily:"'Montserrat'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
+  if(loading)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><FontLoader/><p style={{color:"#0090B3",fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
 
   if(!prestataire)return(
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <FontLoader/>
-      <p style={{color:"#FF3B30",fontFamily:"'Montserrat'",fontSize:20}}>COMPTE NON LIÉ</p>
-      <p style={{color:"#8E8E93",fontFamily:"'Plus Jakarta Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'est pas encore associé à un prestataire. Contactez Third-One Studio.</p>
+      <p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20}}>COMPTE NON LIÉ</p>
+      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'est pas encore associé à un prestataire. Contactez Third-One Studio.</p>
       <button className="btn btn-ghost" onClick={onLogout}>Se déconnecter</button>
     </div>
   );
@@ -4700,9 +4700,9 @@ function PartenaireView({user,userProfile,onLogout}){
       <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F"}}>
         <div style={{background:"#F5F5F7",borderBottom:"1px solid #E5E5EA",padding:"0 20px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <span style={{fontFamily:"'Montserrat'",fontSize:22,color:"#007AFF",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</span>
+            <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:24,display:"block"}}/>
             <span style={{color:"#E5E5EA"}}>|</span>
-            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#4ECDC4"}}>Espace Partenaire</span>
+            <span style={{fontFamily:"'Inter'",fontSize:11,color:"#4ECDC4"}}>Espace Partenaire</span>
           </div>
           <button className="btn btn-ghost" style={{fontSize:12}} onClick={onLogout}>Déconnexion</button>
         </div>
@@ -4711,55 +4711,55 @@ function PartenaireView({user,userProfile,onLogout}){
           <div className="fadeUp" style={{background:"linear-gradient(135deg,#4ECDC412,#7B9CFF08)",border:"1px solid #4ECDC430",borderRadius:12,padding:"20px 24px",display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
             <div style={{width:52,height:52,borderRadius:"50%",background:"#4ECDC422",border:"1.5px solid #4ECDC455",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{tIcon(prestataire.service_type_id)}</div>
             <div style={{flex:1}}>
-              <h1 style={{fontFamily:"'Montserrat'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>{prestataire.nom}</h1>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#4ECDC4"}}>{tLabel(prestataire.service_type_id)}</p>
-              {prestataire.description&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:4}}>{prestataire.description}</p>}
+              <h1 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>{prestataire.nom}</h1>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#4ECDC4"}}>{tLabel(prestataire.service_type_id)}</p>
+              {prestataire.description&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>{prestataire.description}</p>}
             </div>
             <div style={{textAlign:"right"}}>
-              <p style={{fontFamily:"'JetBrains Mono'",fontSize:12,color:"#007AFF",fontWeight:600}}>{pending.length} mission{pending.length!==1?"s":""} en attente</p>
+              <p style={{fontFamily:"'JetBrains Mono'",fontSize:12,color:"#00B4D8",fontWeight:600}}>{pending.length} mission{pending.length!==1?"s":""} en attente</p>
               <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#4ECDC4"}}>{historic.filter(m=>m.statut==="accepté").length} acceptée(s)</p>
             </div>
           </div>
 
           {pending.length>0&&(
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              <h2 style={{fontFamily:"'Montserrat'",fontSize:18,color:"#007AFF",letterSpacing:"0.05em"}}>MISSIONS EN ATTENTE</h2>
+              <h2 style={{fontFamily:"'Urbanist'",fontSize:18,color:"#00B4D8",letterSpacing:"0.05em"}}>MISSIONS EN ATTENTE</h2>
               {pending.map(m=>(
-                <div key={m.id} className="card fadeUp" style={{padding:20,borderColor:"#007AFF30"}}>
+                <div key={m.id} className="card fadeUp" style={{padding:20,borderColor:"#00B4D830"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,flexWrap:"wrap",gap:8}}>
                     <div>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{m.projects?.title||"Projet"}</p>
-                      {m.projects?.shoot_date&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:2}}>📅 Date souhaitée : {new Date(m.projects.shoot_date+"T12:00:00").toLocaleDateString("fr-FR")}</p>}
+                      <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{m.projects?.title||"Projet"}</p>
+                      {m.projects?.shoot_date&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>📅 Date souhaitée : {new Date(m.projects.shoot_date+"T12:00:00").toLocaleDateString("fr-FR")}</p>}
                     </div>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,fontWeight:600,color:"#007AFF",background:"#007AFF22",border:"1px solid #007AFF44",borderRadius:10,padding:"2px 8px"}}>En attente</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#00B4D8",background:"#00B4D822",border:"1px solid #00B4D844",borderRadius:10,padding:"2px 8px"}}>En attente</span>
                   </div>
                   {m.brief_extrait&&(
                     <div style={{background:"#F5F5F7",borderRadius:8,padding:"12px 16px",marginBottom:14}}>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>Brief du projet</p>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",lineHeight:1.7,whiteSpace:"pre-line"}}>{m.brief_extrait}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>Brief du projet</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",lineHeight:1.7,whiteSpace:"pre-line"}}>{m.brief_extrait}</p>
                     </div>
                   )}
                   {respondingId===m.id?(
                     <div style={{display:"flex",flexDirection:"column",gap:12}}>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                         <div>
-                          <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:4}}>Prix proposé (€ HT)</label>
+                          <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:4}}>Prix proposé (€ HT)</label>
                           <input className="input" type="number" min="0" placeholder="Ex: 800" value={replyPrix} onChange={e=>setReplyPrix(e.target.value)}/>
                         </div>
                         <div>
-                          <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:4}}>Ce qui est inclus</label>
+                          <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:4}}>Ce qui est inclus</label>
                           <input className="input" placeholder="Ex: Demi-journée, 2 photos HD..." value={replyDesc} onChange={e=>setReplyDesc(e.target.value)}/>
                         </div>
                       </div>
                       <div>
-                        <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:4}}>Message *</label>
+                        <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:4}}>Message *</label>
                         <textarea className="input" rows={3} placeholder="Votre disponibilité, conditions particulières..." value={replyMsg} onChange={e=>setReplyMsg(e.target.value)}/>
                       </div>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93"}}>Vos liens portfolio seront automatiquement joints à la proposition.</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Vos liens portfolio seront automatiquement joints à la proposition.</p>
                       <div style={{background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:8,padding:"12px 14px"}}>
                         <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",userSelect:"none"}}>
                           <input type="checkbox" checked={nonConcurrence} onChange={e=>setNonConcurrence(e.target.checked)} style={{marginTop:3,flexShrink:0,accentColor:"#FF9F43"}}/>
-                          <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",lineHeight:1.5}}>
+                          <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",lineHeight:1.5}}>
                             <strong style={{color:"#FF9F43"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
                           </span>
                         </label>
@@ -4779,17 +4779,17 @@ function PartenaireView({user,userProfile,onLogout}){
 
           {historic.length>0&&(
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              <h2 style={{fontFamily:"'Montserrat'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.05em"}}>HISTORIQUE</h2>
+              <h2 style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.05em"}}>HISTORIQUE</h2>
               {historic.map(m=>(
                 <div key={m.id} className="card fadeUp" style={{padding:16}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
                     <div>
-                      <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{m.projects?.title||"Projet"}</p>
-                      {m.responded_at&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",marginTop:2}}>Répondu le {new Date(m.responded_at).toLocaleDateString("fr-FR")}</p>}
+                      <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{m.projects?.title||"Projet"}</p>
+                      {m.responded_at&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Répondu le {new Date(m.responded_at).toLocaleDateString("fr-FR")}</p>}
                     </div>
-                    <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
                   </div>
-                  {m.message_dispo&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:8,whiteSpace:"pre-line"}}>{m.message_dispo}</p>}
+                  {m.message_dispo&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:8,whiteSpace:"pre-line"}}>{m.message_dispo}</p>}
                 </div>
               ))}
             </div>
@@ -4797,18 +4797,18 @@ function PartenaireView({user,userProfile,onLogout}){
 
           {missions.length===0&&(
             <div className="card" style={{padding:30,textAlign:"center"}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93"}}>Aucune mission reçue pour l'instant.</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93",marginTop:6}}>Vous serez contacté directement par l'équipe Third-One Studio.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucune mission reçue pour l'instant.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginTop:6}}>Vous serez contacté directement par l'équipe Third-One Studio.</p>
             </div>
           )}
 
           <div className="card" style={{padding:20}}>
             <SH icon="🖼️" title="MON PORTFOLIO"/>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginBottom:10}}>Liens Instagram, site web, Google Photos… (un par ligne). Ils seront joints à vos réponses.</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:10}}>Liens Instagram, site web, Google Photos… (un par ligne). Ils seront joints à vos réponses.</p>
             <textarea className="input" rows={4} value={portfolioInput} onChange={e=>setPortfolioInput(e.target.value)} placeholder={"https://instagram.com/votre-compte\nhttps://votre-site.com\nhttps://drive.google.com/..."}/>
             <div style={{marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {(prestataire.portfolio_urls||[]).map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
+                {(prestataire.portfolio_urls||[]).map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
               </div>
               <button className="btn btn-primary" onClick={savePortfolio} disabled={savingPortfolio}>{savingPortfolio?"Enregistrement...":"Enregistrer"}</button>
             </div>
@@ -4859,14 +4859,14 @@ function PrestaireResponsePage({token}){
     setDone(true);setSubmitting(false);
   };
 
-  if(loading)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{color:"#0066CC",fontFamily:"'Montserrat'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
-  if(errMsg)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><p style={{color:"#FF3B30",fontFamily:"'Montserrat'",fontSize:20}}>LIEN INVALIDE</p><p style={{color:"#8E8E93",fontFamily:"'Plus Jakarta Sans'",fontSize:13}}>{errMsg}</p></div>;
+  if(loading)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{color:"#0090B3",fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
+  if(errMsg)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20}}>LIEN INVALIDE</p><p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13}}>{errMsg}</p></div>;
   if(done)return(
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <FontLoader/>
       <span style={{fontSize:48}}>✅</span>
-      <p style={{color:"#4ECDC4",fontFamily:"'Montserrat'",fontSize:22,letterSpacing:"0.1em"}}>RÉPONSE ENVOYÉE</p>
-      <p style={{color:"#6E6E73",fontFamily:"'Plus Jakarta Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Merci ! L'équipe Third-One Studio a bien reçu votre disponibilité. Ils vous recontacteront directement.</p>
+      <p style={{color:"#4ECDC4",fontFamily:"'Urbanist'",fontSize:22,letterSpacing:"0.1em"}}>RÉPONSE ENVOYÉE</p>
+      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Merci ! L'équipe Third-One Studio a bien reçu votre disponibilité. Ils vous recontacteront directement.</p>
     </div>
   );
 
@@ -4876,63 +4876,63 @@ function PrestaireResponsePage({token}){
       <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",padding:"32px 16px"}}>
         <div style={{maxWidth:580,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:32}}>
-            <p style={{fontFamily:"'Montserrat'",fontSize:26,color:"#007AFF",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</p>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:4}}>Mission prestataire</p>
+            <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:28,display:"inline-block"}}/>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Mission prestataire</p>
           </div>
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Projet</p>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:15,fontWeight:600,color:"#1D1D1F"}}>{mission.projects?.title||"—"}</p>
-            {mission.prestataires&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:4}}>Demande pour : <span style={{color:"#007AFF"}}>{mission.prestataires.nom}</span></p>}
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Projet</p>
+            <p style={{fontFamily:"'Inter'",fontSize:15,fontWeight:600,color:"#1D1D1F"}}>{mission.projects?.title||"—"}</p>
+            {mission.prestataires&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Demande pour : <span style={{color:"#00B4D8"}}>{mission.prestataires.nom}</span></p>}
           </div>
           {mission.brief_extrait&&(
             <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Brief du projet</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#1D1D1F",lineHeight:1.7,whiteSpace:"pre-line"}}>{mission.brief_extrait}</p>
+              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Brief du projet</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",lineHeight:1.7,whiteSpace:"pre-line"}}>{mission.brief_extrait}</p>
             </div>
           )}
           {mission.statut!=="envoyé"?(
             <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:10,padding:24,textAlign:"center"}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",color:"#4ECDC4",fontSize:14,fontWeight:600}}>Vous avez déjà répondu à cette mission.</p>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",color:"#6E6E73",fontSize:12,marginTop:6}}>Statut : {mission.statut}</p>
+              <p style={{fontFamily:"'Inter'",color:"#4ECDC4",fontSize:14,fontWeight:600}}>Vous avez déjà répondu à cette mission.</p>
+              <p style={{fontFamily:"'Inter'",color:"#6E6E73",fontSize:12,marginTop:6}}>Statut : {mission.statut}</p>
             </div>
           ):(
             <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,display:"flex",flexDirection:"column",gap:14}}>
-              <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>Votre proposition</p>
+              <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>Votre proposition</p>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <div>
-                  <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Prix proposé (€ HT)</label>
-                  <input style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,outline:"none",boxSizing:"border-box"}}
+                  <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Prix proposé (€ HT)</label>
+                  <input style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none",boxSizing:"border-box"}}
                     type="number" min="0" placeholder="Ex: 800" value={prix} onChange={e=>setPrix(e.target.value)}/>
                 </div>
                 <div>
-                  <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Ce qui est inclus</label>
-                  <input style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,outline:"none",boxSizing:"border-box"}}
+                  <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Ce qui est inclus</label>
+                  <input style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none",boxSizing:"border-box"}}
                     placeholder="Ex: Demi-journée, 2 photos HD..." value={description} onChange={e=>setDescription(e.target.value)}/>
                 </div>
               </div>
               <div>
-                <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Message *</label>
-                <textarea style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,outline:"none",resize:"none",minHeight:90,boxSizing:"border-box"}}
+                <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Message *</label>
+                <textarea style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none",resize:"none",minHeight:90,boxSizing:"border-box"}}
                   placeholder="Votre disponibilité, conditions particulières..." value={message} onChange={e=>setMessage(e.target.value)}/>
               </div>
               <div>
-                <label style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Photos / Portfolio (un lien par ligne)</label>
-                <textarea style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:13,outline:"none",resize:"none",boxSizing:"border-box"}}
+                <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5}}>Photos / Portfolio (un lien par ligne)</label>
+                <textarea style={{width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none",resize:"none",boxSizing:"border-box"}}
                   rows={3} placeholder={"https://instagram.com/votre-compte\nhttps://drive.google.com/...\nhttps://votre-site.com/galerie"} value={portfolioUrls} onChange={e=>setPortfolioUrls(e.target.value)}/>
               </div>
               <div style={{background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:8,padding:"12px 14px"}}>
                 <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",userSelect:"none"}}>
                   <input type="checkbox" checked={nonConcurrence} onChange={e=>setNonConcurrence(e.target.checked)} style={{marginTop:3,flexShrink:0,accentColor:"#FF9F43"}}/>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#1D1D1F",lineHeight:1.5}}>
+                  <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",lineHeight:1.5}}>
                     <strong style={{color:"#FF9F43"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
                   </span>
                 </label>
               </div>
-              <button style={{width:"100%",background:nonConcurrence&&message.trim()?"#007AFF":"#E5E5EA",color:nonConcurrence&&message.trim()?"#FFFFFF":"#8E8E93",border:"none",borderRadius:6,padding:"12px",fontFamily:"'Plus Jakarta Sans',sans-serif",fontSize:14,fontWeight:600,cursor:nonConcurrence&&message.trim()?"pointer":"not-allowed",transition:"all .2s"}}
+              <button style={{width:"100%",background:nonConcurrence&&message.trim()?"#00B4D8":"#E5E5EA",color:nonConcurrence&&message.trim()?"#FFFFFF":"#8E8E93",border:"none",borderRadius:6,padding:"12px",fontFamily:"'Inter',sans-serif",fontSize:14,fontWeight:600,cursor:nonConcurrence&&message.trim()?"pointer":"not-allowed",transition:"all .2s"}}
                 disabled={submitting||!message.trim()||!nonConcurrence} onClick={submit}>
                 {submitting?"Envoi en cours...":"✓ Envoyer ma proposition"}
               </button>
-              {!nonConcurrence&&<p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#FF9F43",textAlign:"center",marginTop:-8}}>Veuillez accepter la clause de non-concurrence pour continuer.</p>}
+              {!nonConcurrence&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#FF9F43",textAlign:"center",marginTop:-8}}>Veuillez accepter la clause de non-concurrence pour continuer.</p>}
             </div>
           )}
         </div>
@@ -5000,25 +5000,25 @@ function AccessManager({onNotif}){
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
         <div>
           <SH icon="🔐" title="ACCÈS COLLABORATEURS"/>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:-8,marginBottom:4}}>Accès complet au back-office sauf la section Estimation / Tarifs.</p>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:-8,marginBottom:4}}>Accès complet au back-office sauf la section Estimation / Tarifs.</p>
         </div>
         <button className="btn btn-primary" style={{fontSize:12}} onClick={()=>setShowAdd(v=>!v)}>{showAdd?"Annuler":"+ Ajouter un accès"}</button>
       </div>
 
       {showAdd&&(
         <div className="card" style={{padding:20,display:"flex",flexDirection:"column",gap:12}}>
-          <p style={{fontFamily:"'Montserrat'",fontSize:16,color:"#007AFF",letterSpacing:"0.05em"}}>ACCORDER UN ACCÈS COLLABORATEUR</p>
-          <div style={{background:"#007AFF10",border:"1px solid #007AFF30",borderRadius:8,padding:"10px 14px"}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#007AFF",lineHeight:1.6}}>
+          <p style={{fontFamily:"'Urbanist'",fontSize:16,color:"#00B4D8",letterSpacing:"0.05em"}}>ACCORDER UN ACCÈS COLLABORATEUR</p>
+          <div style={{background:"#00B4D810",border:"1px solid #00B4D830",borderRadius:8,padding:"10px 14px"}}>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",lineHeight:1.6}}>
               Le collaborateur doit d'abord <strong>créer son compte</strong> sur thirdone.studio (page de connexion → S'inscrire). Une fois fait, entre son email ci-dessous pour lui accorder l'accès.
             </p>
           </div>
           <div><Lbl>Email du collaborateur</Lbl><input className="input" type="email" placeholder="lucas@thirdone.studio" value={email} onChange={e=>setEmail(e.target.value)}/></div>
           <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:8,padding:"12px 14px"}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#4ECDC4",fontWeight:600,marginBottom:8}}>Modules accessibles</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#4ECDC4",fontWeight:600,marginBottom:8}}>Modules accessibles</p>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-              {MODULES.map(m=><span key={m} style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:4,padding:"2px 8px",color:"#1D1D1F"}}>✓ {m}</span>)}
-              <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,background:"#FF3B3015",border:"1px solid #FF3B3030",borderRadius:4,padding:"2px 8px",color:"#FF3B3088",textDecoration:"line-through"}}>Estimation / Tarifs</span>
+              {MODULES.map(m=><span key={m} style={{fontFamily:"'Inter'",fontSize:11,background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:4,padding:"2px 8px",color:"#1D1D1F"}}>✓ {m}</span>)}
+              <span style={{fontFamily:"'Inter'",fontSize:11,background:"#FF3B3015",border:"1px solid #FF3B3030",borderRadius:4,padding:"2px 8px",color:"#FF3B3088",textDecoration:"line-through"}}>Estimation / Tarifs</span>
             </div>
           </div>
           <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
@@ -5028,22 +5028,22 @@ function AccessManager({onNotif}){
         </div>
       )}
 
-      {loading?<p style={{color:"#8E8E93",fontFamily:"'Plus Jakarta Sans'",fontSize:13,textAlign:"center",padding:"20px 0"}}>Chargement...</p>
+      {loading?<p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",padding:"20px 0"}}>Chargement...</p>
       :collabs.length===0?(
         <div className="card" style={{padding:24,textAlign:"center"}}>
-          <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:13,color:"#8E8E93"}}>Aucun collaborateur. Ajoutez un accès ci-dessus.</p>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucun collaborateur. Ajoutez un accès ci-dessus.</p>
         </div>
       ):collabs.map(c=>(
         <div key={c.id} className="card" style={{padding:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-          <div style={{width:38,height:38,borderRadius:"50%",background:"#7B9CFF22",border:"1px solid #7B9CFF44",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:18,color:"#7B9CFF",flexShrink:0}}>
+          <div style={{width:38,height:38,borderRadius:"50%",background:"#7B9CFF22",border:"1px solid #7B9CFF44",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:18,color:"#7B9CFF",flexShrink:0}}>
             {(c.nom||c.email||"?")[0].toUpperCase()}
           </div>
           <div style={{flex:1}}>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{c.nom||"—"}</p>
-            <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#8E8E93"}}>{c.email}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{c.nom||"—"}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>{c.email}</p>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,background:"#7B9CFF22",border:"1px solid #7B9CFF44",borderRadius:10,padding:"2px 10px",color:"#7B9CFF"}}>collaborateur</span>
+            <span style={{fontFamily:"'Inter'",fontSize:11,background:"#7B9CFF22",border:"1px solid #7B9CFF44",borderRadius:10,padding:"2px 10px",color:"#7B9CFF"}}>collaborateur</span>
             <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>revoke(c)}>Révoquer</button>
           </div>
         </div>
@@ -5188,7 +5188,7 @@ function AppMain() {
       if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
       if(bookingsData) setBookings(bookingsData.map(b=>({...b,projectId:b.project_id||null,client:b.client_name||"",team:b.team||"A",status:b.status||"option",note:b.note||"",startTime:b.start_time||"08:00",endTime:b.end_time||"17:00",createdAt:b.created_at?.split("T")[0],expiresAt:b.expires_at||null,extras:b.extras||[],confirmType:b.confirm_type||null})));
       if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isActive:p.is_active!==false})));
-      if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#007AFF"})));
+      if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#00B4D8"})));
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
       if(notesData) setMeetingNotes(notesData.map(n=>({id:n.id,projectId:n.project_id,date:n.date,participants:n.participants||"",content:n.content||"",decisions:n.decisions||""})));
@@ -5228,13 +5228,13 @@ function AppMain() {
 
   if (authLoading || dataLoading) return <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
     <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.8}}/>
-    <p style={{color:"#0066CC",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
+    <p style={{color:"#0090B3",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
   </div>;
   if (!user) return <Login onLogin={setUser} />;
   if (user && userProfile === null && userRole !== null) return (
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-      <p style={{color:"#FF3B30",fontFamily:"'Montserrat'",fontSize:20,letterSpacing:"0.1em"}}>COMPTE SUPPRIMÉ</p>
-      <p style={{color:"#8E8E93",fontFamily:"'Plus Jakarta Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'existe plus. Contactez Third-One Studio.</p>
+      <p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>COMPTE SUPPRIMÉ</p>
+      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'existe plus. Contactez Third-One Studio.</p>
       <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
     </div>
   );
@@ -5242,8 +5242,8 @@ function AppMain() {
   if (userProfile && userProfile.role === "client" && userProfile.is_active === false) return (
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.6}}/>
-      <p style={{color:"#FF3B30",fontFamily:"'Montserrat'",fontSize:20,letterSpacing:"0.1em"}}>ACCÈS SUSPENDU</p>
-      <p style={{color:"#8E8E93",fontFamily:"'Plus Jakarta Sans'",fontSize:13,textAlign:"center",maxWidth:320}}>Votre accès a été suspendu. Contactez Third-One Studio pour plus d'informations.</p>
+      <p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>ACCÈS SUSPENDU</p>
+      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Votre accès a été suspendu. Contactez Third-One Studio pour plus d'informations.</p>
       <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
     </div>
   );
@@ -5285,7 +5285,7 @@ function AppMain() {
     : previewClient || clients[0];
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
 
-  const statusColor=s=>({brief:"#7B9CFF",storyboard:"#007AFF",review:"#FF9F43",livraison:"#4ECDC4"}[s]||"#6E6E73");
+  const statusColor=s=>({brief:"#7B9CFF",storyboard:"#00B4D8",review:"#FF9F43",livraison:"#4ECDC4"}[s]||"#6E6E73");
 
   // ── PROD NAV ────────────────────────────────────────────────────────────────
   const prodNavAll=[
@@ -5332,16 +5332,16 @@ function AppMain() {
         <div style={{background:"#F5F5F7",borderBottom:"1px solid #E5E5EA",padding:"0 16px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <button className="mob-only" onClick={()=>setSidebarOpen(o=>!o)} style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:18,padding:"4px",lineHeight:1,flexShrink:0}}>☰</button>
-            <span style={{fontFamily:"'Montserrat'",fontSize:22,color:"#007AFF",letterSpacing:"0.1em"}}>THIRD-ONE STUDIO</span>
+            <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:24,display:"block"}}/>
             <span className="desk-only" style={{color:"#E5E5EA",alignItems:"center"}}>|</span>
-            <span className="desk-only" style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#8E8E93",alignItems:"center"}}>
+            <span className="desk-only" style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",alignItems:"center"}}>
               {appView==="prod"?"Back-office":`Espace client${activeClient?.name?` — ${activeClient.name}`:""}`}
             </span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
               {userRole==="admin"&&previewClientId&&appView==="client"&&(
                 <div className="desk-only" style={{display:"flex",alignItems:"center",gap:6,background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>
-                  <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF"}}>👁 {previewClient?.name}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF"}}>👁 {previewClient?.name}</span>
                   <button style={{background:"none",border:"none",color:"#7B9CFF",cursor:"pointer",fontSize:12,padding:"0 2px"}} onClick={()=>{setPreviewClientId(null);setAppView("prod");setProdSection("comptes");}}>✕</button>
                 </div>
               )}
@@ -5352,10 +5352,10 @@ function AppMain() {
                 </div>
               )}
               {isCollab&&(
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:11,color:"#7B9CFF",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>Collaborateur</span>
+                <span style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>Collaborateur</span>
               )}
               {/* Avatar / menu utilisateur */}
-              <button onClick={()=>setShowSettings(true)} style={{width:34,height:34,borderRadius:"50%",background:accentColor+"22",border:`1.5px solid ${accentColor}55`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Montserrat'",fontSize:15,color:accentColor,cursor:"pointer",flexShrink:0,transition:"all .15s"}}
+              <button onClick={()=>setShowSettings(true)} style={{width:34,height:34,borderRadius:"50%",background:accentColor+"22",border:`1.5px solid ${accentColor}55`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:15,color:accentColor,cursor:"pointer",flexShrink:0,transition:"all .15s"}}
                 onMouseEnter={e=>{e.currentTarget.style.background=accentColor+"40";e.currentTarget.style.borderColor=accentColor;}}
                 onMouseLeave={e=>{e.currentTarget.style.background=accentColor+"22";e.currentTarget.style.borderColor=accentColor+"55";}}>
                 {(user?.email||"?")[0].toUpperCase()}
@@ -5382,7 +5382,7 @@ function AppMain() {
             {/* Project list — prod: only on section "projets", client: always */}
             {((appView==="prod"&&prodSection==="projets")||appView==="client")&&(
               <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid #F2F2F7"}}>
-                <span style={{fontFamily:"'Plus Jakarta Sans'",fontSize:9,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
+                <span style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
                 {(appView==="prod"?projects:clientProjects).map(p=>(
                   <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client")setClientSection("projets");setSidebarOpen(false);}}>
                     <div style={{flex:1,minWidth:0}}>
@@ -5393,11 +5393,11 @@ function AppMain() {
                     </div>
                   </div>
                 ))}
-                <button style={{width:"100%",marginTop:6,background:"#007AFF10",border:"1px solid #007AFF25",borderRadius:6,color:"#007AFF",fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setShowCreateModal(true)}>
+                <button style={{width:"100%",marginTop:6,background:"#00B4D810",border:"1px solid #00B4D825",borderRadius:6,color:"#00B4D8",fontFamily:"'Inter'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setShowCreateModal(true)}>
                   + Nouveau projet
                 </button>
                 {appView==="client"&&clientProjects.length===0&&(
-                  <button style={{width:"100%",marginTop:4,background:"#4ECDC410",border:"1px solid #4ECDC425",borderRadius:6,color:"#4ECDC4",fontFamily:"'Plus Jakarta Sans'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setClientSection("calendrier")}>
+                  <button style={{width:"100%",marginTop:4,background:"#4ECDC410",border:"1px solid #4ECDC425",borderRadius:6,color:"#4ECDC4",fontFamily:"'Inter'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setClientSection("calendrier")}>
                     📅 Prendre un RDV →
                   </button>
                 )}
@@ -5473,9 +5473,9 @@ function AppMain() {
             )}
             {appView==="client"&&clientSection==="calendrier"&&(
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
-                <div style={{background:"linear-gradient(135deg,#007AFF10,#7B9CFF08)",border:"1px solid #007AFF20",borderRadius:10,padding:"14px 18px"}}>
-                  <h2 style={{fontFamily:"'Montserrat'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>DISPONIBILITÉS</h2>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:2}}>Consultez les disponibilités et posez une option sur une date.</p>
+                <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:10,padding:"14px 18px"}}>
+                  <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>DISPONIBILITÉS</h2>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>Consultez les disponibilités et posez une option sur une date.</p>
                 </div>
                 <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={false} onNotif={showNotif} projects={clientProjects}/>
               </div>
@@ -5497,8 +5497,8 @@ function AppMain() {
             {appView==="client"&&clientSection==="estimation"&&activeClient?.simulatorEnabled&&(
               <div style={{maxWidth:560}}>
                 <div style={{marginBottom:20}}>
-                  <h2 style={{fontFamily:"'Montserrat'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>ESTIMATION TARIFAIRE</h2>
-                  <p style={{fontFamily:"'Plus Jakarta Sans'",fontSize:12,color:"#6E6E73",marginTop:3}}>Obtenez une estimation indicative en quelques clics.</p>
+                  <h2 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>ESTIMATION TARIFAIRE</h2>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:3}}>Obtenez une estimation indicative en quelques clics.</p>
                 </div>
                 <ClientEstimationWidget pricing={pricing} clientData={activeClient}/>
               </div>

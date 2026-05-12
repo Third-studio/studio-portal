@@ -1,7 +1,13 @@
 {
-  "short_name": "Third-One Studio",
-  "name": "Third-One Studio | Production Audiovisuelle Martinique",
+  "short_name": "ThirdOne",
+  "name": "ThirdOne Studio | Production Audiovisuelle Martinique",
   "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    },
     {
       "src": "logo192.png",
       "type": "image/png",
@@ -15,6 +21,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#08080F",
-  "background_color": "#08080F"
+  "theme_color": "#FFFFFF",
+  "background_color": "#FFFFFF"
 }
