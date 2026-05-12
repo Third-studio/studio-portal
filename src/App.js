@@ -903,6 +903,24 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               </div>
             );
           })()}
+          {(()=>{
+            const ca=project.brief?.charteAssets;
+            if(!ca)return null;
+            const hasCharte=ca.logoUrl||ca.charteUrl||ca.autresUrls||ca.noCharte;
+            if(!hasCharte)return null;
+            return(
+              <div className="card" style={{padding:18,marginTop:12,border:"1px solid #7B9CFF33",background:"#7B9CFF06"}}>
+                <SH icon="🎨" title="ÉLÉMENTS DE MARQUE"/>
+                <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                  {ca.noCharte&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#FF9F43",background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:6,padding:"4px 10px",display:"inline-block"}}>⚠ Client sans logo / charte graphique</span>}
+                  {ca.logoUrl&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Logo</p><a href={safePortfolioUrl(ca.logoUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",textDecoration:"underline",wordBreak:"break-all"}}>{ca.logoUrl}</a></div>}
+                  {ca.charteUrl&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Charte graphique</p><a href={safePortfolioUrl(ca.charteUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",textDecoration:"underline",wordBreak:"break-all"}}>{ca.charteUrl}</a></div>}
+                  {ca.autresUrls&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Autres ressources</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{ca.autresUrls}</p></div>}
+                  {project.brief?.deliveryWished&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Livraison souhaitée</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{project.brief.deliveryWished}</p></div>}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
       {tab==="storyboards"&&(
@@ -1175,8 +1193,11 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
     notes: project.brief?.notes||"",
     services: project.brief?.services||[],
     musique: project.brief?.musique||{ambiances:[],genres:[],instruments:[],tempo:"",voix:"",inspiration:""},
+    charteAssets: project.brief?.charteAssets||{logoUrl:"",charteUrl:"",autresUrls:"",noCharte:false},
   });
   const[saving,setSaving]=useState(false);
+  const[charteEdit,setCharteEdit]=useState(project.brief?.charteAssets||{logoUrl:"",charteUrl:"",autresUrls:"",noCharte:false});
+  const[savingCharte,setSavingCharte]=useState(false);
   const hasSimulator=clientData?.simulatorEnabled;
   const briefEmpty=!project.brief?.objective&&!project.brief?.target&&!project.brief?.duration;
   const showIntake=project.status==="brief"&&briefEmpty;
@@ -1184,9 +1205,18 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
   const toggleService=(id)=>setBrief(p=>({...p,services:p.services.includes(id)?p.services.filter(s=>s!==id):[...p.services,id]}));
   const toggleMusique=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:p.musique[key].includes(val)?p.musique[key].filter(x=>x!==val):[...p.musique[key],val]}}));
   const setMusiqueField=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:val}}));
+  const setCA=(key,val)=>setBrief(p=>({...p,charteAssets:{...p.charteAssets,[key]:val}}));
+  const saveChartePost=async()=>{
+    setSavingCharte(true);
+    const newBrief={...project.brief,charteAssets:charteEdit};
+    await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    onUpdate({...project,brief:newBrief});
+    onNotif("Éléments de marque mis à jour ✓");
+    setSavingCharte(false);
+  };
   const submitBrief=async()=>{
     setSaving(true);
-    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,deliveryWished:brief.deliveryWished,submitted:true};
+    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,deliveryWished:brief.deliveryWished,charteAssets:brief.charteAssets,submitted:true};
     await supabase.from("projects").update({title:brief.title||project.title,brief:newBrief,shoot_date:brief.shootDate||null}).eq("id",project.id);
     onUpdate({...project,title:brief.title||project.title,brief:newBrief,shootDate:brief.shootDate||""});
     onNotif("Brief envoyé avec succès — notre équipe revient vers vous rapidement ✨");
@@ -1224,10 +1254,60 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
             <div><Lbl>Budget approximatif</Lbl><input className="input" placeholder="Ex : 2 000 €, 5 000 €…" value={brief.budget} onChange={e=>setBrief(p=>({...p,budget:e.target.value}))}/></div>
           </div>
           <div><Lbl>Livrables souhaités</Lbl><input className="input" placeholder="Ex : 1 vidéo 16:9 + version story Instagram, sous-titres…" value={brief.deliverables} onChange={e=>setBrief(p=>({...p,deliverables:e.target.value}))}/></div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <div><Lbl>Date de tournage envisagée</Lbl><input type="date" className="input" value={brief.shootDate} onChange={e=>setBrief(p=>({...p,shootDate:e.target.value}))}/></div>
-            <div><Lbl>Date de livraison souhaitée</Lbl><input type="date" className="input" value={brief.deliveryWished} onChange={e=>setBrief(p=>({...p,deliveryWished:e.target.value}))}/></div>
-          </div>
+          {/* ── ÉLÉMENTS DE MARQUE ── */}
+          {(()=>{
+            const ca=brief.charteAssets;
+            const charteReady=ca.logoUrl.trim()||ca.charteUrl.trim()||ca.autresUrls.trim()||ca.noCharte;
+            return(
+              <div style={{display:"flex",flexDirection:"column",gap:14,borderTop:"1px solid #E5E5EA",paddingTop:16}}>
+                <div style={{background:"linear-gradient(135deg,rgba(175,82,222,0.06),rgba(0,180,216,0.04))",border:"1px solid rgba(175,82,222,0.18)",borderRadius:12,padding:"14px 16px"}}>
+                  <p style={{fontFamily:"'Urbanist'",fontSize:15,fontWeight:800,color:"#1D1D1F",marginBottom:4}}>🎨 Vos éléments de marque</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6}}>
+                    Pour estimer un délai de livraison réaliste, nous avons besoin de vos fichiers de marque <strong style={{color:"#1D1D1F"}}>avant le début de la production</strong> — logo, charte graphique, couleurs, typographies. Partagez un lien (Google Drive, WeTransfer, Dropbox…) ou indiquez que vous ne les avez pas encore.
+                  </p>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                  <div>
+                    <Lbl>Lien vers votre logo</Lbl>
+                    <input className="input" placeholder="https://drive.google.com/…" value={ca.logoUrl} onChange={e=>setCA("logoUrl",e.target.value)}/>
+                  </div>
+                  <div>
+                    <Lbl>Lien vers votre charte graphique</Lbl>
+                    <input className="input" placeholder="https://wetransfer.com/…" value={ca.charteUrl} onChange={e=>setCA("charteUrl",e.target.value)}/>
+                  </div>
+                </div>
+                <div>
+                  <Lbl>Autres ressources (polices, visuels, photos de marque…)</Lbl>
+                  <input className="input" placeholder="Autres liens ou descriptions…" value={ca.autresUrls} onChange={e=>setCA("autresUrls",e.target.value)}/>
+                </div>
+                <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>setCA("noCharte",!ca.noCharte)}>
+                  <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${ca.noCharte?"#00B4D8":"#C7C7CC"}`,background:ca.noCharte?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                    {ca.noCharte&&<span style={{color:"#FFFFFF",fontSize:11,fontWeight:700,lineHeight:1}}>✓</span>}
+                  </div>
+                  <span style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F"}}>Je n'ai pas encore de logo / charte graphique</span>
+                </label>
+
+                {/* Date de livraison — gateé derrière la charte */}
+                <div style={{borderTop:"1px solid #F2F2F7",paddingTop:14}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+                    <div><Lbl>Date de tournage envisagée</Lbl><input type="date" className="input" value={brief.shootDate} onChange={e=>setBrief(p=>({...p,shootDate:e.target.value}))}/></div>
+                    <div>
+                      <Lbl>Date de livraison souhaitée</Lbl>
+                      <input type="date" className="input" value={brief.deliveryWished}
+                        disabled={!charteReady}
+                        style={{opacity:charteReady?1:0.45,cursor:charteReady?"auto":"not-allowed"}}
+                        onChange={e=>setBrief(p=>({...p,deliveryWished:e.target.value}))}/>
+                      {!charteReady&&(
+                        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#AF52DE",marginTop:4}}>
+                          ↑ Partagez vos éléments de marque (ou cochez la case ci-dessus) pour débloquer ce champ.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
           <div><Lbl>Références & inspirations</Lbl><textarea className="input" rows={2} placeholder="Liens YouTube, publicités que vous aimez, univers visuels…" value={brief.references} onChange={e=>setBrief(p=>({...p,references:e.target.value}))}/></div>
           <div><Lbl>Informations complémentaires</Lbl><textarea className="input" rows={3} placeholder="Lieu de tournage, personnes à filmer, contraintes particulières…" value={brief.notes} onChange={e=>setBrief(p=>({...p,notes:e.target.value}))}/></div>
           {serviceTypes.length>0&&(
@@ -1378,6 +1458,37 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
                 {act&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginLeft:"auto"}}>En cours</span>}
               </div>
             );})}
+          </div>
+        </div>
+      )}
+      {tab==="suivi"&&(
+        <div className="card fadeUp" style={{padding:18,marginTop:12,border:"1px solid #7B9CFF33",background:"#7B9CFF06"}}>
+          <SH icon="🎨" title="ÉLÉMENTS DE MARQUE"/>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:14,lineHeight:1.6}}>
+            Déposez ici vos liens de logo, charte graphique ou tout autre élément visuel.<br/>
+            Ces informations nous permettent de personnaliser votre production aux couleurs de votre marque.
+          </p>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div><Lbl>Lien du logo</Lbl>
+                <input className="input" placeholder="https://drive.google.com/…" value={charteEdit.logoUrl} onChange={e=>setCharteEdit(p=>({...p,logoUrl:e.target.value}))}/>
+              </div>
+              <div><Lbl>Lien de la charte graphique</Lbl>
+                <input className="input" placeholder="https://wetransfer.com/…" value={charteEdit.charteUrl} onChange={e=>setCharteEdit(p=>({...p,charteUrl:e.target.value}))}/>
+              </div>
+            </div>
+            <div><Lbl>Autres ressources (liens ou description)</Lbl>
+              <input className="input" placeholder="Palette de couleurs, typographies, références…" value={charteEdit.autresUrls} onChange={e=>setCharteEdit(p=>({...p,autresUrls:e.target.value}))}/>
+            </div>
+            <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>setCharteEdit(p=>({...p,noCharte:!p.noCharte}))}>
+              <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${charteEdit.noCharte?"#FF9F43":"#C7C7CC"}`,background:charteEdit.noCharte?"#FF9F43":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                {charteEdit.noCharte&&<span style={{color:"#FFFFFF",fontSize:11,fontWeight:700}}>✓</span>}
+              </div>
+              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Je n'ai pas encore de logo / charte graphique</span>
+            </label>
+            <button className="btn btn-primary" style={{alignSelf:"flex-end"}} onClick={saveChartePost} disabled={savingCharte}>
+              {savingCharte?"Enregistrement…":"Enregistrer ✓"}
+            </button>
           </div>
         </div>
       )}
