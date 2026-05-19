@@ -495,20 +495,26 @@ function AIGenerator({project,onGenerated}){
   );
 }
 
-function ProdLivrables({project,onUpdate,onNotif}){
+function ProdLivrables({project,onUpdate,onNotif,notifyClient,client}){
   const[showAdd,setShowAdd]=useState(null);
   const[form,setForm]=useState({name:"",url:"",note:""});
+  const[notify,setNotify]=useState(true);
   const sections=[
     {key:"rushes",  label:"Rushes",              icon:"🎬",color:"#7B9CFF",colorDim:"#7B9CFF18",colorBorder:"#7B9CFF30",vis:false},
     {key:"droits",  label:"Documents de droits", icon:"📄",color:"#FF9F43",colorDim:"#FF9F4318",colorBorder:"#FF9F4330",vis:false},
     {key:"finaux",  label:"Livrables finaux",     icon:"✦", color:"#4ECDC4",colorDim:"#4ECDC418",colorBorder:"#4ECDC430",vis:true},
   ];
   const files=key=>(project.livrables||[]).filter(l=>l.category===key);
-  const add=()=>{
+  const add=async()=>{
     if(!form.name.trim())return;
     if(form.url&&!safePortfolioUrl(form.url)){onNotif("URL invalide — utilisez un lien https://");return;}
-    onUpdate({...project,livrables:[...(project.livrables||[]),{id:Date.now(),...form,category:showAdd,date:new Date().toISOString().split("T")[0]}]});
-    onNotif("Fichier ajouté !");setForm({name:"",url:"",note:""});setShowAdd(null);
+    const cat=showAdd;
+    onUpdate({...project,livrables:[...(project.livrables||[]),{id:Date.now(),...form,category:cat,date:new Date().toISOString().split("T")[0]}]});
+    onNotif("Fichier ajouté !");
+    if(cat==="finaux"&&notify&&notifyClient&&client?.email){
+      await notifyClient({ project, client, kind:"livrable", extra:`Fichier : ${form.name}` });
+    }
+    setForm({name:"",url:"",note:""});setShowAdd(null);
   };
   const del=id=>onUpdate({...project,livrables:(project.livrables||[]).filter(l=>l.id!==id)});
   return(
@@ -534,6 +540,12 @@ function ProdLivrables({project,onUpdate,onNotif}){
                 <input className="input" placeholder="Nom du fichier *" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
                 <input className="input" placeholder="Lien (Drive, WeTransfer...)" value={form.url} onChange={e=>setForm(p=>({...p,url:e.target.value}))}/>
                 <input className="input" placeholder="Note interne (optionnel)" value={form.note} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/>
+                {showAdd==="finaux"&&notifyClient&&client?.email&&(
+                  <label style={{display:"flex",alignItems:"center",gap:6,fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",cursor:"pointer"}}>
+                    <input type="checkbox" checked={notify} onChange={e=>setNotify(e.target.checked)} style={{accentColor:"#4ECDC4"}}/>
+                    Envoyer un email au client ({client.email}) à l'enregistrement
+                  </label>
+                )}
                 <div style={{display:"flex",gap:7,justifyContent:"flex-end"}}>
                   <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowAdd(null)}>Annuler</button>
                   <button className="btn btn-primary" style={{fontSize:11}} onClick={add}>Enregistrer</button>
@@ -795,7 +807,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
   );
 }
 
-function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar,serviceTypes=[],prestataires=[],prestataireMissions=[],setPrestataireMissions,onPreviewClient}){
+function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar,serviceTypes=[],prestataires=[],prestataireMissions=[],setPrestataireMissions,onPreviewClient,invoices=[],onAddInvoice,onEditInvoice,onMarkPaid,notifyClient}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
@@ -820,7 +832,20 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onNotif("Brief sauvegardé !");
   };
   const briefServices=project.brief?.services||[];
-  const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}])];
+  const projInvoices=invoices.filter(i=>i.project_id===project.id);
+  const clientForNotif=clients?.find(c=>c.id===project.clientId);
+  const markDelivered=async()=>{
+    await supabase.from("projects").update({status:"livraison"}).eq("id",project.id);
+    onUpdate({...project,status:"livraison"});
+    if(notifyClient) await notifyClient({ project, client:clientForNotif, kind:"delivered" });
+    onNotif("Projet livré — email envoyé au client");
+  };
+  const notifyRevisionDone=async()=>{
+    if(!clientForNotif?.email){onNotif("Aucun email client renseigné");return;}
+    if(notifyClient) await notifyClient({ project, client:clientForNotif, kind:"modif_done" });
+    onNotif("Modifs terminées — email envoyé au client");
+  };
+  const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"facturation",l:`💶 Facturation (${projInvoices.length})`},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}])];
   const[linkingBookingId,setLinkingBookingId]=useState("");
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -830,6 +855,8 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
             {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#7B9CFF",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
+            {notifyClient&&project.clientId&&(<button className="btn btn-orange" style={{fontSize:11,padding:"4px 10px"}} onClick={notifyRevisionDone} title="Notifier le client que les modifs sont prêtes">✦ Modifs terminées</button>)}
+            {notifyClient&&project.clientId&&project.status!=="livraison"&&(<button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={markDelivered} title="Marquer le projet comme livré + notification email">📦 Marquer livré</button>)}
             <span className={`tag tag-${project.status}`}>{project.status}</span>
           </div>
         </div>
@@ -949,7 +976,37 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
       {tab==="comments"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="prod"/></div>}
       {tab==="charte"&&<CharteGraphiquePanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={fmtProdAuthor(userProfile?.nom)} isAdmin={true}/>}
-      {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
+      {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif} notifyClient={notifyClient} client={clientForNotif}/>}
+      {tab==="facturation"&&(
+        <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+            <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>FACTURATION</h3>
+            {onAddInvoice&&<button className="btn btn-primary" onClick={onAddInvoice}>+ Nouvelle facture</button>}
+          </div>
+          {projInvoices.length===0 && <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune facture sur ce projet.</p>}
+          {projInvoices.map(inv=>{
+            const col=inv.status==="paid"?"#34C759":inv.status==="overdue"?"#FF3B30":inv.status==="sent"?"#FF9F43":inv.status==="cancelled"?"#8E8E93":"#7B9CFF";
+            const lbl=inv.status==="paid"?"✓ Payée":inv.status==="overdue"?"⚠ En retard":inv.status==="sent"?"⏳ À payer":inv.status==="cancelled"?"Annulée":"Brouillon";
+            return(
+              <div key={inv.id} className="card" style={{padding:14,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",borderColor:col+"44"}}>
+                <div style={{flex:"1 1 220px",minWidth:0}}>
+                  <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{inv.number||"(sans numéro)"} — {inv.label||"—"}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Émise {inv.issued_at||"—"}{inv.due_date?` · échéance ${inv.due_date}`:""}{inv.paid_at?` · payée ${inv.paid_at}`:""}</p>
+                </div>
+                <div style={{textAlign:"right",minWidth:130}}>
+                  <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",fontWeight:700}}>{Number(inv.amount_ttc||0).toFixed(2)} €</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{Number(inv.amount_ht||0).toFixed(2)} HT · TVA {inv.vat_rate}%</p>
+                </div>
+                <span style={{background:col+"22",color:col,border:`1px solid ${col}55`,borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:600}}>{lbl}</span>
+                <div style={{display:"flex",gap:6}}>
+                  {inv.status!=="paid"&&onMarkPaid&&<button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onMarkPaid(inv)}>Marquer payée</button>}
+                  {onEditInvoice&&<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onEditInvoice(inv)}>✏️</button>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {tab==="equipe"&&<TeamSection project={project} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={onUpdateAssignments} onNotif={onNotif}/>}
       {tab==="notes"&&<MeetingNotesSection project={project} meetingNotes={meetingNotes} onUpdateMeetingNotes={onUpdateMeetingNotes} onNotif={onNotif}/>}
       {tab==="prestataires"&&<div className="fadeUp"><ProjectPrestatairesPanel project={project} serviceTypes={serviceTypes} prestataires={prestataires} missions={prestataireMissions} setMissions={setPrestataireMissions} onNotif={onNotif}/></div>}
@@ -3672,9 +3729,9 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
 // ─────────────────────────────────────────────────────────────────────────────
 // CREATE PROJECT MODAL
 // ─────────────────────────────────────────────────────────────────────────────
-function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,onCreate}){
+function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,onCreate,initialClientId=null}){
   const[title,setTitle]=useState("");
-  const[clientId,setClientId]=useState("");
+  const[clientId,setClientId]=useState(initialClientId||"");
   const[selectedTeam,setSelectedTeam]=useState(null);
   const[loading,setLoading]=useState(false);
 
@@ -3765,7 +3822,7 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENTS MANAGER
 // ─────────────────────────────────────────────────────────────────────────────
-function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
+function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProject}){
   const TYPES=["PME","Startup","Association","Collectivité","Particulier","Autre"];
   const emptyForm={nom:"",email:"",password:"",client_type:"PME",discount:0,simulator_enabled:false,shortone_enabled:false};
   const[tab,setTab]=useState("liste");
@@ -3930,6 +3987,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient}){
               {c.simulatorEnabled&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
               <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#E5E5EA"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#8E8E93",cursor:"pointer"}}>◆ Shortone</button>
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
+              {onCreateProject&&<button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onCreateProject(c)}>+ Projet</button>}
               <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
               <button className={`btn ${c.isActive?"btn-red":"btn-green"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={()=>toggleActive(c)}>{c.isActive?"Suspendre":"Réactiver"}</button>
               <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px",opacity:0.7}} onClick={()=>deleteClient(c)}>🗑 Supprimer</button>
@@ -5169,7 +5227,7 @@ function PrestaireResponsePage({token}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function ComptesSection({clients,setClients,onNotif,onPreviewClient,isAdmin=false}){
+function ComptesSection({clients,setClients,onNotif,onPreviewClient,onCreateProject,isAdmin=false}){
   const[tab,setTab]=useState("clients");
   const tabs=[{k:"clients",l:"👥 Clients"},...(isAdmin?[{k:"acces",l:"🔐 Accès équipe"}]:[])];
   return(
@@ -5181,7 +5239,7 @@ function ComptesSection({clients,setClients,onNotif,onPreviewClient,isAdmin=fals
           ))}
         </div>
       )}
-      {tab==="clients"&&<ClientsManager clients={clients} setClients={setClients} onNotif={onNotif} onPreviewClient={onPreviewClient}/>}
+      {tab==="clients"&&<ClientsManager clients={clients} setClients={setClients} onNotif={onNotif} onPreviewClient={onPreviewClient} onCreateProject={onCreateProject}/>}
       {tab==="acces"&&isAdmin&&<AccessManager onNotif={onNotif}/>}
     </div>
   );
@@ -5280,6 +5338,206 @@ function AccessManager({onNotif}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif }){
+  const[q,setQ]=useState("");
+  const[fStatus,setFStatus]=useState("all"); // brief|storyboard|review|livraison
+  const[fInvoice,setFInvoice]=useState("all"); // none|draft|sent|paid|overdue
+  const clientById = id => clients.find(c=>c.id===id);
+  const inv4 = pid => invoices.filter(i=>i.project_id===pid);
+  const statusLabel = { brief:"Brief", storyboard:"Storyboard", review:"Revue", livraison:"Livraison" };
+  const statusColors = { brief:"#7B9CFF", storyboard:"#00B4D8", review:"#FF9F43", livraison:"#4ECDC4" };
+  const list = projects.filter(p=>{
+    if(fStatus!=="all" && (p.status||"brief")!==fStatus) return false;
+    const ivs = inv4(p.id);
+    if(fInvoice==="none" && ivs.length>0) return false;
+    if(fInvoice!=="all" && fInvoice!=="none" && !ivs.some(i=>i.status===fInvoice)) return false;
+    if(q){
+      const s=q.toLowerCase();
+      const c=clientById(p.clientId);
+      if(!p.title.toLowerCase().includes(s) && !(c?.name||"").toLowerCase().includes(s) && !(c?.email||"").toLowerCase().includes(s)) return false;
+    }
+    return true;
+  });
+  const totals = projects.reduce((acc,p)=>{
+    const ivs=inv4(p.id);
+    ivs.forEach(i=>{
+      const ttc=Number(i.amount_ttc||0);
+      acc.total+=ttc;
+      if(i.status==="paid") acc.paid+=ttc;
+      else if(i.status==="overdue") acc.overdue+=ttc;
+      else if(i.status==="sent") acc.sent+=ttc;
+    });
+    return acc;
+  },{total:0,paid:0,sent:0,overdue:0});
+  const fmt = n => new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n||0);
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:10,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14,flexWrap:"wrap"}}>
+        <div>
+          <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>PROJETS</h2>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>{projects.length} projets · {invoices.length} factures</p>
+        </div>
+        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"6px 12px",minWidth:120}}>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em"}}>Encaissé</p>
+            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#34C759",fontWeight:700}}>{fmt(totals.paid)}</p>
+          </div>
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"6px 12px",minWidth:120}}>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em"}}>En attente</p>
+            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#FF9F43",fontWeight:700}}>{fmt(totals.sent)}</p>
+          </div>
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"6px 12px",minWidth:120}}>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em"}}>En retard</p>
+            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#FF3B30",fontWeight:700}}>{fmt(totals.overdue)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+        <input className="input" placeholder="Rechercher projet, client, email…" value={q} onChange={e=>setQ(e.target.value)} style={{flex:"1 1 220px",minWidth:200,maxWidth:340}}/>
+        <select className="input" value={fStatus} onChange={e=>setFStatus(e.target.value)} style={{maxWidth:170}}>
+          <option value="all">Tous statuts</option>
+          <option value="brief">Brief</option>
+          <option value="storyboard">Storyboard</option>
+          <option value="review">Revue</option>
+          <option value="livraison">Livraison</option>
+        </select>
+        <select className="input" value={fInvoice} onChange={e=>setFInvoice(e.target.value)} style={{maxWidth:200}}>
+          <option value="all">Toutes factures</option>
+          <option value="none">Aucune facture</option>
+          <option value="draft">Brouillon</option>
+          <option value="sent">Émise (à payer)</option>
+          <option value="paid">Payée</option>
+          <option value="overdue">En retard</option>
+        </select>
+      </div>
+
+      <div className="card" style={{padding:0,overflow:"hidden"}}>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"'Inter',sans-serif",fontSize:13,minWidth:780}}>
+            <thead>
+              <tr style={{background:"#F5F5F7",textAlign:"left"}}>
+                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Projet</th>
+                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Client</th>
+                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Statut</th>
+                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Livraison</th>
+                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Facturation</th>
+                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {list.length===0 && (
+                <tr><td colSpan={6} style={{padding:"24px 14px",textAlign:"center",color:"#8E8E93"}}>Aucun projet ne correspond.</td></tr>
+              )}
+              {list.map(p=>{
+                const c = clientById(p.clientId);
+                const ivs = inv4(p.id);
+                const paid = ivs.filter(i=>i.status==="paid");
+                const sent = ivs.filter(i=>i.status==="sent");
+                const overdue = ivs.filter(i=>i.status==="overdue");
+                return(
+                  <tr key={p.id} style={{borderTop:"1px solid #F2F2F7"}}>
+                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
+                      <p style={{fontWeight:600,color:"#1D1D1F"}}>{p.title}</p>
+                      <p style={{fontSize:11,color:"#8E8E93",marginTop:2}}>Créé {p.createdAt||"—"}</p>
+                    </td>
+                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
+                      {c ? (
+                        <>
+                          <p style={{color:"#1D1D1F"}}>{c.name}</p>
+                          <p style={{fontSize:11,color:"#8E8E93"}}>{c.email}</p>
+                        </>
+                      ) : <span style={{color:"#8E8E93",fontStyle:"italic"}}>—</span>}
+                    </td>
+                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
+                      <span style={{background:statusColors[p.status||"brief"]+"22",color:statusColors[p.status||"brief"],border:`1px solid ${statusColors[p.status||"brief"]}55`,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:600}}>{statusLabel[p.status||"brief"]||p.status}</span>
+                      <div style={{height:3,background:"#F2F2F7",borderRadius:2,marginTop:6,width:90}}>
+                        <div style={{height:"100%",width:`${p.progress||0}%`,background:statusColors[p.status||"brief"],borderRadius:2}}/>
+                      </div>
+                    </td>
+                    <td style={{padding:"12px 14px",verticalAlign:"top",color:"#1D1D1F"}}>{p.deliveryDate||<span style={{color:"#8E8E93"}}>—</span>}</td>
+                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
+                      {ivs.length===0 ? (
+                        <span style={{background:"#8E8E9322",color:"#8E8E93",border:"1px solid #8E8E9355",borderRadius:6,padding:"2px 8px",fontSize:11}}>Aucune facture</span>
+                      ) : (
+                        <div style={{display:"flex",flexDirection:"column",gap:3}}>
+                          {paid.length>0 && <span style={{background:"#34C75922",color:"#34C759",border:"1px solid #34C75955",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>✓ Payé {fmt(paid.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
+                          {sent.length>0 && <span style={{background:"#FF9F4322",color:"#FF9F43",border:"1px solid #FF9F4355",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⏳ À payer {fmt(sent.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
+                          {overdue.length>0 && <span style={{background:"#FF3B3022",color:"#FF3B30",border:"1px solid #FF3B3055",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⚠ Retard {fmt(overdue.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
+                        </div>
+                      )}
+                    </td>
+                    <td style={{padding:"12px 14px",verticalAlign:"top",textAlign:"right",whiteSpace:"nowrap"}}>
+                      <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px",marginRight:6}} onClick={()=>onOpenProject(p.id)}>Ouvrir</button>
+                      {sent.concat(overdue).length>0
+                        ? <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px",marginRight:6}} onClick={()=>onMarkPaid(sent[0]||overdue[0],p,c)}>Marquer payée</button>
+                        : <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",marginRight:6}} onClick={()=>onAddInvoice(p,c)}>+ Facture</button>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+function InvoiceModal({ project, client, existing, onClose, onSave }){
+  const init = existing || { number:"", label:project?.title||"", amount_ht:0, vat_rate:8.5, amount_ttc:0, status:"draft", issued_at:new Date().toISOString().slice(0,10), due_date:"", notes:"" };
+  const [f,setF]=useState(init);
+  const [saving,setSaving]=useState(false);
+  const compute = (ht, vat) => Math.round(Number(ht||0)*(1+Number(vat||0)/100)*100)/100;
+  const setHT = v => setF(x=>({...x, amount_ht:v, amount_ttc:compute(v, x.vat_rate)}));
+  const setVAT = v => setF(x=>({...x, vat_rate:v, amount_ttc:compute(x.amount_ht, v)}));
+  const submit = async () => {
+    setSaving(true);
+    await onSave({ ...f, project_id:project.id, client_id:client?.id||null });
+    setSaving(false);
+    onClose();
+  };
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div onClick={e=>e.stopPropagation()} className="card" style={{padding:22,maxWidth:520,width:"100%",display:"flex",flexDirection:"column",gap:12,maxHeight:"92vh",overflowY:"auto"}}>
+        <div>
+          <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#162040",letterSpacing:"0.04em"}}>{existing?"MODIFIER FACTURE":"NOUVELLE FACTURE"}</p>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>{project?.title} · {client?.name||"Sans client"}</p>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><Lbl>Numéro</Lbl><input className="input" placeholder="F-2026-0001" value={f.number||""} onChange={e=>setF({...f,number:e.target.value})}/></div>
+          <div><Lbl>Statut</Lbl>
+            <select className="input" value={f.status} onChange={e=>setF({...f,status:e.target.value})}>
+              <option value="draft">Brouillon</option>
+              <option value="sent">Émise (envoyée au client)</option>
+              <option value="paid">Payée</option>
+              <option value="overdue">En retard</option>
+              <option value="cancelled">Annulée</option>
+            </select>
+          </div>
+        </div>
+        <div><Lbl>Libellé / objet</Lbl><input className="input" value={f.label||""} onChange={e=>setF({...f,label:e.target.value})}/></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+          <div><Lbl>Montant HT €</Lbl><input className="input" type="number" min="0" step="0.01" value={f.amount_ht} onChange={e=>setHT(e.target.value)}/></div>
+          <div><Lbl>TVA %</Lbl><input className="input" type="number" min="0" step="0.1" value={f.vat_rate} onChange={e=>setVAT(e.target.value)}/></div>
+          <div><Lbl>Montant TTC €</Lbl><input className="input" type="number" min="0" step="0.01" value={f.amount_ttc} onChange={e=>setF({...f,amount_ttc:e.target.value})}/></div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><Lbl>Date d'émission</Lbl><input className="input" type="date" value={f.issued_at||""} onChange={e=>setF({...f,issued_at:e.target.value})}/></div>
+          <div><Lbl>Échéance</Lbl><input className="input" type="date" value={f.due_date||""} onChange={e=>setF({...f,due_date:e.target.value})}/></div>
+        </div>
+        <div><Lbl>Notes (optionnel)</Lbl><textarea className="input" rows={2} value={f.notes||""} onChange={e=>setF({...f,notes:e.target.value})}/></div>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:6}}>
+          <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
+          <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?"Enregistrement…":(existing?"Enregistrer":"Créer")}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -5322,6 +5580,10 @@ function AppMain() {
   const[serviceTypes,setServiceTypes]=useState([]);
   const[prestataires,setPrestataires]=useState([]);
   const[prestataireMissions,setPrestataireMissions]=useState([]);
+  const[invoices,setInvoices]=useState([]);
+  const[invoiceModal,setInvoiceModal]=useState(null); // {project, client, existing?}
+  const[projetsView,setProjetsView]=useState("liste"); // "liste" | "detail"
+  const[createForClientId,setCreateForClientId]=useState(null);
   const[notif,setNotif]=useState(null);
   const[dataLoading,setDataLoading]=useState(true);
   const[previewClientId,setPreviewClientId]=useState(null);
@@ -5344,6 +5606,7 @@ function AppMain() {
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
         supabase.from("bookings").select("*").order("date",{ascending:true}),
         supabase.from("service_types").select("*").order("label"),
+        supabase.from("invoices").select("*").order("issued_at",{ascending:false}),
       ];
       // Données admin seulement
       if(isAdminUser){
@@ -5362,13 +5625,14 @@ function AppMain() {
       const postsData     = results[1]?.data;
       const bookingsData  = results[2]?.data;
       const stData        = results[3]?.data;
-      const profilesData  = isAdminUser ? results[4]?.data : null;
-      const membersData   = isAdminUser ? results[5]?.data : null;
-      const assignData    = isAdminUser ? results[6]?.data : null;
-      const slotsData     = isAdminUser ? results[7]?.data : null;
-      const notesData     = isAdminUser ? results[8]?.data : null;
-      const prestData     = isAdminUser ? results[9]?.data : null;
-      const missionsData  = isAdminUser ? results[10]?.data : null;
+      const invoicesData  = results[4]?.data;
+      const profilesData  = isAdminUser ? results[5]?.data : null;
+      const membersData   = isAdminUser ? results[6]?.data : null;
+      const assignData    = isAdminUser ? results[7]?.data : null;
+      const slotsData     = isAdminUser ? results[8]?.data : null;
+      const notesData     = isAdminUser ? results[9]?.data : null;
+      const prestData     = isAdminUser ? results[10]?.data : null;
+      const missionsData  = isAdminUser ? results[11]?.data : null;
 
       if(projectsData && projectsData.length > 0) {
         const formatted = projectsData.map(p => ({
@@ -5422,6 +5686,7 @@ function AppMain() {
       if(stData) setServiceTypes(stData.map(t=>({id:t.id,label:t.label,icone:t.icone||"🔧",actif:t.actif!==false})));
       if(prestData) setPrestataires(prestData.map(p=>({id:p.id,nom:p.nom,email:p.email,telephone:p.telephone||"",description:p.description||"",portfolio_urls:p.portfolio_urls||[],service_type_id:p.service_type_id,actif:p.actif!==false})));
       if(missionsData) setPrestataireMissions(missionsData.map(m=>({id:m.id,prestataire_id:m.prestataire_id,project_id:m.project_id,brief_extrait:m.brief_extrait||"",statut:m.statut||"envoyé",message_dispo:m.message_dispo||"",token:m.token,responded_at:m.responded_at,created_at:m.created_at})));
+      if(invoicesData) setInvoices(invoicesData);
       }catch(e){ console.error("loadData error",e); }
       finally{ setDataLoading(false); }
     };
@@ -5476,6 +5741,48 @@ function AppMain() {
   );
 
   const showNotif=msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); };
+  // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
+  // kind ∈ "livrable" | "modif_done" | "delivered" | "invoice_sent" | "custom"
+  const notifyClient = async({ project, client, kind="custom", subject, html, text, extra="" }) => {
+    try{
+      const to = client?.email; if(!to) return;
+      const pTitle = project?.title || "Votre projet";
+      const link = "https://thirdone.studio";
+      const greet = `Bonjour ${client?.name || ""},`.trim();
+      const presets = {
+        livrable:    { s:`Nouveau livrable – ${pTitle}`,            l:"Un nouveau livrable a été ajouté à votre projet." },
+        modif_done:  { s:`Modifications appliquées – ${pTitle}`,    l:"Les modifications demandées ont été appliquées. Vous pouvez les valider depuis votre espace." },
+        delivered:   { s:`Projet déposé – ${pTitle}`,               l:"Votre projet est livré et disponible dans votre espace client." },
+        invoice_sent:{ s:`Facture émise – ${pTitle}`,               l:"Votre facture est disponible dans votre espace client." },
+      };
+      const preset = presets[kind] || { s: subject || `Mise à jour – ${pTitle}`, l: extra || "Mise à jour disponible dans votre espace client." };
+      const finalSubject = subject || preset.s;
+      const lead = preset.l;
+      const finalText = text ||
+`${greet}
+
+${lead}
+${extra ? "\n" + extra + "\n" : ""}
+Accéder à votre espace : ${link}
+
+— Third-One Studio`;
+      const finalHtml = html ||
+`<div style="font-family:Inter,Arial,sans-serif;color:#1D1D1F;max-width:560px;margin:0 auto;padding:24px">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
+    <strong style="font-family:Urbanist,Arial,sans-serif;font-size:20px;color:#162040">Third</strong><strong style="font-family:Urbanist,Arial,sans-serif;font-size:20px;color:#00B4D8">One</strong>
+  </div>
+  <p style="margin:0 0 10px">${greet}</p>
+  <p style="margin:0 0 12px;line-height:1.55">${lead}</p>
+  ${extra ? `<p style="margin:0 0 12px;line-height:1.55;color:#6E6E73">${extra}</p>` : ""}
+  <p style="margin:18px 0 0">
+    <a href="${link}" style="background:#00B4D8;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;display:inline-block">Ouvrir mon espace</a>
+  </p>
+  <p style="margin:24px 0 0;font-size:12px;color:#8E8E93">Third-One Studio · contact@thirdone.studio</p>
+</div>`;
+      const{ error } = await supabase.functions.invoke("send-email", { body: { to, subject: finalSubject, html: finalHtml, text: finalText } });
+      if(error) console.warn("notifyClient",error);
+    }catch(e){ console.warn("notifyClient", e); }
+  };
   const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
   const selProject=projects.find(p=>p.id===selectedProjectId);
   const createProject=async(title,clientId,team)=>{
@@ -5511,6 +5818,39 @@ function AppMain() {
     ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, shortoneEnabled:userProfile.shortone_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
     : previewClient || clients[0];
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
+
+  const saveInvoice=async(row)=>{
+    const payload={
+      project_id:row.project_id, client_id:row.client_id||null,
+      number:row.number||null, label:row.label||null,
+      amount_ht:Number(row.amount_ht||0), vat_rate:Number(row.vat_rate||0), amount_ttc:Number(row.amount_ttc||0),
+      status:row.status||"draft",
+      issued_at:row.issued_at||null, due_date:row.due_date||null, paid_at:row.paid_at||null,
+      notes:row.notes||null,
+    };
+    if(row.id){
+      const{data,error}=await supabase.from("invoices").update(payload).eq("id",row.id).select().single();
+      if(error){showNotif("Erreur facture : "+error.message);return;}
+      setInvoices(ivs=>ivs.map(i=>i.id===data.id?data:i));
+      showNotif("Facture mise à jour");
+    } else {
+      const{data,error}=await supabase.from("invoices").insert(payload).select().single();
+      if(error){showNotif("Erreur facture : "+error.message);return;}
+      setInvoices(ivs=>[data,...ivs]);
+      showNotif("Facture créée");
+      if(data.status==="sent"){
+        const proj=projects.find(p=>p.id===data.project_id);
+        const cli=clients.find(c=>c.id===data.client_id);
+        notifyClient({ project:proj, client:cli, kind:"invoice_sent", extra:`Montant TTC : ${Number(data.amount_ttc).toFixed(2)} €${data.due_date?` · échéance ${data.due_date}`:""}` });
+      }
+    }
+  };
+  const markInvoicePaid=async(inv,project,client)=>{
+    const{data,error}=await supabase.from("invoices").update({status:"paid",paid_at:new Date().toISOString().slice(0,10)}).eq("id",inv.id).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setInvoices(ivs=>ivs.map(i=>i.id===data.id?data:i));
+    showNotif(`Facture ${data.number||"#"+data.id.slice(0,6)} marquée payée`);
+  };
 
   const statusColor=s=>({brief:"#7B9CFF",storyboard:"#00B4D8",review:"#FF9F43",livraison:"#4ECDC4"}[s]||"#6E6E73");
 
@@ -5642,8 +5982,31 @@ function AppMain() {
             {appView==="prod"&&prodSection==="dashboard"&&(
               <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection} bookings={bookings} onGoToCalendar={()=>setProdSection("calendrier")} teamMembers={teamMembers}/>
             )}
-            {appView==="prod"&&prodSection==="projets"&&selProject&&(
-              <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions} onPreviewClient={handlePreviewClient}/>
+            {appView==="prod"&&prodSection==="projets"&&(
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                <div style={{display:"flex",gap:3,background:"#F5F5F7",padding:4,borderRadius:8,width:"fit-content",border:"1px solid #E5E5EA"}}>
+                  <button className={`tab ${projetsView==="liste"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("liste")}>📋 Liste</button>
+                  <button className={`tab ${projetsView==="detail"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("detail")} disabled={!selProject}>📁 Détail{selProject?` — ${selProject.title}`:""}</button>
+                </div>
+                {projetsView==="liste" && (
+                  <ProjectsListView
+                    projects={projects}
+                    clients={clients}
+                    invoices={invoices}
+                    onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}
+                    onAddInvoice={(p,c)=>setInvoiceModal({project:p,client:c})}
+                    onMarkPaid={markInvoicePaid}
+                    onCreateForClient={(c)=>{setCreateForClientId(c?.id||null);setShowCreateModal(true);}}
+                    onNotif={showNotif}
+                  />
+                )}
+                {projetsView==="detail" && selProject && (
+                  <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions} onPreviewClient={handlePreviewClient} invoices={invoices.filter(i=>i.project_id===selProject.id)} onAddInvoice={()=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId)})} onEditInvoice={(inv)=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId),existing:inv})} onMarkPaid={(inv)=>markInvoicePaid(inv,selProject,clients.find(c=>c.id===selProject.clientId))} notifyClient={notifyClient}/>
+                )}
+                {projetsView==="detail" && !selProject && (
+                  <div className="card" style={{padding:24,textAlign:"center",color:"#8E8E93"}}>Sélectionnez un projet dans la liste.</div>
+                )}
+              </div>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
               <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif} projects={projects} onGoToProject={(id)=>{setSelectedProjectId(id);setProdSection("projets");}}/>
@@ -5661,7 +6024,7 @@ function AppMain() {
               <CMModule posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
             )}
             {appView==="prod"&&prodSection==="comptes"&&(isAdmin||isCollab)&&(
-              <ComptesSection clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient} isAdmin={isAdmin}/>
+              <ComptesSection clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient} onCreateProject={(c)=>{setCreateForClientId(c.id);setShowCreateModal(true);}} isAdmin={isAdmin}/>
             )}
             {appView==="prod"&&prodSection==="prestataires"&&(
               <PrestatairesModule serviceTypes={serviceTypes} setServiceTypes={setServiceTypes} prestataires={prestataires} setPrestataires={setPrestataires} missions={prestataireMissions} setMissions={setPrestataireMissions} projects={projects} onNotif={showNotif}/>
@@ -5734,7 +6097,8 @@ function AppMain() {
         </div>
 
         {notif&&<Notif msg={notif} onDone={()=>setNotif(null)}/>}
-        {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} onClose={()=>setShowCreateModal(false)} onCreate={createProject}/>}
+        {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} initialClientId={createForClientId} onClose={()=>{setShowCreateModal(false);setCreateForClientId(null);}} onCreate={createProject}/>}
+        {invoiceModal&&<InvoiceModal project={invoiceModal.project} client={invoiceModal.client} existing={invoiceModal.existing} onClose={()=>setInvoiceModal(null)} onSave={saveInvoice}/>}
         {showSettings&&<SettingsPanel settings={settings} onChange={setSettings} onClose={()=>setShowSettings(false)} user={user} onLogout={()=>supabase.auth.signOut()}/>}
       </div>
     </>
