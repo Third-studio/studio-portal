@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
+import Inbox from "./Inbox";
+import TasksReminders from "./TasksReminders";
+import VoiceCapture from "./VoiceCapture";
+import ProjectAutoStatus from "./ProjectAutoStatus";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STYLES
@@ -4389,7 +4393,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
 // ─────────────────────────────────────────────────────────────────────────────
 // CLIENT WELCOME PAGE
 // ─────────────────────────────────────────────────────────────────────────────
-function ClientWelcomePage({client,projects,onGoTo}){
+function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject}){
   const shortcuts=[
     {icon:"📁",k:"projets",title:"Mes projets",desc:"Suivez l'avancement et donnez vos retours"},
     {icon:"📅",k:"calendrier",title:"Disponibilités",desc:"Consultez nos créneaux disponibles"},
@@ -4399,8 +4403,10 @@ function ClientWelcomePage({client,projects,onGoTo}){
   const statusColor=s=>({brief:"#00B4D8",storyboard:"#FF9500",tournage:"#FF9F43",montage:"#AF52DE",livraison:"#34C759"}[s]||"#6E6E73");
   const statusLabel=s=>({brief:"Brief en cours",storyboard:"Storyboard",tournage:"En tournage",montage:"Montage",livraison:"Livré ✓"}[s]||s);
   const statusIcon=s=>({brief:"✏️",storyboard:"🎞",tournage:"🎬",montage:"✂️",livraison:"✅"}[s]||"📌");
-  const topProjects=projects.slice(0,3);
+  const STEPS=[{k:"brief",l:"Brief"},{k:"storyboard",l:"Storyboard"},{k:"tournage",l:"Tournage"},{k:"montage",l:"Montage"},{k:"livraison",l:"Livraison"}];
+  const topProjects=projects.slice(0,4);
   const prenom=(client.name||"").split(" ")[0]||"vous";
+  const primaryBtn={background:"linear-gradient(135deg,#00B4D8,#0090B3)",color:"#FFFFFF",border:"none",borderRadius:12,padding:"13px 26px",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:"0.02em",fontFamily:"'Inter'",boxShadow:"0 6px 18px rgba(0,180,216,0.32)",transition:"transform .15s,box-shadow .15s"};
   return(
     <div style={{display:"flex",flexDirection:"column",gap:28}} className="fadeUp">
 
@@ -4412,9 +4418,14 @@ function ClientWelcomePage({client,projects,onGoTo}){
         <h1 style={{fontFamily:"'Urbanist'",fontSize:34,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:6,lineHeight:1.15,fontWeight:800}}>
           Bonjour, {prenom} 👋
         </h1>
-        <p style={{fontFamily:"'Inter'",fontSize:14,color:"#6E6E73",lineHeight:1.6,maxWidth:480}}>
+        <p style={{fontFamily:"'Inter'",fontSize:14,color:"#6E6E73",lineHeight:1.6,maxWidth:480,marginBottom:20}}>
           Tout ce qu'il vous faut pour suivre votre production, valider vos contenus et rester en contact avec notre équipe.
         </p>
+        <button onClick={onCreateProject} style={primaryBtn}
+          onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 8px 22px rgba(0,180,216,0.4)";}}
+          onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 6px 18px rgba(0,180,216,0.32)";}}>
+          + Démarrer un nouveau projet
+        </button>
       </div>
 
       {/* Raccourcis */}
@@ -4433,44 +4444,63 @@ function ClientWelcomePage({client,projects,onGoTo}){
         </div>
       </div>
 
-      {/* Projets en cours */}
+      {/* Projets — cœur de l'app */}
       <div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700}}>Vos projets en cours</p>
-          {projects.length>0&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>onGoTo("projets")}>Voir tout →</button>}
+          {projects.length>4&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>onGoTo("projets")}>Voir tout →</button>}
         </div>
         {projects.length===0?(
-          <div style={{background:"#FAFAFA",border:"1.5px dashed #E5E5EA",borderRadius:14,padding:"36px 24px",textAlign:"center"}}>
-            <div style={{fontSize:40,marginBottom:14}}>🎬</div>
-            <p style={{fontFamily:"'Inter'",fontSize:14,color:"#1D1D1F",fontWeight:600,marginBottom:6}}>Votre première production commence ici</p>
-            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:20,lineHeight:1.6}}>Contactez-nous pour lancer votre projet.<br/>Notre équipe vous accompagne de A à Z.</p>
-            <a href="mailto:contact@thirdone.studio" style={{background:"#00B4D8",color:"#FFFFFF",border:"none",borderRadius:10,padding:"11px 24px",fontSize:12,fontWeight:700,cursor:"pointer",letterSpacing:"0.04em",textTransform:"uppercase",textDecoration:"none",display:"inline-block",boxShadow:"0 4px 12px rgba(0,180,216,0.3)"}}>Démarrer un projet →</a>
+          <div style={{background:"linear-gradient(135deg,rgba(0,180,216,0.05),rgba(175,82,222,0.03))",border:"1.5px dashed rgba(0,180,216,0.3)",borderRadius:16,padding:"44px 24px",textAlign:"center"}}>
+            <div style={{fontSize:46,marginBottom:14}}>🎬</div>
+            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",fontWeight:800,marginBottom:6}}>Votre première production commence ici</p>
+            <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",marginBottom:22,lineHeight:1.6,maxWidth:380,marginLeft:"auto",marginRight:"auto"}}>Lancez votre projet en quelques secondes — on vous guide ensuite pour le brief, étape par étape.</p>
+            <button onClick={onCreateProject} style={primaryBtn}
+              onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-1px)";e.currentTarget.style.boxShadow="0 8px 22px rgba(0,180,216,0.4)";}}
+              onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="0 6px 18px rgba(0,180,216,0.32)";}}>+ Démarrer mon projet</button>
           </div>
         ):(
-          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
             {topProjects.map(p=>{
               const sc=statusColor(p.status);
               const pct=p.progress||0;
+              const curIdx=STEPS.findIndex(s=>s.k===p.status);
               return(
-                <button key={p.id} onClick={()=>onGoTo("projets")} style={{background:"#FFFFFF",border:"1.5px solid #E5E5EA",borderRadius:12,padding:"16px 18px",textAlign:"left",cursor:"pointer",width:"100%",transition:"all .2s",boxShadow:"0 2px 6px rgba(0,0,0,0.04)"}}
-                  onMouseEnter={e=>{e.currentTarget.style.borderColor=sc;e.currentTarget.style.boxShadow=`0 4px 16px ${sc}22`;}}
+                <button key={p.id} onClick={()=>onOpenProject(p.id)} style={{background:"#FFFFFF",border:"1.5px solid #E5E5EA",borderRadius:14,padding:"18px 20px",textAlign:"left",cursor:"pointer",width:"100%",transition:"all .2s",boxShadow:"0 2px 6px rgba(0,0,0,0.04)"}}
+                  onMouseEnter={e=>{e.currentTarget.style.borderColor=sc;e.currentTarget.style.boxShadow=`0 6px 20px ${sc}22`;}}
                   onMouseLeave={e=>{e.currentTarget.style.borderColor="#E5E5EA";e.currentTarget.style.boxShadow="0 2px 6px rgba(0,0,0,0.04)";}}>
-                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:12}}>
+                  <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:12,marginBottom:18}}>
                     <div style={{flex:1,minWidth:0}}>
-                      <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:700,color:"#1D1D1F",marginBottom:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{fontSize:12}}>{statusIcon(p.status)}</span>
-                        <span style={{fontFamily:"'Inter'",fontSize:11,color:sc,fontWeight:600}}>{statusLabel(p.status)}</span>
-                      </div>
+                      <p style={{fontFamily:"'Urbanist'",fontSize:16,fontWeight:800,color:"#1D1D1F",marginBottom:6,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
+                      <span style={{display:"inline-flex",alignItems:"center",gap:5,background:`${sc}15`,color:sc,fontFamily:"'Inter'",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20}}>{statusIcon(p.status)} {statusLabel(p.status)}</span>
                     </div>
                     <span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:sc,flexShrink:0}}>{pct}%</span>
                   </div>
-                  <div style={{height:4,background:"#F2F2F7",borderRadius:4,overflow:"hidden"}}>
-                    <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${sc}99,${sc})`,borderRadius:4,transition:"width .8s"}}/>
+                  {/* Stepper d'avancement */}
+                  <div style={{display:"flex",alignItems:"flex-start"}}>
+                    {STEPS.map((st,i)=>{
+                      const done=i<curIdx, current=i===curIdx;
+                      const last=i===STEPS.length-1;
+                      return(
+                        <div key={st.k} style={{display:"flex",alignItems:"center",flex:last?"0 0 auto":1}}>
+                          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6,flexShrink:0}}>
+                            <div style={{width:22,height:22,borderRadius:"50%",background:done?sc:current?"#FFFFFF":"#F2F2F7",border:`2px solid ${done||current?sc:"#E5E5EA"}`,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:current?`0 0 0 4px ${sc}22`:"none",transition:"all .2s"}}>
+                              {done&&<span style={{color:"#FFFFFF",fontSize:10,fontWeight:800,lineHeight:1}}>✓</span>}
+                              {current&&<div style={{width:7,height:7,borderRadius:"50%",background:sc}}/>}
+                            </div>
+                            <span style={{fontFamily:"'Inter'",fontSize:9.5,fontWeight:current?700:500,color:done||current?"#1D1D1F":"#C7C7CC",whiteSpace:"nowrap"}}>{st.l}</span>
+                          </div>
+                          {!last&&<div style={{flex:1,height:2,background:i<curIdx?sc:"#E5E5EA",margin:"0 6px",marginBottom:20,borderRadius:2,transition:"all .2s"}}/>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </button>
               );
             })}
+            <button onClick={onCreateProject} style={{background:"transparent",border:"1.5px dashed rgba(0,180,216,0.4)",borderRadius:14,padding:"15px",fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:"#00B4D8",cursor:"pointer",transition:"all .2s",width:"100%"}}
+              onMouseEnter={e=>{e.currentTarget.style.background="rgba(0,180,216,0.05)";e.currentTarget.style.borderColor="#00B4D8";}}
+              onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.borderColor="rgba(0,180,216,0.4)";}}>+ Démarrer un nouveau projet</button>
           </div>
         )}
       </div>
@@ -5857,6 +5887,8 @@ Accéder à votre espace : ${link}
   // ── PROD NAV ────────────────────────────────────────────────────────────────
   const prodNavAll=[
     {k:"dashboard",   l:"Dashboard",     icon:"📊"},
+    {k:"inbox",       l:"Inbox",         icon:"✉️"},
+    {k:"taches",      l:"Tâches",        icon:"✓"},
     {k:"projets",     l:"Projets",       icon:"📁"},
     {k:"calendrier",  l:"Calendrier",    icon:"📅"},
     {k:"organisation",l:"Organisation",  icon:"🗂️"},
@@ -6001,7 +6033,10 @@ Accéder à votre espace : ${link}
                   />
                 )}
                 {projetsView==="detail" && selProject && (
-                  <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions} onPreviewClient={handlePreviewClient} invoices={invoices.filter(i=>i.project_id===selProject.id)} onAddInvoice={()=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId)})} onEditInvoice={(inv)=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId),existing:inv})} onMarkPaid={(inv)=>markInvoicePaid(inv,selProject,clients.find(c=>c.id===selProject.clientId))} notifyClient={notifyClient}/>
+                  <>
+                    <ProjectAutoStatus project={selProject} onRefreshed={(d)=>updProject({...selProject,...d})}/>
+                    <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions} onPreviewClient={handlePreviewClient} invoices={invoices.filter(i=>i.project_id===selProject.id)} onAddInvoice={()=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId)})} onEditInvoice={(inv)=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId),existing:inv})} onMarkPaid={(inv)=>markInvoicePaid(inv,selProject,clients.find(c=>c.id===selProject.clientId))} notifyClient={notifyClient}/>
+                  </>
                 )}
                 {projetsView==="detail" && !selProject && (
                   <div className="card" style={{padding:24,textAlign:"center",color:"#8E8E93"}}>Sélectionnez un projet dans la liste.</div>
@@ -6055,9 +6090,15 @@ Accéder à votre espace : ${link}
                 }}
               />
             )}
+            {appView==="prod"&&prodSection==="inbox"&&(
+              <Inbox onOpenProject={(pid)=>{setSelectedProjectId(pid);setProdSection("projets");setProjetsView("detail");}}/>
+            )}
+            {appView==="prod"&&prodSection==="taches"&&(
+              <TasksReminders onOpenProject={(pid)=>{setSelectedProjectId(pid);setProdSection("projets");setProjetsView("detail");}}/>
+            )}
 
             {/* CLIENT SECTIONS */}
-            {appView==="client"&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection}/>}
+            {appView==="client"&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection} onCreateProject={()=>createProject()} onOpenProject={(id)=>{setSelectedProjectId(id);setClientSection("projets");}}/>}
             {appView==="client"&&clientSection==="projets"&&clientSelProject&&(
               <ClientProjectView key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing} serviceTypes={serviceTypes}/>
             )}
@@ -6100,6 +6141,7 @@ Accéder à votre espace : ${link}
         {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} initialClientId={createForClientId} onClose={()=>{setShowCreateModal(false);setCreateForClientId(null);}} onCreate={createProject}/>}
         {invoiceModal&&<InvoiceModal project={invoiceModal.project} client={invoiceModal.client} existing={invoiceModal.existing} onClose={()=>setInvoiceModal(null)} onSave={saveInvoice}/>}
         {showSettings&&<SettingsPanel settings={settings} onChange={setSettings} onClose={()=>setShowSettings(false)} user={user} onLogout={()=>supabase.auth.signOut()}/>}
+        {(isAdmin||isCollab)&&appView==="prod"&&<VoiceCapture currentProjectId={selectedProjectId}/>}
       </div>
     </>
   );
