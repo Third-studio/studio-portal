@@ -829,6 +829,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   };
   const saveBrief=async()=>{
     if(statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)){onNotif("URL invalide — domaine non autorisé");return;}
+    if(statusMeta.shootDate&&statusMeta.deliveryDate&&statusMeta.deliveryDate<statusMeta.shootDate){onNotif("La date de livraison ne peut pas être antérieure à la date de tournage.");return;}
     const newBrief={...brief,videoStatus:project.videoStatus,videoComment:project.videoComment};
     const safeUrl=statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)?statusMeta.replayUrl:null;
     await supabase.from("projects").update({brief:newBrief,delivery_date:statusMeta.deliveryDate||null,shoot_date:statusMeta.shootDate||null,status_note:statusMeta.statusNote||null,replay_url:safeUrl}).eq("id",project.id);
@@ -876,7 +877,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <div><Lbl>Date de tournage prévue</Lbl><input type="date" className="input" value={statusMeta.shootDate} onChange={e=>setStatusMeta(p=>({...p,shootDate:e.target.value}))}/></div>
-                <div><Lbl>Date de livraison prévue</Lbl><input type="date" className="input" value={statusMeta.deliveryDate} onChange={e=>setStatusMeta(p=>({...p,deliveryDate:e.target.value}))}/></div>
+                <div><Lbl>Date de livraison prévue</Lbl><input type="date" className="input" min={statusMeta.shootDate||undefined} value={statusMeta.deliveryDate} onChange={e=>setStatusMeta(p=>({...p,deliveryDate:e.target.value}))}/></div>
               </div>
               <div><Lbl>Note de statut (visible client)</Lbl><input className="input" placeholder="Ex: Montage en cours, livraison le 15 mai..." value={statusMeta.statusNote} onChange={e=>setStatusMeta(p=>({...p,statusNote:e.target.value}))}/></div>
               <div>
@@ -1276,6 +1277,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
     setSavingCharte(false);
   };
   const submitBrief=async()=>{
+    if(brief.shootDate&&brief.deliveryWished&&brief.deliveryWished<brief.shootDate){onNotif("La date de livraison souhaitée ne peut pas être antérieure à la date de tournage.");return;}
     setSaving(true);
     const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,deliveryWished:brief.deliveryWished,charteAssets:brief.charteAssets,submitted:true};
     await supabase.from("projects").update({title:brief.title||project.title,brief:newBrief,shoot_date:brief.shootDate||null}).eq("id",project.id);
@@ -1356,6 +1358,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
                       <Lbl>Date de livraison souhaitée</Lbl>
                       <input type="date" className="input" value={brief.deliveryWished}
                         disabled={!charteReady}
+                        min={brief.shootDate||undefined}
                         style={{opacity:charteReady?1:0.45,cursor:charteReady?"auto":"not-allowed"}}
                         onChange={e=>setBrief(p=>({...p,deliveryWished:e.target.value}))}/>
                       {!charteReady&&(
