@@ -5822,6 +5822,7 @@ Accéder à votre espace : ${link}
     const newClientId = userRole==="client" ? user.id : (clientId||null);
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:newClientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
     if(error){showNotif("Erreur : "+error.message);return null;}
+    supabase.functions.invoke("notify-new-project",{body:{project_id:data.id}}).catch(()=>{});
     const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
     setSelectedProjectId(np.id);
@@ -6085,6 +6086,7 @@ Accéder à votre espace : ${link}
                     replay_url:"",delivery_date:null,shoot_date:null,status_note:null
                   }).select().single();
                   if(error){showNotif("Erreur : "+error.message);return;}
+                  supabase.functions.invoke("notify-new-project",{body:{project_id:data.id}}).catch(()=>{});
                   const np={id:data.id,title:data.title,clientId:null,status:"brief",progress:0,createdAt:data.created_at?.split("T")[0],brief:data.brief,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
                   setProjects(ps=>[np,...ps]);
                   setSelectedProjectId(np.id);
