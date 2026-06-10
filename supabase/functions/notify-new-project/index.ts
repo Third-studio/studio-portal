@@ -9,8 +9,9 @@
 //   supabase.functions.invoke("notify-new-project", { body: { project_id } })
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendMail } from "../_shared/mailer.ts";
+import { renderEmail, escapeHtml } from "../_shared/template.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -82,63 +83,33 @@ serve(async (req) => {
     const link = "https://www.thirdone.studio";
     const subject = `🎬 Nouveau projet : ${title}`;
 
-    const rows = [
-      `Projet : ${title}`,
-      project.client_id ? `Client : ${clientName} (${clientEmail})${clientType ? " · " + clientType : ""}` : "Client : — (créé en interne)",
-      `Statut : ${project.status || "brief"}`,
-      source ? `Source : ${source}` : null,
-      `Créé le : ${when}`,
-    ].filter(Boolean);
-
     const text =
 `Un nouveau projet vient d'être créé sur la plateforme Third-One Studio.
 
-${rows.join("\n")}
+Projet : ${title}
+${project.client_id ? `Client : ${clientName} (${clientEmail})${clientType ? " · " + clientType : ""}` : "Client : — (créé en interne)"}
+Statut : ${project.status || "brief"}
+${source ? `Source : ${source}\n` : ""}Créé le : ${when}
 
 Ouvrir le back-office : ${link}
 
 — Notification automatique Third-One Studio`;
 
-    const html =
-`<div style="font-family:Inter,Arial,sans-serif;color:#1D1D1F;max-width:560px;margin:0 auto;padding:24px">
-  <div style="margin-bottom:18px">
-    <strong style="font-family:Urbanist,Arial,sans-serif;font-size:20px;color:#162040">Third</strong><strong style="font-family:Urbanist,Arial,sans-serif;font-size:20px;color:#00B4D8">One</strong>
-  </div>
-  <p style="margin:0 0 6px;font-size:13px;color:#00B4D8;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Nouveau projet</p>
-  <h1 style="font-family:Urbanist,Arial,sans-serif;font-size:22px;margin:0 0 16px;color:#1D1D1F">${title}</h1>
-  <table style="border-collapse:collapse;font-size:14px;line-height:1.6;margin:0 0 18px">
-    <tr><td style="color:#8E8E93;padding-right:14px">Client</td><td>${project.client_id ? `${clientName} &lt;${clientEmail}&gt;${clientType ? " · " + clientType : ""}` : "— (créé en interne)"}</td></tr>
-    <tr><td style="color:#8E8E93;padding-right:14px">Statut</td><td>${project.status || "brief"}</td></tr>
-    ${source ? `<tr><td style="color:#8E8E93;padding-right:14px">Source</td><td>${source}</td></tr>` : ""}
-    <tr><td style="color:#8E8E93;padding-right:14px">Créé le</td><td>${when}</td></tr>
-  </table>
-  <p style="margin:18px 0 0">
-    <a href="${link}" style="background:#00B4D8;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;display:inline-block">Ouvrir le back-office</a>
-  </p>
-  <p style="margin:24px 0 0;font-size:12px;color:#8E8E93">Notification automatique · Third-One Studio</p>
-</div>`;
+    const html = renderEmail({
+      preheader: `${title} — ${clientName}`,
+      kicker: "Nouveau projet",
+      title,
+      contentHtml: `<p style="margin:0 0 14px;">Un nouveau projet vient d'être créé sur la plateforme.</p>`,
+      rows: [
+        ["Client", project.client_id ? `${escapeHtml(clientName)} &lt;${escapeHtml(clientEmail)}&gt;${clientType ? " · " + escapeHtml(clientType) : ""}` : "— (créé en interne)"],
+        ["Statut", escapeHtml(project.status || "brief")],
+        ...(source ? [["Source", escapeHtml(String(source))] as [string, string]] : []),
+        ["Créé le", escapeHtml(when)],
+      ],
+      cta: { label: "Ouvrir le back-office", url: link },
+    });
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: Deno.env.get("SMTP_HOST") || "smtp.hostinger.com",
-        port: Number(Deno.env.get("SMTP_PORT") || "465"),
-        tls: true,
-        auth: {
-          username: Deno.env.get("SMTP_USER")!,
-          password: Deno.env.get("SMTP_PASS")!,
-        },
-      },
-    });
-    const fromName = Deno.env.get("FROM_NAME") || "Third-One Studio";
-    const fromUser = Deno.env.get("SMTP_USER")!;
-    await client.send({
-      from: `${fromName} <${fromUser}>`,
-      to: [NOTIFY_TO],
-      subject,
-      content: text,
-      html,
-    });
-    await client.close();
+    await sendMail({ to: NOTIFY_TO, subject, html, text });
 
     return json({ ok: true });
   } catch (e) {

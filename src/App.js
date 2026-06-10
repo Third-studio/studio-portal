@@ -3069,6 +3069,81 @@ function J2AlertBanner({projects,clients}){
   );
 }
 
+// MESSAGES À TRAITER (widget dashboard)
+// Dernier message de chaque conversation projet : si c'est le client (ou un prestataire)
+// qui a parlé en dernier → à traiter par l'équipe ; si c'est l'équipe → en attente client.
+// Catégorisation auto par mots-clés + tri par importance puis ancienneté.
+const MSG_CATS = [
+  { k:"urgent",     l:"⚠ Urgent",      color:"#FF3B30", re:/urgent|probl[èe]me|souci|erreur|bug|pas re[çc]u|inquiet|retard/i, w:0 },
+  { k:"validation", l:"✓ Validation",  color:"#34C759", re:/valid|approuv|storyboard|maquette|version|retour sur/i, w:1 },
+  { k:"facturation",l:"💰 Facturation", color:"#FF9F43", re:/factur|paiement|devis|tarif|prix|acompte|virement/i, w:1 },
+  { k:"planning",   l:"📅 Planning",    color:"#7B9CFF", re:/date|planning|tournage|dispo|report|rdv|horaire|cal[ée]/i, w:2 },
+  { k:"question",   l:"💬 Question",    color:"#00B4D8", re:/./, w:3 },
+];
+const msgCat = (text) => MSG_CATS.find(c => c.re.test(text||"")) || MSG_CATS[MSG_CATS.length-1];
+const daysSince = (d) => d ? Math.max(0, Math.floor((Date.now() - new Date(d+"T12:00:00").getTime()) / 86400000)) : 0;
+
+function MessagesATraiter({ projects, clients, onSelectProject, onSectionChange }) {
+  const [side, setSide] = useState("equipe"); // equipe | client
+  const items = projects
+    .filter(p => p.status !== "livraison" && (p.comments||[]).length > 0)
+    .map(p => {
+      const last = p.comments[p.comments.length-1];
+      const toTreatByTeam = last.role !== "prod";
+      const cat = msgCat(last.text);
+      const days = daysSince(last.date);
+      const clientName = clients.find(c => c.id === p.clientId)?.name || "Client";
+      return { p, last, toTreatByTeam, cat, days, clientName, score: cat.w*100 - days };
+    })
+    .filter(it => side === "equipe" ? it.toTreatByTeam : !it.toTreatByTeam)
+    .sort((a,b) => a.score - b.score);
+
+  const nTeam = projects.filter(p => p.status!=="livraison" && (p.comments||[]).length>0 && p.comments[p.comments.length-1].role!=="prod").length;
+  const nClient = projects.filter(p => p.status!=="livraison" && (p.comments||[]).length>0 && p.comments[p.comments.length-1].role==="prod").length;
+
+  return (
+    <div className="card" style={{ padding:16 }}>
+      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12, flexWrap:"wrap" }}>
+        <span style={{ fontFamily:"'Urbanist'", fontSize:15, color:"#1D1D1F", letterSpacing:"0.06em", fontWeight:800 }}>💬 MESSAGES À TRAITER</span>
+        <div style={{ display:"flex", gap:4, background:"#F5F5F7", padding:3, borderRadius:8, marginLeft:"auto" }}>
+          <button className={`tab ${side==="equipe"?"active":""}`} style={{ fontSize:11, padding:"5px 10px" }} onClick={()=>setSide("equipe")}>Notre côté ({nTeam})</button>
+          <button className={`tab ${side==="client"?"active":""}`} style={{ fontSize:11, padding:"5px 10px" }} onClick={()=>setSide("client")}>Côté client ({nClient})</button>
+        </div>
+      </div>
+      {items.length === 0 ? (
+        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#8E8E93", textAlign:"center", padding:"14px 0" }}>
+          {side==="equipe" ? "✓ Aucun message en attente de réponse de l'équipe." : "Aucune réponse client attendue."}
+        </p>
+      ) : (
+        <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+          {items.map(({ p, last, cat, days, clientName }) => (
+            <div key={p.id} onClick={()=>{ onSelectProject(p.id); onSectionChange("projets"); }}
+              style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 12px", background:"#FAFAFA",
+                border:`1px solid ${days>=3&&side==="equipe"?"#FF3B3040":"#E5E5EA"}`, borderRadius:10, cursor:"pointer", transition:"all .15s" }}
+              onMouseEnter={e=>e.currentTarget.style.borderColor="#00B4D8"}
+              onMouseLeave={e=>e.currentTarget.style.borderColor=days>=3&&side==="equipe"?"#FF3B3040":"#E5E5EA"}>
+              <span className="tag" style={{ background:cat.color+"18", color:cat.color, border:`1px solid ${cat.color}40`, flexShrink:0 }}>{cat.l}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:"'Inter'", fontSize:12, fontWeight:600, color:"#1D1D1F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+                  {p.title} <span style={{ color:"#8E8E93", fontWeight:400 }}>· {clientName}</span>
+                </div>
+                <div style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", marginTop:2 }}>
+                  {last.author} : {typeof last.text==="string" ? last.text.slice(0,90) : "(pièce jointe)"}
+                </div>
+              </div>
+              <span style={{ fontFamily:"'Inter'", fontSize:10, fontWeight:600, flexShrink:0, padding:"3px 8px", borderRadius:10,
+                background: days>=3?"#FF3B3018":days>=1?"#FF9F4318":"#00B4D818",
+                color: days>=3?"#FF3B30":days>=1?"#FF9500":"#00B4D8" }}>
+                {days===0?"aujourd'hui":days===1?"hier":`${days} j`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ADMIN DASHBOARD
 // ─────────────────────────────────────────────────────────────────────────────
 function AdminDashboard({ projects, clients, assignments, onSelectProject, onSectionChange, bookings=[], onGoToCalendar, teamMembers=[] }) {
@@ -3126,6 +3201,9 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
           </div>
         ))}
       </div>
+
+      {/* Messages à traiter */}
+      <MessagesATraiter projects={projects} clients={clients} onSelectProject={onSelectProject} onSectionChange={onSectionChange}/>
 
       {/* Tri */}
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -5818,20 +5896,16 @@ ${extra ? "\n" + extra + "\n" : ""}
 Accéder à votre espace : ${link}
 
 — Third-One Studio`;
-      const finalHtml = html ||
-`<div style="font-family:Inter,Arial,sans-serif;color:#1D1D1F;max-width:560px;margin:0 auto;padding:24px">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
-    <strong style="font-family:Urbanist,Arial,sans-serif;font-size:20px;color:#162040">Third</strong><strong style="font-family:Urbanist,Arial,sans-serif;font-size:20px;color:#00B4D8">One</strong>
-  </div>
-  <p style="margin:0 0 10px">${greet}</p>
-  <p style="margin:0 0 12px;line-height:1.55">${lead}</p>
-  ${extra ? `<p style="margin:0 0 12px;line-height:1.55;color:#6E6E73">${extra}</p>` : ""}
-  <p style="margin:18px 0 0">
-    <a href="${link}" style="background:#00B4D8;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;display:inline-block">Ouvrir mon espace</a>
-  </p>
-  <p style="margin:24px 0 0;font-size:12px;color:#8E8E93">Third-One Studio · contact@thirdone.studio</p>
-</div>`;
-      const{ error } = await supabase.functions.invoke("send-email", { body: { to, subject: finalSubject, html: finalHtml, text: finalText } });
+      // Le template de marque est appliqué côté serveur (send-email).
+      const fragment = html ||
+`<p style="margin:0 0 14px;">${greet}</p>
+<p style="margin:0 0 14px;">${lead}</p>
+${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
+      const{ error } = await supabase.functions.invoke("send-email", { body: {
+        to, subject: finalSubject, text: finalText, html: fragment,
+        kicker: "Suivi de projet", title: finalSubject,
+        cta: { label: "Ouvrir mon espace", url: link },
+      } });
       if(error) console.warn("notifyClient",error);
     }catch(e){ console.warn("notifyClient", e); }
   };

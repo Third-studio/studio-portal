@@ -101,7 +101,8 @@ serve(async (req) => {
             to: clientEmail,
             subject,
             text: body,
-            html: body.replace(/\n/g, "<br>"),
+            kicker: "Facturation",
+            cta: { label: "Ouvrir mon espace client", url: "https://www.thirdone.studio" },
           }),
         });
 

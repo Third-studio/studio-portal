@@ -1,20 +1,24 @@
 // supabase/functions/send-email/index.ts
 // Envoi d'emails transactionnels via SMTP Hostinger.
-// Réservé admin/collaborateur (vérif JWT côté Supabase + check rôle).
+// Réservé admin/collaborateur (vérif JWT) ou cron interne (X-Cron-Key).
 //
-// Secrets requis (supabase secrets set ...) :
-//   SMTP_HOST   smtp.hostinger.com
-//   SMTP_PORT   465
-//   SMTP_USER   contact@thirdone.studio
-//   SMTP_PASS   <mot de passe applicatif>
-//   FROM_NAME   Third-One Studio
+// Secrets requis : SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, FROM_NAME
 //
-// Appel côté front :
-//   supabase.functions.invoke("send-email", { body: { to, subject, html, text } })
+// Appel :
+//   supabase.functions.invoke("send-email", { body: {
+//     to, subject,
+//     text?,                    // texte brut (converti en HTML stylé si pas de html)
+//     html?,                    // fragment HTML (habillé dans le template de marque)
+//     kicker?, title?,          // sur-titre et titre de la carte
+//     cta?: { label, url },     // bouton d'action
+//     wrap?: false,             // true par défaut — false = envoyer html tel quel
+//     replyTo?
+//   }})
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { sendMail } from "../_shared/mailer.ts";
+import { renderEmail, nl2html } from "../_shared/template.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -55,38 +59,26 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => null);
     if (!body) return json({ error: "Invalid JSON" }, 400);
-    const { to, subject, html, text, replyTo } = body as {
+    const { to, subject, html, text, replyTo, kicker, title, cta, wrap } = body as {
       to: string | string[]; subject: string; html?: string; text?: string; replyTo?: string;
+      kicker?: string; title?: string; cta?: { label: string; url: string }; wrap?: boolean;
     };
     if (!to || !subject || (!html && !text)) {
       return json({ error: "Missing fields: to, subject, html|text" }, 400);
     }
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: Deno.env.get("SMTP_HOST") || "smtp.hostinger.com",
-        port: Number(Deno.env.get("SMTP_PORT") || "465"),
-        tls: true,
-        auth: {
-          username: Deno.env.get("SMTP_USER")!,
-          password: Deno.env.get("SMTP_PASS")!,
-        },
-      },
-    });
+    // Habillage dans le template de marque (sauf wrap:false)
+    const finalHtml = wrap === false && html
+      ? html
+      : renderEmail({
+          preheader: (text || "").slice(0, 110),
+          kicker: kicker || "Third-One Studio",
+          title: title ?? subject,
+          contentHtml: html || nl2html(text || ""),
+          cta,
+        });
 
-    const fromName = Deno.env.get("FROM_NAME") || "Third-One Studio";
-    const fromUser = Deno.env.get("SMTP_USER")!;
-    const recipients = Array.isArray(to) ? to : [to];
-
-    await client.send({
-      from: `${fromName} <${fromUser}>`,
-      to: recipients,
-      replyTo: replyTo || fromUser,
-      subject,
-      content: text || "Voir version HTML.",
-      html: html || undefined,
-    });
-    await client.close();
+    await sendMail({ to, subject, html: finalHtml, text, replyTo });
 
     return json({ ok: true });
   } catch (e) {
