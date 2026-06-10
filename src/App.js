@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 import Login from "./Login";
 import Inbox from "./Inbox";
 import TasksReminders from "./TasksReminders";
-import VoiceCapture from "./VoiceCapture";
+import Assistant from "./Assistant";
 import ProjectAutoStatus from "./ProjectAutoStatus";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11,12 +11,16 @@ import ProjectAutoStatus from "./ProjectAutoStatus";
 // ─────────────────────────────────────────────────────────────────────────────
 const FontLoader = () => (
   <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
-    body { background:#FFFFFF; color:#1D1D1F; font-family:'Inter',sans-serif; }
-    ::-webkit-scrollbar { width:4px; }
-    ::-webkit-scrollbar-track { background:#F5F5F7; }
-    ::-webkit-scrollbar-thumb { background:#C7C7CC; border-radius:2px; }
+    html { -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility; }
+    body { background:#FFFFFF; color:#1D1D1F; font-family:'Inter',sans-serif; font-feature-settings:'cv02','cv03','cv04'; letter-spacing:-0.011em; }
+    ::selection { background:rgba(0,180,216,0.18); color:#1D1D1F; }
+    :focus-visible { outline:2px solid rgba(0,180,216,0.55); outline-offset:2px; border-radius:4px; }
+    button:focus:not(:focus-visible), input:focus:not(:focus-visible) { outline:none; }
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:#D1D1D6; border-radius:3px; }
+    ::-webkit-scrollbar-thumb:hover { background:#AEAEB2; }
     @keyframes fadeUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:.4} }
     @keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -24,11 +28,11 @@ const FontLoader = () => (
     .fadeUp  { animation:fadeUp .35s ease both; }
     .countUp { animation:countUp .4s cubic-bezier(.34,1.56,.64,1) both; }
 
-    .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .18s ease;white-space:nowrap; }
+    .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);white-space:nowrap; }
     .btn:active { transform:scale(.97); }
     .btn:disabled { opacity:.4;cursor:not-allowed; }
-    .btn-primary { background:#00B4D8;color:#FFFFFF; }
-    .btn-primary:hover:not(:disabled) { background:#0090B3; }
+    .btn-primary { background:linear-gradient(180deg,#0BC2E6,#00A8CA);color:#FFFFFF;box-shadow:0 1px 2px rgba(0,144,179,0.4), 0 4px 14px rgba(0,180,216,0.25), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .btn-primary:hover:not(:disabled) { background:linear-gradient(180deg,#00B4D8,#0090B3);transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,144,179,0.4), 0 8px 22px rgba(0,180,216,0.32), inset 0 1px 0 rgba(255,255,255,0.25); }
     .btn-ghost { background:transparent;color:#6E6E73;border:1.5px solid #E5E5EA; }
     .btn-ghost:hover:not(:disabled) { border-color:#00B4D8;color:#00B4D8; }
     .btn-green { background:#34C75918;color:#34C759;border:1px solid #34C75940; }
@@ -42,16 +46,16 @@ const FontLoader = () => (
     .btn-purple { background:#AF52DE18;color:#AF52DE;border:1px solid #AF52DE40; }
     .btn-purple:hover:not(:disabled) { background:#AF52DE28; }
 
-    .card { background:#FFFFFF;border:1px solid #E5E5EA;border-radius:12px;overflow:hidden;transition:border-color .2s,box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,0.06); }
-    .card:hover { border-color:#D1D1D6;box-shadow:0 4px 16px rgba(0,0,0,0.10); }
+    .card { background:#FFFFFF;border:1px solid #E8E8ED;border-radius:14px;overflow:hidden;transition:border-color .25s cubic-bezier(.4,0,.2,1),box-shadow .25s cubic-bezier(.4,0,.2,1),transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 2px rgba(16,24,40,0.04), 0 2px 8px rgba(16,24,40,0.04); }
+    .card:hover { border-color:#D8D8DE;transform:translateY(-1px);box-shadow:0 2px 4px rgba(16,24,40,0.05), 0 10px 28px rgba(16,24,40,0.09); }
 
-    .input { width:100%;background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:8px;padding:10px 14px;color:#1D1D1F;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;resize:none; }
-    .input:focus { border-color:#00B4D8;box-shadow:0 0 0 3px rgba(0,180,216,0.12); }
+    .input { width:100%;background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:9px;padding:10px 14px;color:#1D1D1F;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;resize:none; }
+    .input:focus { border-color:#00B4D8;background:#FFFFFF;box-shadow:0 0 0 4px rgba(0,180,216,0.10); }
     .input::placeholder { color:#C7C7CC; }
     select.input { appearance:none;cursor:pointer; }
 
     .tab { padding:7px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border:none;transition:all .15s; }
-    .tab.active { background:#00B4D8;color:#FFFFFF;box-shadow:0 2px 8px rgba(0,180,216,0.3); }
+    .tab.active { background:linear-gradient(180deg,#0BC2E6,#00A8CA);color:#FFFFFF;box-shadow:0 2px 8px rgba(0,180,216,0.35), inset 0 1px 0 rgba(255,255,255,0.2); }
     .tab:not(.active) { background:transparent;color:#6E6E73; }
     .tab:not(.active):hover { color:#1D1D1F;background:#F5F5F7; }
 
@@ -105,9 +109,9 @@ const FontLoader = () => (
     .toggle.off::after { left:2px; }
 
     .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px; }
-    .modal { background:#FFFFFF;border:1px solid #E5E5EA;border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:fadeUp .25s ease;box-shadow:0 24px 64px rgba(0,0,0,0.12); }
+    .modal { background:#FFFFFF;border:1px solid #E8E8ED;border-radius:18px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:fadeUp .28s cubic-bezier(.16,1,.3,1);box-shadow:0 1px 2px rgba(16,24,40,0.06), 0 32px 80px rgba(16,24,40,0.18); }
 
-    .notif { position:fixed;bottom:24px;right:24px;z-index:200;background:#FFFFFF;border:1px solid #E5E5EA;border-radius:12px;padding:12px 18px;font-family:'Inter',sans-serif;font-size:13px;color:#1D1D1F;display:flex;align-items:center;gap:8px;animation:fadeUp .3s ease;box-shadow:0 8px 32px rgba(0,0,0,0.12); }
+    .notif { position:fixed;bottom:24px;right:24px;z-index:200;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid #E8E8ED;border-radius:14px;padding:12px 18px;font-family:'Inter',sans-serif;font-size:13px;color:#1D1D1F;display:flex;align-items:center;gap:8px;animation:fadeUp .3s cubic-bezier(.16,1,.3,1);box-shadow:0 2px 6px rgba(16,24,40,0.06), 0 12px 40px rgba(16,24,40,0.14); }
 
     .admin-input { background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:6px;padding:6px 10px;color:#1D1D1F;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;width:100%;text-align:right; }
     .admin-input:focus { border-color:#00B4D8; }
@@ -276,7 +280,21 @@ const fmtEur   = (n) => new Intl.NumberFormat("fr-FR",{style:"currency",currency
 const fmtD   = (s) => new Date(s+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"});
 const fmtS   = (s) => new Date(s+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"});
 const calcH  = (s,e) => { if(!s||!e)return 0; const[sh,sm]=s.split(":").map(Number);const[eh,em]=e.split(":").map(Number);return Math.max(0,(eh*60+em-sh*60-sm)/60); };
-const fmtProdAuthor = (nom) => { if(!nom)return"Studio"; const p=nom.trim().split(/\s+/); return p.length>1?p[0]+" "+p[1][0]+".":p[0]; };
+// Anonymisation chat : côté équipe on n'expose jamais le nom complet — alias (poste/surnom) + prénom, ou "Équipe ThirdOne".
+const fmtProdAuthor = (p) => {
+  if(!p) return "Équipe ThirdOne";
+  if(typeof p === "string"){ const w=p.trim().split(/\s+/); return w[0] ? `Équipe · ${w[0]}` : "Équipe ThirdOne"; }
+  const prenom=(p.nom||"").trim().split(/\s+/)[0];
+  if(p.alias) return prenom ? `${p.alias} · ${prenom}` : p.alias;
+  return prenom ? `Équipe · ${prenom}` : "Équipe ThirdOne";
+};
+// Côté client : prénom + entreprise, jamais le nom complet ni l'email.
+const fmtClientAuthor = (nomOuProfil, company) => {
+  const nom = typeof nomOuProfil === "string" ? nomOuProfil : (nomOuProfil?.nom || nomOuProfil?.name || "");
+  const comp = company ?? (typeof nomOuProfil === "object" ? nomOuProfil?.company : null);
+  const prenom = (nom||"").trim().split(/\s+/)[0] || "Client";
+  return comp ? `${prenom} · ${comp}` : prenom;
+};
 const downloadICS = (summary, dateStr, description="", location="Third-One Studio, Martinique") => {
   const d=dateStr.replace(/-/g,"");
   const nd=new Date(dateStr+"T12:00:00");nd.setDate(nd.getDate()+1);
@@ -821,7 +839,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   const addSB=sb=>{onUpdate({...project,storyboards:[...project.storyboards,sb]});setShowGen(false);onNotif("Storyboard généré !");};
   const updSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif("Statut mis à jour");};
   const addMsg=async(text,role)=>{
-    const author=role==="prod"?fmtProdAuthor(userProfile?.nom):(userProfile?.nom||"Client");
+    const author=role==="prod"?fmtProdAuthor(userProfile):fmtClientAuthor(userProfile);
     const date=new Date().toISOString().split("T")[0];
     const c={id:Date.now(),author,text,date,role};
     onUpdate({...project,comments:[...project.comments,c]});
@@ -980,7 +998,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
       )}
       {tab==="comments"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="prod"/></div>}
       {tab==="charte"&&<CharteGraphiquePanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
-      {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={fmtProdAuthor(userProfile?.nom)} isAdmin={true}/>}
+      {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={fmtProdAuthor(userProfile)} isAdmin={true}/>}
       {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif} notifyClient={notifyClient} client={clientForNotif}/>}
       {tab==="facturation"&&(
         <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1288,7 +1306,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
 
   const valSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif(st==="approved"?"Storyboard approuvé !":"Révision demandée");};
   const addMsg=async(text)=>{
-    const author=clientData?.name||"Client";
+    const author=fmtClientAuthor(clientData?.name, clientData?.company);
     const date=new Date().toISOString().split("T")[0];
     const c={id:Date.now(),author,text,date,role:"client"};
     onUpdate({...project,comments:[...project.comments,c]});
@@ -3831,7 +3849,7 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
 // ─────────────────────────────────────────────────────────────────────────────
 function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProject}){
   const TYPES=["PME","Startup","Association","Collectivité","Particulier","Autre"];
-  const emptyForm={nom:"",email:"",password:"",client_type:"PME",discount:0,simulator_enabled:false,shortone_enabled:false};
+  const emptyForm={nom:"",email:"",password:"",company:"",client_type:"PME",discount:0,simulator_enabled:false,shortone_enabled:false};
   const[tab,setTab]=useState("liste");
   const[form,setForm]=useState(emptyForm);
   const[editId,setEditId]=useState(null);
@@ -3840,7 +3858,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
   const[showPass,setShowPass]=useState(false);
   const F=(k,v)=>setForm(p=>({...p,[k]:v}));
 
-  const openEdit=(c)=>{setEditId(c.id);setForm({nom:c.name,email:c.email,password:"",client_type:c.type,discount:c.discount,simulator_enabled:c.simulatorEnabled,shortone_enabled:c.shortoneEnabled||false});setTab("edit");};
+  const openEdit=(c)=>{setEditId(c.id);setForm({nom:c.name,email:c.email,password:"",company:c.company||"",client_type:c.type,discount:c.discount,simulator_enabled:c.simulatorEnabled,shortone_enabled:c.shortoneEnabled||false});setTab("edit");};
   const cancelEdit=()=>{setEditId(null);setForm(emptyForm);setTab("liste");};
 
   const createAccount=async()=>{
@@ -3850,8 +3868,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
     if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
     const uid=data.user?.id;
     if(!uid){onNotif("Erreur création compte");setSaving(false);return;}
-    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_active:true});
-    const nc={id:uid,name:form.nom||form.email,email:form.email,type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isActive:true};
+    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",company:form.company||null,client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_active:true});
+    const nc={id:uid,name:form.nom||form.email,email:form.email,company:form.company||"",type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isActive:true};
     setClients(cs=>[...cs,nc]);
     setCreatedPass(form.password);
     setShowPass(true);
@@ -3863,8 +3881,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 
   const saveEdit=async()=>{
     setSaving(true);
-    await supabase.from("profiles").update({nom:form.nom,client_type:form.client_type,discount:Number(form.discount),simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled}).eq("id",editId);
-    setClients(cs=>cs.map(c=>c.id===editId?{...c,name:form.nom||c.email,type:form.client_type,discount:Number(form.discount),simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled}:c));
+    await supabase.from("profiles").update({nom:form.nom,company:form.company||null,client_type:form.client_type,discount:Number(form.discount),simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled}).eq("id",editId);
+    setClients(cs=>cs.map(c=>c.id===editId?{...c,name:form.nom||c.email,company:form.company||"",type:form.client_type,discount:Number(form.discount),simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled}:c));
     setSaving(false);
     onNotif("Compte mis à jour");
     cancelEdit();
@@ -3898,6 +3916,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
       <div style={{display:"flex",flexDirection:"column",gap:12}}>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
           <div><Lbl>Nom complet</Lbl><input className="input" placeholder="Jean Dupont" value={form.nom} onChange={e=>F("nom",e.target.value)}/></div>
+          <div><Lbl>Entreprise</Lbl><input className="input" placeholder="Société XYZ (affiché dans le chat)" value={form.company} onChange={e=>F("company",e.target.value)}/></div>
           <div><Lbl>Type de client</Lbl><select className="input" value={form.client_type} onChange={e=>F("client_type",e.target.value)}>{TYPES.map(t=><option key={t} value={t}>{t}</option>)}</select></div>
         </div>
         <div><Lbl>Email</Lbl><input className="input" type="email" placeholder="client@email.com" value={form.email} onChange={e=>F("email",e.target.value)} disabled={!isNew} style={!isNew?{opacity:.5}:{}}/></div>
@@ -5711,7 +5730,7 @@ function AppMain() {
       }
       if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
       if(bookingsData) setBookings(bookingsData.map(b=>({...b,projectId:b.project_id||null,client:b.client_name||"",team:b.team||"A",status:b.status||"option",note:b.note||"",startTime:b.start_time||"08:00",endTime:b.end_time||"17:00",createdAt:b.created_at?.split("T")[0],expiresAt:b.expires_at||null,extras:b.extras||[],confirmType:b.confirm_type||null})));
-      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isActive:p.is_active!==false})));
+      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",company:p.company||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isActive:p.is_active!==false})));
       if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#00B4D8"})));
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
@@ -5849,7 +5868,7 @@ Accéder à votre espace : ${link}
   const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
 
   const activeClient = isClient && userProfile
-    ? { id:user.id, name:userProfile.nom||user.email, email:user.email, simulatorEnabled:userProfile.simulator_enabled||false, shortoneEnabled:userProfile.shortone_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
+    ? { id:user.id, name:userProfile.nom||user.email, email:user.email, company:userProfile.company||"", simulatorEnabled:userProfile.simulator_enabled||false, shortoneEnabled:userProfile.shortone_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
     : previewClient || clients[0];
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
 
@@ -6146,7 +6165,7 @@ Accéder à votre espace : ${link}
         {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} initialClientId={createForClientId} onClose={()=>{setShowCreateModal(false);setCreateForClientId(null);}} onCreate={createProject}/>}
         {invoiceModal&&<InvoiceModal project={invoiceModal.project} client={invoiceModal.client} existing={invoiceModal.existing} onClose={()=>setInvoiceModal(null)} onSave={saveInvoice}/>}
         {showSettings&&<SettingsPanel settings={settings} onChange={setSettings} onClose={()=>setShowSettings(false)} user={user} onLogout={()=>supabase.auth.signOut()}/>}
-        {(isAdmin||isCollab)&&appView==="prod"&&<VoiceCapture currentProjectId={selectedProjectId}/>}
+        {(isAdmin||isCollab||userRole==="client")&&<Assistant isTeam={isAdmin||isCollab} currentProjectId={selectedProjectId}/>}
       </div>
     </>
   );

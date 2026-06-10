@@ -18,7 +18,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-cron-key",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -27,24 +27,30 @@ serve(async (req) => {
   if (req.method !== "POST") return new Response("Method not allowed", { status: 405, headers: CORS });
 
   try {
-    const auth = req.headers.get("Authorization") || "";
-    const jwt = auth.replace("Bearer ", "");
-    if (!jwt) return json({ error: "Missing JWT" }, 401);
+    // Bypass JWT si appel cron interne avec clé partagée
+    const cronKey = req.headers.get("X-Cron-Key");
+    const isCron = cronKey && cronKey === Deno.env.get("CRON_SHARED_SECRET");
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: { Authorization: auth } } }
-    );
+    if (!isCron) {
+      const auth = req.headers.get("Authorization") || "";
+      const jwt = auth.replace("Bearer ", "");
+      if (!jwt) return json({ error: "Missing JWT" }, 401);
 
-    const { data: userData, error: userErr } = await supabase.auth.getUser(jwt);
-    if (userErr || !userData?.user) return json({ error: "Invalid session" }, 401);
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+        { global: { headers: { Authorization: auth } } }
+      );
 
-    const { data: profile } = await supabase
-      .from("profiles").select("role").eq("id", userData.user.id).single();
-    const role = profile?.role;
-    if (role !== "admin" && role !== "collaborateur") {
-      return json({ error: "Forbidden" }, 403);
+      const { data: userData, error: userErr } = await supabase.auth.getUser(jwt);
+      if (userErr || !userData?.user) return json({ error: "Invalid session" }, 401);
+
+      const { data: profile } = await supabase
+        .from("profiles").select("role").eq("id", userData.user.id).single();
+      const role = profile?.role;
+      if (role !== "admin" && role !== "collaborateur") {
+        return json({ error: "Forbidden" }, 403);
+      }
     }
 
     const body = await req.json().catch(() => null);
