@@ -4,12 +4,12 @@ import { supabase } from "./supabase";
 // Couleurs par type de mail (cohérence avec la palette existante)
 const KIND_COLORS = {
   info:       { bg: "#6E6E7318", color: "#6E6E73", label: "Info" },
-  devis_in:   { bg: "#AF52DE18", color: "#AF52DE", label: "Devis reçu" },
-  facture_in: { bg: "#FF950018", color: "#FF9500", label: "Facture" },
-  rdv:        { bg: "#00B4D818", color: "#00B4D8", label: "RDV" },
-  livrable:   { bg: "#34C75918", color: "#34C759", label: "Livrable" },
-  relance:    { bg: "#FF9F4318", color: "#FF9F43", label: "Relance" },
-  spam:       { bg: "#FF3B3018", color: "#FF3B30", label: "Spam" },
+  devis_in:   { bg: "#AF52DE18", color: "#7C3AED", label: "Devis reçu" },
+  facture_in: { bg: "#FF950018", color: "#B45309", label: "Facture" },
+  rdv:        { bg: "#00B4D818", color: "#0077B6", label: "RDV" },
+  livrable:   { bg: "#34C75918", color: "#15803D", label: "Livrable" },
+  relance:    { bg: "#FF9F4318", color: "#B45309", label: "Relance" },
+  spam:       { bg: "#FF3B3018", color: "#D70015", label: "Spam" },
   autre:      { bg: "#C7C7CC18", color: "#6E6E73", label: "Autre" },
 };
 
@@ -144,12 +144,12 @@ export default function Inbox({ onOpenProject }) {
                   }} />
                   <span className="tag" style={{ background: kc.bg, color: kc.color }}>{kc.label}</span>
                   {proj && (
-                    <span style={{ fontSize: 11, color: "#00B4D8", fontWeight: 600 }}>
+                    <span style={{ fontSize: 11, color: "#0077B6", fontWeight: 600 }}>
                       • {proj.title}
                     </span>
                   )}
                   {!e.classified && (
-                    <span style={{ fontSize: 10, color: "#FF9500" }}>non classifié</span>
+                    <span style={{ fontSize: 10, color: "#B45309" }}>non classifié</span>
                   )}
                   <span style={{ marginLeft: "auto", fontSize: 11, color: "#6E6E73" }}>
                     {formatDate(e.received_at)}
@@ -200,7 +200,7 @@ export default function Inbox({ onOpenProject }) {
 
             {selected.summary_fr && (
               <div style={{ background: "#F5F5F7", padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 13 }}>
-                <strong style={{ fontSize: 11, color: "#00B4D8", textTransform: "uppercase" }}>Résumé IA</strong>
+                <strong style={{ fontSize: 11, color: "#0077B6", textTransform: "uppercase" }}>Résumé IA</strong>
                 <div style={{ marginTop: 4 }}>{selected.summary_fr}</div>
               </div>
             )}
@@ -254,7 +254,7 @@ function FullEmailBody({ emailId }) {
     <>
       {full.action_items?.length > 0 && (
         <div style={{ marginBottom: 16 }}>
-          <strong style={{ fontSize: 11, color: "#00B4D8", textTransform: "uppercase" }}>
+          <strong style={{ fontSize: 11, color: "#0077B6", textTransform: "uppercase" }}>
             Actions extraites
           </strong>
           <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 13 }}>

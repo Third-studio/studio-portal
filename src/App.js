@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Fragment } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
 import Inbox from "./Inbox";
@@ -31,75 +31,75 @@ const FontLoader = () => (
     .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);white-space:nowrap; }
     .btn:active { transform:scale(.97); }
     .btn:disabled { opacity:.4;cursor:not-allowed; }
-    .btn-primary { background:linear-gradient(180deg,#0BC2E6,#00A8CA);color:#FFFFFF;box-shadow:0 1px 2px rgba(0,144,179,0.4), 0 4px 14px rgba(0,180,216,0.25), inset 0 1px 0 rgba(255,255,255,0.25); }
-    .btn-primary:hover:not(:disabled) { background:linear-gradient(180deg,#00B4D8,#0090B3);transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,144,179,0.4), 0 8px 22px rgba(0,180,216,0.32), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .btn-primary { background:linear-gradient(180deg,#0096C7,#0077B6);color:#FFFFFF;box-shadow:0 1px 2px rgba(0,144,179,0.4), 0 4px 14px rgba(0,180,216,0.25), inset 0 1px 0 rgba(255,255,255,0.25); }
+    .btn-primary:hover:not(:disabled) { background:linear-gradient(180deg,#0077B6,#02618F);transform:translateY(-1px);box-shadow:0 2px 4px rgba(0,144,179,0.4), 0 8px 22px rgba(0,180,216,0.32), inset 0 1px 0 rgba(255,255,255,0.25); }
     .btn-ghost { background:transparent;color:#6E6E73;border:1.5px solid #E5E5EA; }
-    .btn-ghost:hover:not(:disabled) { border-color:#00B4D8;color:#00B4D8; }
-    .btn-green { background:#34C75918;color:#34C759;border:1px solid #34C75940; }
+    .btn-ghost:hover:not(:disabled) { border-color:#0077B6;color:#0077B6; }
+    .btn-green { background:#34C75918;color:#15803D;border:1px solid #34C75940; }
     .btn-green:hover:not(:disabled) { background:#34C75928; }
-    .btn-red { background:#FF3B3018;color:#FF3B30;border:1px solid #FF3B3040; }
+    .btn-red { background:#FF3B3018;color:#D70015;border:1px solid #FF3B3040; }
     .btn-red:hover:not(:disabled) { background:#FF3B3028; }
-    .btn-blue { background:#00B4D818;color:#00B4D8;border:1px solid #00B4D840; }
+    .btn-blue { background:#00B4D818;color:#0077B6;border:1px solid #00B4D840; }
     .btn-blue:hover:not(:disabled) { background:#00B4D828; }
-    .btn-orange { background:#FF9F4318;color:#FF9500;border:1px solid #FF950040; }
+    .btn-orange { background:#FF9F4318;color:#B45309;border:1px solid #FF950040; }
     .btn-orange:hover:not(:disabled) { background:#FF950028; }
-    .btn-purple { background:#AF52DE18;color:#AF52DE;border:1px solid #AF52DE40; }
+    .btn-purple { background:#AF52DE18;color:#7C3AED;border:1px solid #AF52DE40; }
     .btn-purple:hover:not(:disabled) { background:#AF52DE28; }
 
     .card { background:#FFFFFF;border:1px solid #E8E8ED;border-radius:14px;overflow:hidden;transition:border-color .25s cubic-bezier(.4,0,.2,1),box-shadow .25s cubic-bezier(.4,0,.2,1),transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 2px rgba(16,24,40,0.04), 0 2px 8px rgba(16,24,40,0.04); }
     .card:hover { border-color:#D8D8DE;transform:translateY(-1px);box-shadow:0 2px 4px rgba(16,24,40,0.05), 0 10px 28px rgba(16,24,40,0.09); }
 
     .input { width:100%;background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:9px;padding:10px 14px;color:#1D1D1F;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;resize:none; }
-    .input:focus { border-color:#00B4D8;background:#FFFFFF;box-shadow:0 0 0 4px rgba(0,180,216,0.10); }
+    .input:focus { border-color:#0077B6;background:#FFFFFF;box-shadow:0 0 0 4px rgba(0,180,216,0.10); }
     .input::placeholder { color:#C7C7CC; }
     select.input { appearance:none;cursor:pointer; }
 
     .tab { padding:7px 14px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;border:none;transition:all .15s; }
-    .tab.active { background:linear-gradient(180deg,#0BC2E6,#00A8CA);color:#FFFFFF;box-shadow:0 2px 8px rgba(0,180,216,0.35), inset 0 1px 0 rgba(255,255,255,0.2); }
+    .tab.active { background:linear-gradient(180deg,#0096C7,#0077B6);color:#FFFFFF;box-shadow:0 2px 8px rgba(0,180,216,0.35), inset 0 1px 0 rgba(255,255,255,0.2); }
     .tab:not(.active) { background:transparent;color:#6E6E73; }
     .tab:not(.active):hover { color:#1D1D1F;background:#F5F5F7; }
 
     .nav-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;font-size:13px;color:#6E6E73;border:1px solid transparent; }
     .nav-item:hover { background:#F2F2F7;color:#1D1D1F; }
-    .nav-item.active { background:rgba(0,180,216,0.08);color:#00B4D8;border-color:rgba(0,180,216,0.2); }
+    .nav-item.active { background:rgba(0,180,216,0.08);color:#0077B6;border-color:rgba(0,180,216,0.2); }
 
     .sidebar-proj { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;font-size:12px;color:#6E6E73;border:1px solid transparent; }
     .sidebar-proj:hover { background:#F2F2F7;color:#1D1D1F; }
-    .sidebar-proj.active { background:rgba(0,180,216,0.08);color:#00B4D8;border-color:rgba(0,180,216,0.2); }
+    .sidebar-proj.active { background:rgba(0,180,216,0.08);color:#0077B6;border-color:rgba(0,180,216,0.2); }
 
     .progress-bar { height:3px;background:#E5E5EA;border-radius:2px;overflow:hidden; }
     .progress-fill { height:100%;border-radius:2px;background:linear-gradient(90deg,#0090B3,#00B4D8);transition:width .6s ease; }
 
     .check-item { display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:#FAFAFA;border-radius:8px;border:1px solid #E5E5EA;cursor:pointer;transition:all .15s;user-select:none; }
     .check-item:hover { border-color:#D1D1D6; }
-    .check-item.done { background:#F0FDF4;border-color:#34C75930; }
+    .check-item.done { background:#F0FDF4;border-color:#15803D30; }
     .check-box { width:18px;height:18px;border-radius:4px;border:2px solid #C7C7CC;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;margin-top:1px; }
-    .check-box.checked { background:#34C759;border-color:#34C759; }
+    .check-box.checked { background:#34C759;border-color:#15803D; }
 
     .cal-day { aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .15s ease;position:relative;border:1px solid transparent;min-height:48px; }
     .cal-day:hover:not(.past):not(.empty):not(.full) { transform:scale(1.05);z-index:2; }
     .cal-day.empty    { cursor:default;opacity:0;pointer-events:none; }
     .cal-day.past     { cursor:default;opacity:.3; }
     .cal-day.available { background:#FAFAFA;border-color:#E5E5EA; }
-    .cal-day.available:hover { border-color:#4ECDC4;background:#4ECDC410; }
-    .cal-day.option-a  { background:#FF9F4318;border-color:#FF9F4344; }
-    .cal-day.option-b  { background:#00B4D818;border-color:#00B4D844; }
-    .cal-day.option-ab { background:#FF9F4318;border-color:#FF9F4344; }
-    .cal-day.full      { background:#FF3B3012;border-color:#FF3B3033;cursor:not-allowed; }
-    .cal-day.confirmed-a { background:#00B4D812;border-color:#00B4D833; }
-    .cal-day.confirmed-b { background:#4ECDC412;border-color:#4ECDC433; }
-    .cal-day.confirmed-ab { background:#FF3B3018;border-color:#FF3B3044;cursor:not-allowed; }
-    .cal-day.partial-a  { background:linear-gradient(135deg,#00B4D812 50%,#FAFAFA 50%);border-color:#00B4D833; }
-    .cal-day.partial-b  { background:linear-gradient(135deg,#4ECDC412 50%,#FAFAFA 50%);border-color:#4ECDC433; }
+    .cal-day.available:hover { border-color:#0F766E;background:#4ECDC410; }
+    .cal-day.option-a  { background:#FF9F4318;border-color:#B4530944; }
+    .cal-day.option-b  { background:#00B4D818;border-color:#0077B644; }
+    .cal-day.option-ab { background:#FF9F4318;border-color:#B4530944; }
+    .cal-day.full      { background:#FF3B3012;border-color:#D7001533;cursor:not-allowed; }
+    .cal-day.confirmed-a { background:#00B4D812;border-color:#0077B633; }
+    .cal-day.confirmed-b { background:#4ECDC412;border-color:#0F766E33; }
+    .cal-day.confirmed-ab { background:#FF3B3018;border-color:#D7001544;cursor:not-allowed; }
+    .cal-day.partial-a  { background:linear-gradient(135deg,#00B4D812 50%,#FAFAFA 50%);border-color:#0077B633; }
+    .cal-day.partial-b  { background:linear-gradient(135deg,#4ECDC412 50%,#FAFAFA 50%);border-color:#0F766E33; }
     .cal-day.partial-ab { background:linear-gradient(135deg,#00B4D812 50%,#4ECDC412 50%);border-color:#6E6E7344; }
-    .cal-day.selected { border-color:#00B4D8 !important;background:#00B4D820 !important;box-shadow:0 0 0 2px #00B4D840; }
+    .cal-day.selected { border-color:#0077B6 !important;background:#00B4D820 !important;box-shadow:0 0 0 2px #00B4D840; }
     .cal-day.today { box-shadow:inset 0 0 0 2px #00B4D888; }
 
     .option-card { padding:12px 14px;border-radius:10px;border:2px solid #E5E5EA;cursor:pointer;transition:all .18s;background:#FAFAFA;display:flex;align-items:flex-start;gap:10px; }
     .option-card:hover { border-color:#D1D1D6;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.06); }
-    .option-card.selected { border-color:#00B4D8;background:rgba(0,180,216,0.06); }
+    .option-card.selected { border-color:#0077B6;background:rgba(0,180,216,0.06); }
     .option-check { width:18px;height:18px;border-radius:50%;border:2px solid #C7C7CC;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s; }
-    .option-check.checked { background:#00B4D8;border-color:#00B4D8; }
+    .option-check.checked { background:#00B4D8;border-color:#0077B6; }
 
     .toggle { width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;transition:all .2s;position:relative;flex-shrink:0; }
     .toggle.on  { background:#00B4D8; }
@@ -114,24 +114,24 @@ const FontLoader = () => (
     .notif { position:fixed;bottom:24px;right:24px;z-index:200;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid #E8E8ED;border-radius:14px;padding:12px 18px;font-family:'Inter',sans-serif;font-size:13px;color:#1D1D1F;display:flex;align-items:center;gap:8px;animation:fadeUp .3s cubic-bezier(.16,1,.3,1);box-shadow:0 2px 6px rgba(16,24,40,0.06), 0 12px 40px rgba(16,24,40,0.14); }
 
     .admin-input { background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:6px;padding:6px 10px;color:#1D1D1F;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .2s;width:100%;text-align:right; }
-    .admin-input:focus { border-color:#00B4D8; }
+    .admin-input:focus { border-color:#0077B6; }
 
     .tag { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase; }
-    .tag-brief       { background:#00B4D818;color:#00B4D8; }
-    .tag-storyboard  { background:#FF950018;color:#FF9500; }
-    .tag-review      { background:#FF9F4318;color:#FF9F43; }
-    .tag-delivered   { background:#34C75918;color:#34C759; }
+    .tag-brief       { background:#00B4D818;color:#0077B6; }
+    .tag-storyboard  { background:#FF950018;color:#B45309; }
+    .tag-review      { background:#FF9F4318;color:#B45309; }
+    .tag-delivered   { background:#34C75918;color:#15803D; }
 
     .time-cell { background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:6px;padding:6px 8px;color:#1D1D1F;font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;width:100%;text-align:center;transition:border-color .2s; }
-    .time-cell:focus { border-color:#00B4D8; }
+    .time-cell:focus { border-color:#0077B6; }
 
     .step-dot { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;transition:all .3s;font-family:'Inter',sans-serif; }
     .step-dot.done   { background:#34C759;color:#FFFFFF; }
     .step-dot.active { background:#00B4D8;color:#FFFFFF; }
-    .step-dot.todo   { background:#F2F2F7;color:#8E8E93;border:1px solid #E5E5EA; }
+    .step-dot.todo   { background:#F2F2F7;color:#6E6E73;border:1px solid #E5E5EA; }
 
     .price-range { background:linear-gradient(135deg,rgba(0,180,216,0.06),rgba(0,180,216,0.02));border:1px solid rgba(0,180,216,0.2);border-radius:12px;padding:24px;text-align:center; }
-    .discount-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;background:#34C75918;color:#34C759;border:1px solid #34C75940; }
+    .discount-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-family:'Inter',sans-serif;font-size:11px;font-weight:600;background:#34C75918;color:#15803D;border:1px solid #34C75940; }
     .clickup-badge  { display:inline-flex;align-items:center;gap:5px;padding:3px 8px;background:#7B68EE18;border:1px solid #7B68EE44;border-radius:12px;font-family:'Inter',sans-serif;font-size:10px;color:#7B68EE;font-weight:600; }
 
     .timeline-step { display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;position:relative; }
@@ -140,7 +140,7 @@ const FontLoader = () => (
     .timeline-dot { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;z-index:1;font-family:'Inter',sans-serif; }
     .dot-done   { background:#34C759;color:#FFFFFF; }
     .dot-active { background:#00B4D8;color:#FFFFFF;animation:pulse 1.8s infinite; }
-    .dot-todo   { background:#F2F2F7;color:#8E8E93;border:1px solid #E5E5EA; }
+    .dot-todo   { background:#F2F2F7;color:#6E6E73;border:1px solid #E5E5EA; }
 
     .comment-bubble       { padding:10px 14px;border-radius:10px;font-family:'Inter',sans-serif;font-size:13px;line-height:1.5;max-width:80%; }
     .comment-prod         { background:#F2F2F7;color:#1D1D1F;align-self:flex-start; }
@@ -150,13 +150,14 @@ const FontLoader = () => (
     .equip-item { display:flex;align-items:center;gap:8px;padding:8px 12px;background:#FAFAFA;border-radius:8px;border:1px solid #E5E5EA;transition:all .15s; }
     .equip-item.included { border-color:rgba(0,180,216,0.3); }
     .type-pill { padding:5px 12px;border-radius:20px;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px;font-weight:500;border:1.5px solid #E5E5EA;background:#FAFAFA;color:#6E6E73;transition:all .15s; }
-    .type-pill.selected { background:rgba(0,180,216,0.08);border-color:#00B4D8;color:#00B4D8; }
+    .type-pill.selected { background:rgba(0,180,216,0.08);border-color:#0077B6;color:#0077B6; }
     .type-pill:hover:not(.selected) { border-color:#D1D1D6;color:#1D1D1F; }
 
     /* ── RESPONSIVE ── */
     .app-body { display:flex;flex:1;overflow:hidden; }
     .app-sidebar { width:200px;border-right:1px solid #E5E5EA;background:rgba(247,247,247,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:14px 10px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex-shrink:0;transition:transform .25s ease; }
-    .app-main { flex:1;overflow-y:auto;padding:22px 24px; }
+    .app-main { flex:1;overflow-y:auto;padding:22px 24px 120px; }
+    .hscroll { -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); }
     .mob-only { display:none !important; }
     .desk-only { display:flex; }
     .sidebar-backdrop { display:none; }
@@ -164,7 +165,7 @@ const FontLoader = () => (
     @media (max-width:768px) {
       .app-sidebar { position:fixed;left:0;top:54px;height:calc(100vh - 54px);z-index:40;transform:translateX(-100%);box-shadow:none;width:220px; }
       .app-sidebar.open { transform:translateX(0);box-shadow:4px 0 30px rgba(0,0,0,0.12); }
-      .app-main { padding:14px 14px 90px; }
+      .app-main { padding:14px 14px 110px; }
       .mob-only { display:flex !important; }
       .desk-only { display:none !important; }
       .sidebar-backdrop { display:block;position:fixed;inset:0;top:54px;background:rgba(0,0,0,0.3);z-index:39;backdrop-filter:blur(2px); }
@@ -172,7 +173,7 @@ const FontLoader = () => (
       .modal { max-width:100% !important;border-radius:12px; }
     }
     @media (max-width:480px) {
-      .app-main { padding:12px 12px 90px; }
+      .app-main { padding:12px 12px 110px; }
       .btn { font-size:12px;padding:7px 12px; }
       .input { font-size:13px;padding:9px 12px; }
     }
@@ -187,6 +188,28 @@ const STATUS_INDEX   = { brief:0, storyboard:1, tournage:2, montage:3, livraison
 const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com)(\/|$)/i;
 const isSafeUrl=(url)=>{if(!url)return false;try{return ALLOWED_DOMAINS.test(new URL(url).href);}catch{return false;}};
 const safePortfolioUrl=(url)=>{if(!url)return null;try{const u=new URL(url.trim());return["https:","http:"].includes(u.protocol)?u.href:null;}catch{return null;}};
+const prettyName=(n)=>{const s=(n||"").trim();if(!s)return"";const base=s.includes("@")?s.split("@")[0]:s;const w=base.split(/[._\-\s]+/).filter(Boolean)[0]||base;return w.charAt(0).toUpperCase()+w.slice(1);};
+
+// ── Icônes de navigation (SVG, remplace les emojis) ──────────────────────────
+const NAV_PATHS={
+  dashboard:<><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></>,
+  inbox:<><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></>,
+  taches:<><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>,
+  projets:<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>,
+  calendrier:<><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></>,
+  organisation:<><path d="m12 2 8.5 4.5L12 11 3.5 6.5Z"/><path d="m3.5 12 8.5 4.5 8.5-4.5"/><path d="m3.5 17 8.5 4.5 8.5-4.5"/></>,
+  planning:<><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/><path d="M8 15h.01"/><path d="M12 15h.01"/><path d="M16 15h.01"/></>,
+  cm:<><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></>,
+  prestataires:<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></>,
+  tarifs:<><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></>,
+  comptes:<><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></>,
+  shortone:<path d="M12 3l7 9-7 9-7-9z"/>,
+  accueil:<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></>,
+  estimation:<><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M8 16h.01"/><path d="M12 16h.01"/><path d="M16 16h.01"/></>,
+};
+const NavIcon=({k})=>NAV_PATHS[k]
+  ?<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}} aria-hidden="true">{NAV_PATHS[k]}</svg>
+  :<span style={{fontSize:14}}>◆</span>;
 const SHOOT_TYPES    = ["Corporate","Événementiel","Interview","Clip / Fiction","Documentaire","Institutionnel"];
 // const OPTION_EXP_H   = 72;
 const TODAY          = new Date();
@@ -313,13 +336,14 @@ function Lbl({children,style={}}){
   return <label style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",display:"block",marginBottom:5,...style}}>{children}</label>;
 }
 function SH({icon,title,sub,right}){
+  const t=title&&title.length>3&&title===title.toUpperCase()?title.charAt(0)+title.slice(1).toLowerCase():title;
   return(
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <div style={{width:32,height:32,borderRadius:8,background:"#00B4D818",border:"1px solid #00B4D830",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{icon}</div>
+        <div style={{width:32,height:32,borderRadius:8,background:"#00B4D814",border:"1px solid #00B4D826",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{icon}</div>
         <div>
-          <h3 style={{fontFamily:"'Urbanist'",fontSize:16,color:"#1D1D1F",letterSpacing:"0.05em"}}>{title}</h3>
-          {sub&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:1}}>{sub}</p>}
+          <h3 style={{fontFamily:"'Urbanist'",fontSize:16,fontWeight:800,color:"#1D1D1F",letterSpacing:"-0.01em"}}>{t}</h3>
+          {sub&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:1}}>{sub}</p>}
         </div>
       </div>
       {right}
@@ -417,21 +441,21 @@ function PrestaireProposalCard({content}){
         <div style={{background:"#F5F5F7",borderRadius:8,padding:"12px 14px",border:"1px solid #4ECDC430"}}>
           {data.prix&&(
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:data.description?6:0,flexWrap:"wrap"}}>
-              <span style={{fontFamily:"'Urbanist'",fontSize:22,color:"#4ECDC4",letterSpacing:"0.04em"}}>{Number(data.prix).toLocaleString("fr-FR")} €</span>
+              <span style={{fontFamily:"'Urbanist'",fontSize:22,color:"#0F766E",letterSpacing:"0.04em"}}>{Number(data.prix).toLocaleString("fr-FR")} €</span>
               <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>— proposition</span>
-              {data.non_concurrence&&<span style={{fontFamily:"'Inter'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",marginLeft:"auto"}}>✓ Clause non-concurrence acceptée</span>}
+              {data.non_concurrence&&<span style={{fontFamily:"'Inter'",fontSize:10,color:"#0F766E",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",marginLeft:"auto"}}>✓ Clause non-concurrence acceptée</span>}
             </div>
           )}
           {data.description&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",fontStyle:"italic",lineHeight:1.5}}>{data.description}</p>}
         </div>
       )}
       {data.message&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{data.message}</p>}
-      {!data.prix&&data.non_concurrence&&<span style={{fontFamily:"'Inter'",fontSize:10,color:"#4ECDC4",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",alignSelf:"flex-start"}}>✓ Clause non-concurrence acceptée</span>}
+      {!data.prix&&data.non_concurrence&&<span style={{fontFamily:"'Inter'",fontSize:10,color:"#0F766E",background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:10,padding:"2px 8px",alignSelf:"flex-start"}}>✓ Clause non-concurrence acceptée</span>}
       {(data.portfolio_urls||[]).length>0&&(
         <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-          <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Portfolio :</span>
+          <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>Portfolio :</span>
           {data.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(
-            <a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
+            <a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#4F46E5",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>
           ):null;})}
         </div>
       )}
@@ -446,11 +470,11 @@ function CommentThread({comments,onAdd,role="prod"}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"flex",flexDirection:"column",gap:8,maxHeight:320,overflowY:"auto",padding:"2px 0"}}>
-        {comments.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucun message.</p>}
+        {comments.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"20px 0"}}>Aucun message.</p>}
         {comments.map(c=>(
           <div key={c.id} style={{display:"flex",flexDirection:"column",alignItems:c.role==="client"?"flex-end":"flex-start",gap:2}}>
-            <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",paddingInline:4}}>
-              {c.role==="prestataire"&&<span style={{color:"#4ECDC4",marginRight:4}}>🤝</span>}
+            <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",paddingInline:4}}>
+              {c.role==="prestataire"&&<span style={{color:"#0F766E",marginRight:4}}>🤝</span>}
               {c.author} · {fmtS(c.date)}
             </span>
             <div className={`comment-bubble comment-${c.role==="client"?"client":c.role==="prestataire"?"prestataire":"prod"}`}>
@@ -478,7 +502,7 @@ function FrameCard({frame,index}){
     <div style={{flex:"0 0 auto",width:150,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,overflow:"hidden",transition:"all .2s"}}>
       <div style={{height:90,background:colors[index%colors.length],display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,position:"relative"}}>
         {frame.visual}
-        <span style={{position:"absolute",top:5,left:7,fontFamily:"'Urbanist'",fontSize:10,color:"#8E8E93",letterSpacing:1}}>PLAN {index+1}</span>
+        <span style={{position:"absolute",top:5,left:7,fontFamily:"'Urbanist'",fontSize:10,color:"#6E6E73",letterSpacing:1}}>PLAN {index+1}</span>
       </div>
       <div style={{padding:"7px 9px"}}><p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",lineHeight:1.4}}>{frame.desc}</p></div>
     </div>
@@ -506,10 +530,10 @@ function AIGenerator({project,onGenerated}){
   return(
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:7,padding:"10px 12px"}}>
-        <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#8E8E93",lineHeight:1.6,whiteSpace:"pre-line"}}>{briefTxt}</p>
+        <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#6E6E73",lineHeight:1.6,whiteSpace:"pre-line"}}>{briefTxt}</p>
       </div>
       <textarea className="input" rows={3} placeholder="Instructions créatives : ambiance, angles, éléments visuels clés..." value={prompt} onChange={e=>setPrompt(e.target.value)}/>
-      {error&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#FF3B30"}}>{error}</p>}
+      {error&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015"}}>{error}</p>}
       <button className="btn btn-primary" onClick={gen} disabled={loading||!prompt.trim()} style={{alignSelf:"flex-start",opacity:loading?.7:1}}>
         {loading?<><span style={{animation:"spin 1s linear infinite",display:"inline-block"}}>⟳</span> Génération...</>:"✦ Générer"}
       </button>
@@ -522,9 +546,9 @@ function ProdLivrables({project,onUpdate,onNotif,notifyClient,client}){
   const[form,setForm]=useState({name:"",url:"",note:""});
   const[notify,setNotify]=useState(true);
   const sections=[
-    {key:"rushes",  label:"Rushes",              icon:"🎬",color:"#7B9CFF",colorDim:"#7B9CFF18",colorBorder:"#7B9CFF30",vis:false},
-    {key:"droits",  label:"Documents de droits", icon:"📄",color:"#FF9F43",colorDim:"#FF9F4318",colorBorder:"#FF9F4330",vis:false},
-    {key:"finaux",  label:"Livrables finaux",     icon:"✦", color:"#4ECDC4",colorDim:"#4ECDC418",colorBorder:"#4ECDC430",vis:true},
+    {key:"rushes",  label:"Rushes",              icon:"🎬",color:"#4F46E5",colorDim:"#7B9CFF18",colorBorder:"#7B9CFF30",vis:false},
+    {key:"droits",  label:"Documents de droits", icon:"📄",color:"#B45309",colorDim:"#FF9F4318",colorBorder:"#FF9F4330",vis:false},
+    {key:"finaux",  label:"Livrables finaux",     icon:"✦", color:"#0F766E",colorDim:"#4ECDC418",colorBorder:"#4ECDC430",vis:true},
   ];
   const files=key=>(project.livrables||[]).filter(l=>l.category===key);
   const add=async()=>{
@@ -551,7 +575,7 @@ function ProdLivrables({project,onUpdate,onNotif,notifyClient,client}){
                 <div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     <span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sec.label}</span>
-                    <span style={{fontFamily:"'Inter'",fontSize:9,color:sec.vis?sec.color:"#8E8E93",background:sec.vis?sec.colorDim:"#F2F2F7",border:`1px solid ${sec.vis?sec.colorBorder:"#E5E5EA"}`,borderRadius:8,padding:"1px 6px"}}>{sec.vis?"Visible client":"Interne"}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:9,color:sec.vis?sec.color:"#6E6E73",background:sec.vis?sec.colorDim:"#F2F2F7",border:`1px solid ${sec.vis?sec.colorBorder:"#E5E5EA"}`,borderRadius:8,padding:"1px 6px"}}>{sec.vis?"Visible client":"Interne"}</span>
                   </div>
                 </div>
               </div>
@@ -581,7 +605,7 @@ function ProdLivrables({project,onUpdate,onNotif,notifyClient,client}){
                     <div style={{width:5,height:5,borderRadius:"50%",background:sec.color,flexShrink:0}}/>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{f.name}</p>
-                      {f.note&&<p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{f.note}</p>}
+                      {f.note&&<p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{f.note}</p>}
                     </div>
                     {safePortfolioUrl(f.url)&&<a href={safePortfolioUrl(f.url)} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",textDecoration:"none"}}>↗</a>}
                     <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>del(f.id)}>✕</button>
@@ -661,7 +685,7 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
 
       {/* Grid */}
       {items.length===0&&(
-        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>
+        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"30px 0"}}>
           Aucune image pour l'instant.<br/><span style={{fontSize:11}}>Collez des URLs ou uploadez des fichiers pour construire votre direction artistique.</span>
         </p>
       )}
@@ -676,8 +700,8 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
               <div style={{position:"absolute",inset:0,background:"rgba(8,8,15,0.75)",opacity:hoverId===item.id?1:0,transition:"opacity .18s",display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"8px"}}>
                 {item.caption&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#1D1D1F",lineHeight:1.4}}>{item.caption}</p>}
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginTop:"auto"}}>
-                  <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{item.addedBy}</span>
-                  <button style={{background:"#FF3B3018",border:"1px solid #FF3B3033",borderRadius:4,color:"#FF3B30",fontFamily:"'Inter'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>remove(item.id)}>✕</button>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{item.addedBy}</span>
+                  <button style={{background:"#FF3B3018",border:"1px solid #FF3B3033",borderRadius:4,color:"#D70015",fontFamily:"'Inter'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>remove(item.id)}>✕</button>
                 </div>
               </div>
             </div>
@@ -750,7 +774,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
     <div className="fadeUp" style={{display:"flex",flexDirection:"column",gap:16}}>
       {/* Logo */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>LOGO</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#0077B6",letterSpacing:"0.08em",marginBottom:12}}>LOGO</p>
         <div style={{display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
           {charte.logoUrl&&(
             <img src={charte.logoUrl} alt="logo" style={{height:80,borderRadius:8,border:"1px solid #E5E5EA",background:"#F5F5F7",objectFit:"contain",padding:4}} onError={e=>{e.target.style.display="none";}}/>
@@ -766,7 +790,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
 
       {/* Couleurs */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>PALETTE DE COULEURS</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#0077B6",letterSpacing:"0.08em",marginBottom:12}}>PALETTE DE COULEURS</p>
         <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
           {(charte.colors||[]).map((col,idx)=>(
             <div key={idx} style={{position:"relative",display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
@@ -782,7 +806,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
                 style={{position:"absolute",opacity:0,width:1,height:1,pointerEvents:"none"}}
                 onChange={e=>updateColor(idx,e.target.value)}
               />
-              <button onClick={()=>removeColor(idx)} style={{background:"none",border:"none",color:"#8E8E93",cursor:"pointer",fontSize:10,padding:0,lineHeight:1}}>✕</button>
+              <button onClick={()=>removeColor(idx)} style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:10,padding:0,lineHeight:1}}>✕</button>
             </div>
           ))}
           <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px"}} onClick={addColor}>+ Couleur</button>
@@ -798,7 +822,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
 
       {/* Typographies */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>TYPOGRAPHIES</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#0077B6",letterSpacing:"0.08em",marginBottom:12}}>TYPOGRAPHIES</p>
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
           {(charte.fonts||[]).map((font,idx)=>(
             <div key={idx} style={{display:"flex",gap:8,alignItems:"center"}}>
@@ -812,7 +836,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
 
       {/* Notes */}
       <div className="card" style={{padding:18}}>
-        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#00B4D8",letterSpacing:"0.08em",marginBottom:12}}>NOTES / GUIDELINES</p>
+        <p style={{fontFamily:"'Urbanist'",fontSize:12,color:"#0077B6",letterSpacing:"0.08em",marginBottom:12}}>NOTES / GUIDELINES</p>
         <textarea
           className="input"
           rows={4}
@@ -874,10 +898,10 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
-          <div><h2 style={{fontFamily:"'Urbanist'",fontSize:26,color:"#1D1D1F",letterSpacing:"0.04em"}}>{project.title}</h2></div>
+          <div><h2 style={{fontFamily:"'Urbanist'",fontSize:26,fontWeight:800,color:"#1D1D1F",letterSpacing:"-0.01em"}}>{project.title}</h2></div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
-            {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#7B9CFF",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
+            {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#4F46E5",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
             {notifyClient&&project.clientId&&(<button className="btn btn-orange" style={{fontSize:11,padding:"4px 10px"}} onClick={notifyRevisionDone} title="Notifier le client que les modifs sont prêtes">✦ Modifs terminées</button>)}
             {notifyClient&&project.clientId&&project.status!=="livraison"&&(<button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={markDelivered} title="Marquer le projet comme livré + notification email">📦 Marquer livré</button>)}
             <span className={`tag tag-${project.status}`}>{project.status}</span>
@@ -885,7 +909,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
         </div>
         <div style={{marginTop:12}}><Timeline status={project.status}/></div>
       </div>
-      <div style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
+      <div className="hscroll" style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
         {tabs.map(t=><button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
       </div>
       {tab==="brief"&&(
@@ -904,7 +928,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                   <input className="input" placeholder="https://vimeo.com/..." value={statusMeta.replayUrl} onChange={e=>setStatusMeta(p=>({...p,replayUrl:e.target.value}))} style={{flex:1,borderColor:statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)?"#FF3B30":undefined}}/>
                   {statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)&&<a href={statusMeta.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗ Voir</a>}
                 </div>
-                {statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#FF3B30",marginTop:4}}>⚠ Domaine non autorisé — utilisez YouTube, Vimeo, Dropbox, Drive, WeTransfer ou Frame.io</p>}
+                {statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#D70015",marginTop:4}}>⚠ Domaine non autorisé — utilisez YouTube, Vimeo, Dropbox, Drive, WeTransfer ou Frame.io</p>}
               </div>
               {project.videoStatus&&(
                 <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF3B3018":"#00B4D818",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC433":project.videoStatus==="revision"?"#FF3B3033":"#00B4D833"}`}}>
@@ -944,11 +968,11 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               <div className="card" style={{padding:18,marginTop:12}}>
                 <SH icon="🎵" title="AMBIANCE MUSICALE"/>
                 <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                  {m.ambiances?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Ambiance</p><div>{m.ambiances.map(a=><Tag key={a}>{AMB_LABELS[a]||a}</Tag>)}</div></div>}
-                  {m.genres?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Genre</p><div>{m.genres.map(g=><Tag key={g}>{GEN_LABELS[g]||g}</Tag>)}</div></div>}
-                  {m.instruments?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Instruments</p><div>{m.instruments.map(i=><Tag key={i}>{INS_LABELS[i]||i}</Tag>)}</div></div>}
-                  {(m.tempo||m.voix)&&<div style={{display:"flex",gap:16,flexWrap:"wrap"}}>{m.tempo&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Tempo</p><Tag>{TEMPO_LABELS[m.tempo]||m.tempo}</Tag></div>}{m.voix&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Voix</p><Tag>{VOIX_LABELS[m.voix]||m.voix}</Tag></div>}</div>}
-                  {m.inspiration&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Inspiration</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontStyle:"italic"}}>"{m.inspiration}"</p></div>}
+                  {m.ambiances?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Ambiance</p><div>{m.ambiances.map(a=><Tag key={a}>{AMB_LABELS[a]||a}</Tag>)}</div></div>}
+                  {m.genres?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Genre</p><div>{m.genres.map(g=><Tag key={g}>{GEN_LABELS[g]||g}</Tag>)}</div></div>}
+                  {m.instruments?.length>0&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Instruments</p><div>{m.instruments.map(i=><Tag key={i}>{INS_LABELS[i]||i}</Tag>)}</div></div>}
+                  {(m.tempo||m.voix)&&<div style={{display:"flex",gap:16,flexWrap:"wrap"}}>{m.tempo&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Tempo</p><Tag>{TEMPO_LABELS[m.tempo]||m.tempo}</Tag></div>}{m.voix&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Voix</p><Tag>{VOIX_LABELS[m.voix]||m.voix}</Tag></div>}</div>}
+                  {m.inspiration&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Inspiration</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontStyle:"italic"}}>"{m.inspiration}"</p></div>}
                 </div>
               </div>
             );
@@ -962,11 +986,11 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               <div className="card" style={{padding:18,marginTop:12,border:"1px solid #7B9CFF33",background:"#7B9CFF06"}}>
                 <SH icon="🎨" title="ÉLÉMENTS DE MARQUE"/>
                 <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                  {ca.noCharte&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#FF9F43",background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:6,padding:"4px 10px",display:"inline-block"}}>⚠ Client sans logo / charte graphique</span>}
-                  {ca.logoUrl&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Logo</p><a href={safePortfolioUrl(ca.logoUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",textDecoration:"underline",wordBreak:"break-all"}}>{ca.logoUrl}</a></div>}
-                  {ca.charteUrl&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Charte graphique</p><a href={safePortfolioUrl(ca.charteUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",textDecoration:"underline",wordBreak:"break-all"}}>{ca.charteUrl}</a></div>}
-                  {ca.autresUrls&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Autres ressources</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{ca.autresUrls}</p></div>}
-                  {project.brief?.deliveryWished&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Livraison souhaitée</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{project.brief.deliveryWished}</p></div>}
+                  {ca.noCharte&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#B45309",background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:6,padding:"4px 10px",display:"inline-block"}}>⚠ Client sans logo / charte graphique</span>}
+                  {ca.logoUrl&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Logo</p><a href={safePortfolioUrl(ca.logoUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#0077B6",textDecoration:"underline",wordBreak:"break-all"}}>{ca.logoUrl}</a></div>}
+                  {ca.charteUrl&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Charte graphique</p><a href={safePortfolioUrl(ca.charteUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#0077B6",textDecoration:"underline",wordBreak:"break-all"}}>{ca.charteUrl}</a></div>}
+                  {ca.autresUrls&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Autres ressources</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{ca.autresUrls}</p></div>}
+                  {project.brief?.deliveryWished&&<div><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Livraison souhaitée</p><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{project.brief.deliveryWished}</p></div>}
                 </div>
               </div>
             );
@@ -983,11 +1007,11 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
           {project.storyboards.map(sb=>(
             <div key={sb.id} className="card fadeUp" style={{padding:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
-                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{fmtS(sb.createdAt)}</span></div>
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{fmtS(sb.createdAt)}</span></div>
                 <div style={{display:"flex",gap:6,alignItems:"center"}}>
-                  {sb.validationStatus==="approved"&&<span className="tag" style={{background:"#4ECDC422",color:"#4ECDC4"}}>✓ Approuvé</span>}
-                  {sb.validationStatus==="pending"&&<span className="tag" style={{background:"#00B4D822",color:"#00B4D8"}}>⏳ En attente</span>}
-                  {sb.validationStatus==="revision"&&<span className="tag" style={{background:"#FF3B3022",color:"#FF3B30"}}>↩ Révision</span>}
+                  {sb.validationStatus==="approved"&&<span className="tag" style={{background:"#4ECDC422",color:"#0F766E"}}>✓ Approuvé</span>}
+                  {sb.validationStatus==="pending"&&<span className="tag" style={{background:"#00B4D822",color:"#0077B6"}}>⏳ En attente</span>}
+                  {sb.validationStatus==="revision"&&<span className="tag" style={{background:"#FF3B3022",color:"#D70015"}}>↩ Révision</span>}
                   {sb.validationStatus!=="approved"&&<button className="btn btn-green" style={{fontSize:11}} onClick={()=>updSB(sb.id,"approved")}>Valider</button>}
                 </div>
               </div>
@@ -1006,7 +1030,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
             <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>FACTURATION</h3>
             {onAddInvoice&&<button className="btn btn-primary" onClick={onAddInvoice}>+ Nouvelle facture</button>}
           </div>
-          {projInvoices.length===0 && <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune facture sur ce projet.</p>}
+          {projInvoices.length===0 && <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"20px 0"}}>Aucune facture sur ce projet.</p>}
           {projInvoices.map(inv=>{
             const col=inv.status==="paid"?"#34C759":inv.status==="overdue"?"#FF3B30":inv.status==="sent"?"#FF9F43":inv.status==="cancelled"?"#8E8E93":"#7B9CFF";
             const lbl=inv.status==="paid"?"✓ Payée":inv.status==="overdue"?"⚠ En retard":inv.status==="sent"?"⏳ À payer":inv.status==="cancelled"?"Annulée":"Brouillon";
@@ -1014,11 +1038,11 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               <div key={inv.id} className="card" style={{padding:14,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",borderColor:col+"44"}}>
                 <div style={{flex:"1 1 220px",minWidth:0}}>
                   <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{inv.number||"(sans numéro)"} — {inv.label||"—"}</p>
-                  <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Émise {inv.issued_at||"—"}{inv.due_date?` · échéance ${inv.due_date}`:""}{inv.paid_at?` · payée ${inv.paid_at}`:""}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>Émise {inv.issued_at||"—"}{inv.due_date?` · échéance ${inv.due_date}`:""}{inv.paid_at?` · payée ${inv.paid_at}`:""}</p>
                 </div>
                 <div style={{textAlign:"right",minWidth:130}}>
                   <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",fontWeight:700}}>{Number(inv.amount_ttc||0).toFixed(2)} €</p>
-                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{Number(inv.amount_ht||0).toFixed(2)} HT · TVA {inv.vat_rate}%</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{Number(inv.amount_ht||0).toFixed(2)} HT · TVA {inv.vat_rate}%</p>
                 </div>
                 <span style={{background:col+"22",color:col,border:`1px solid ${col}55`,borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:600}}>{lbl}</span>
                 <div style={{display:"flex",gap:6}}>
@@ -1043,13 +1067,13 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
               <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>RÉSERVATIONS LIÉES</h3>
               {onGoToCalendar&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={onGoToCalendar}>Voir dans le calendrier →</button>}
             </div>
-            {projBookings.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune réservation liée à ce projet.</p>}
+            {projBookings.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"20px 0"}}>Aucune réservation liée à ce projet.</p>}
             {projBookings.map(b=>(
               <div key={b.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                 <div style={{width:5,height:5,borderRadius:"50%",background:statusColor(b.status),flexShrink:0}}/>
                 <div style={{flex:1,minWidth:0}}>
                   <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:500,color:"#1D1D1F"}}>{b.client||b.client_name}</p>
-                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{fmtS(b.date)} · Équipe {b.team} · {b.startTime||""}–{b.endTime||""}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{fmtS(b.date)} · Équipe {b.team} · {b.startTime||""}–{b.endTime||""}</p>
                 </div>
                 <span style={{fontFamily:"'Inter'",fontSize:11,color:statusColor(b.status),background:statusColor(b.status)+"18",border:`1px solid ${statusColor(b.status)}30`,borderRadius:10,padding:"2px 8px"}}>
                   {b.status==="confirmed"?`Confirmé (${b.confirmType||""})`:"Option"}
@@ -1124,7 +1148,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
       <SH icon="▶" title="VALIDATION VIDÉO" sub="Visionnez et approuvez ou demandez des révisions"/>
 
       {!project.replayUrl&&(
-        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>Aucune vidéo partagée pour l'instant.<br/><span style={{fontSize:11}}>L'équipe vous notifiera dès qu'une version sera disponible.</span></p>
+        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"30px 0"}}>Aucune vidéo partagée pour l'instant.<br/><span style={{fontSize:11}}>L'équipe vous notifiera dès qu'une version sera disponible.</span></p>
       )}
 
       {project.replayUrl&&(
@@ -1178,7 +1202,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {!showRevForm?(
                 <div style={{display:"flex",gap:8}}>
-                  <button className="btn btn-ghost" style={{flex:1,color:"#FF9F43",borderColor:"#FF9F4330"}} onClick={()=>setShowRevForm(true)}>↩ Demander des révisions</button>
+                  <button className="btn btn-ghost" style={{flex:1,color:"#B45309",borderColor:"#FF9F4330"}} onClick={()=>setShowRevForm(true)}>↩ Demander des révisions</button>
                   <button className="btn btn-green" style={{flex:1}} disabled={saving} onClick={()=>saveValidation("approved")}>✓ Approuver la vidéo</button>
                 </div>
               ):(
@@ -1196,7 +1220,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
 
           {project.videoStatus==="approved"&&(
             <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
-              <button className="btn btn-ghost" style={{fontSize:11,color:"#8E8E93"}} onClick={()=>saveValidation(null,"")}>Annuler mon approbation</button>
+              <button className="btn btn-ghost" style={{fontSize:11,color:"#6E6E73"}} onClick={()=>saveValidation(null,"")}>Annuler mon approbation</button>
             </div>
           )}
         </div>
@@ -1206,7 +1230,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
       {!isGuest&&(
         <div style={{marginTop:14,paddingTop:14,borderTop:"1px solid #E5E5EA"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:showInvite?10:0}}>
-            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>👥 Accès invité</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>👥 Accès invité</p>
             <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setShowInvite(v=>!v)}>{showInvite?"✕ Fermer":"Inviter un collaborateur"}</button>
           </div>
           {showInvite&&(
@@ -1234,12 +1258,12 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
                   <div key={g.token} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:"1px solid #E5E5EA",flexWrap:"wrap"}}>
                     <div style={{flex:1,minWidth:0}}>
                       <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:500}}>{g.name}</p>
-                      <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#8E8E93",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{url}</p>
+                      <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#6E6E73",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{url}</p>
                     </div>
                     <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopiedToken(g.token);onNotif("Lien copié !");}}>
                       {copiedToken===g.token?"✓ Copié":"Copier"}
                     </button>
-                    <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:"#FF3B30",borderColor:"#FF3B3030"}} onClick={async()=>{
+                    <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:"#D70015",borderColor:"#FF3B3030"}} onClick={async()=>{
                       const guests=(project.brief?.guests||[]).filter(x=>x.token!==g.token);
                       const newBrief={...project.brief,guests};
                       await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
@@ -1318,7 +1342,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
   if(showIntake) return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp" style={{background:"linear-gradient(135deg,rgba(0,180,216,0.06),rgba(175,82,222,0.03))",border:"1px solid rgba(0,180,216,0.12)",borderRadius:14,padding:"22px 24px"}}>
-        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#AF52DE",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:6}}>Première étape</p>
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#7C3AED",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:6}}>Première étape</p>
         <h2 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:4,fontWeight:800}}>Votre brief de production</h2>
         <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",lineHeight:1.6}}>Décrivez votre vision — plus vous partagez de détails, plus notre équipe pourra vous proposer une production qui vous ressemble.</p>
       </div>
@@ -1380,7 +1404,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
                         style={{opacity:charteReady?1:0.45,cursor:charteReady?"auto":"not-allowed"}}
                         onChange={e=>setBrief(p=>({...p,deliveryWished:e.target.value}))}/>
                       {!charteReady&&(
-                        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#AF52DE",marginTop:4}}>
+                        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#7C3AED",marginTop:4}}>
                           ↑ Partagez vos éléments de marque (ou cochez la case ci-dessus) pour débloquer ce champ.
                         </p>
                       )}
@@ -1395,7 +1419,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
           {serviceTypes.length>0&&(
             <div>
               <Lbl>Services additionnels dont vous avez besoin</Lbl>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginBottom:8}}>Sélectionnez les services complémentaires pour ce projet (lieu, traiteur, transport…)</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginBottom:8}}>Sélectionnez les services complémentaires pour ce projet (lieu, traiteur, transport…)</p>
               <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                 {serviceTypes.filter(t=>t.actif!==false).map(t=>{
                   const sel=brief.services.includes(t.id);
@@ -1427,11 +1451,11 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
               <div style={{display:"flex",flexDirection:"column",gap:16,paddingTop:4}}>
                 <div style={{borderTop:"1px solid #E5E5EA",paddingTop:16}}>
                   <Lbl>🎵 Ambiance musicale souhaitée</Lbl>
-                  <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginBottom:10}}>Guidez notre choix musical — plus vous êtes précis, plus la musique sera adaptée à votre vision.</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginBottom:10}}>Guidez notre choix musical — plus vous êtes précis, plus la musique sera adaptée à votre vision.</p>
 
                   <div style={{display:"flex",flexDirection:"column",gap:12}}>
                     <div>
-                      <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Ambiance principale <span style={{color:"#8E8E93",fontWeight:400,textTransform:"none"}}>(plusieurs choix)</span></p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Ambiance principale <span style={{color:"#6E6E73",fontWeight:400,textTransform:"none"}}>(plusieurs choix)</span></p>
                       <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
                         {MUS_AMBIANCES.map(a=>(
                           <Chip key={a.v} active={m.ambiances.includes(a.v)} onClick={()=>toggleMusique("ambiances",a.v)}>{a.e} {a.l}</Chip>
@@ -1466,7 +1490,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
                               <div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${m.tempo===t.v?"#00B4D8":"#C7C7CC"}`,background:m.tempo===t.v?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
                                 {m.tempo===t.v&&<div style={{width:6,height:6,borderRadius:"50%",background:"#FFFFFF"}}/>}
                               </div>
-                              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{t.l} <span style={{color:"#8E8E93",fontSize:10}}>{t.s}</span></span>
+                              <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{t.l} <span style={{color:"#6E6E73",fontSize:10}}>{t.s}</span></span>
                             </label>
                           ))}
                         </div>
@@ -1507,12 +1531,12 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp" style={{background:"linear-gradient(135deg,rgba(0,180,216,0.06),rgba(175,82,222,0.03))",border:"1px solid rgba(0,180,216,0.1)",borderRadius:14,padding:"20px 22px"}}>
-        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#AF52DE",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:4}}>Votre projet</p>
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#7C3AED",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:4}}>Votre projet</p>
         <h2 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:2,fontWeight:800}}>{project.title}</h2>
         <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:12}}>En cours de production — notre équipe travaille pour vous ✨</p>
         <Timeline status={project.status}/>
       </div>
-      <div style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
+      <div className="hscroll" style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
         {tabs.map(t=><button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
       </div>
       {tab==="suivi"&&(
@@ -1576,13 +1600,13 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
       )}
       {tab==="storyboards"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {project.storyboards.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"30px 0"}}>Notre équipe prépare votre storyboard — il apparaîtra ici dès qu'il sera prêt. 🎞</p>}
+          {project.storyboards.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"30px 0"}}>Notre équipe prépare votre storyboard — il apparaîtra ici dès qu'il sera prêt. 🎞</p>}
           {project.storyboards.map(sb=>(
             <div key={sb.id} className="card fadeUp" style={{padding:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
-                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Reçu le {fmtS(sb.createdAt)}</span></div>
-                {sb.validationStatus==="approved"&&<span className="tag" style={{background:"#4ECDC422",color:"#4ECDC4"}}>✓ Approuvé</span>}
-                {sb.validationStatus==="revision"&&<span className="tag" style={{background:"#FF3B3022",color:"#FF3B30"}}>↩ Révision en cours</span>}
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{sb.title}</p><span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>Reçu le {fmtS(sb.createdAt)}</span></div>
+                {sb.validationStatus==="approved"&&<span className="tag" style={{background:"#4ECDC422",color:"#0F766E"}}>✓ Approuvé</span>}
+                {sb.validationStatus==="revision"&&<span className="tag" style={{background:"#FF3B3022",color:"#D70015"}}>↩ Révision en cours</span>}
               </div>
               <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>{sb.frames.map((f,i)=><FrameCard key={f.id} frame={f} index={i}/>)}</div>
               {sb.validationStatus==="pending"&&(
@@ -1604,11 +1628,11 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
       {tab==="livrables"&&(
         <div className="card fadeUp" style={{padding:18}}>
           <SH icon="✦" title="LIVRABLES FINAUX"/>
-          {finaux.length===0?<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Vos fichiers finaux apparaîtront ici dès que la production sera terminée. ✨</p>:(
+          {finaux.length===0?<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"20px 0"}}>Vos fichiers finaux apparaîtront ici dès que la production sera terminée. ✨</p>:(
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {finaux.map(l=>(
                 <div key={l.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#F5F5F7",borderRadius:8,border:"1px solid #4ECDC430"}}>
-                  <div style={{flex:1}}><p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{l.name}</p><p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>Depuis le {fmtS(l.date)}</p></div>
+                  <div style={{flex:1}}><p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{l.name}</p><p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>Depuis le {fmtS(l.date)}</p></div>
                   {safePortfolioUrl(l.url)&&<a href={safePortfolioUrl(l.url)} target="_blank" rel="noreferrer" className="btn btn-green" style={{textDecoration:"none",fontSize:11}}>⬇ Télécharger</a>}
                 </div>
               ))}
@@ -1663,11 +1687,11 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
     <div style={{display:"flex",flexDirection:"column",gap:16}}>
       {isAdmin&&alerts.length>0&&(
         <div style={{background:"#FF9F4318",border:"1px solid #FF9F4340",borderRadius:8,padding:"10px 14px",display:"flex",gap:10,alignItems:"flex-start"}}>
-          <span style={{color:"#FF9F43",fontSize:16}}>⚠️</span>
+          <span style={{color:"#B45309",fontSize:16}}>⚠️</span>
           <div>
-            <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#FF9F43"}}>Options expirant dans moins de 24h</p>
+            <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#B45309"}}>Options expirant dans moins de 24h</p>
             {alerts.map(a=>(
-              <p key={a.id} style={{fontFamily:"'Inter'",fontSize:12,color:"#FF9F43",opacity:.8,marginTop:3}}>
+              <p key={a.id} style={{fontFamily:"'Inter'",fontSize:12,color:"#B45309",opacity:.8,marginTop:3}}>
                 {a.client} – Équipe {a.team} – {fmtS(a.date)} – expire dans {getCountdown(a.expiresAt)}
               </p>
             ))}
@@ -1685,7 +1709,7 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
         {/* Day headers */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:4,marginBottom:4}}>
           {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d=>(
-            <div key={d} style={{textAlign:"center",fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",padding:"4px 0"}}>{d}</div>
+            <div key={d} style={{textAlign:"center",fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",padding:"4px 0"}}>{d}</div>
           ))}
         </div>
 
@@ -1738,10 +1762,10 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
                 <div style={{width:5,height:5,borderRadius:"50%",background:b.status==="confirmed"?(b.team==="A"?"#00B4D8":"#4ECDC4"):"#FF9F43",flexShrink:0}}/>
                 <div style={{flex:1,minWidth:0}}>
                   <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{b.client}</p>
-                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{fmtS(b.date)} · Équipe {b.team}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{fmtS(b.date)} · Équipe {b.team}</p>
                 </div>
                 {linkedProject&&onGoToProject&&(
-                  <button onClick={()=>onGoToProject(b.projectId)} style={{background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:6,padding:"2px 8px",color:"#00B4D8",fontFamily:"'Inter'",fontSize:10,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
+                  <button onClick={()=>onGoToProject(b.projectId)} style={{background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:6,padding:"2px 8px",color:"#0077B6",fontFamily:"'Inter'",fontSize:10,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>
                     📁 {linkedProject.title.slice(0,20)}{linkedProject.title.length>20?"…":""}
                   </button>
                 )}
@@ -1854,7 +1878,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
               {(team==="A"?availA:availB).length>0&&(
                 <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:4,marginBottom:bs.length>0?8:0}}>
                   {(team==="A"?availA:availB).map(s=>(
-                    <span key={s.id} style={{fontFamily:"'Inter'",fontSize:10,padding:"2px 7px",borderRadius:4,background:"#4ECDC418",color:"#4ECDC4",border:"1px solid #4ECDC433"}}>
+                    <span key={s.id} style={{fontFamily:"'Inter'",fontSize:10,padding:"2px 7px",borderRadius:4,background:"#4ECDC418",color:"#0F766E",border:"1px solid #4ECDC433"}}>
                       {s.label} libre
                     </span>
                   ))}
@@ -1870,15 +1894,15 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
                         {slotLabel(booking)}
                       </span>
                     )}
-                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>
                       {booking.status==="option"?"option":"confirmé"}
                     </span>
                   </div>
                   {isAdmin&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:500}}>{booking.client||booking.client_name}</p>}
-                  {!isAdmin&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Date réservée</p>}
-                  {isAdmin&&(booking.note)&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>{booking.note}</p>}
+                  {!isAdmin&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Date réservée</p>}
+                  {isAdmin&&(booking.note)&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>{booking.note}</p>}
                   {booking.status==="option"&&(booking.expiresAt||booking.expires_at)&&(
-                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#FF9F43",marginTop:4}}>Expire dans : {getCountdown(booking.expiresAt||booking.expires_at)}</p>
+                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#B45309",marginTop:4}}>Expire dans : {getCountdown(booking.expiresAt||booking.expires_at)}</p>
                   )}
                   {booking.status==="confirmed"&&(
                     <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",marginTop:6,display:"inline-flex",alignItems:"center",gap:4}} onClick={()=>{const sl=slotLabel(booking)||"";downloadICS(`Tournage Third-One Studio – Équipe ${team}`,date,`Créneau : ${sl}\nThird-One Studio, Martinique`);}}>
@@ -1935,7 +1959,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
                 {currentAvailSlots.map(s=>(
                   <div key={s.id} style={{flex:1,minWidth:80,padding:"8px 10px",borderRadius:7,border:`2px solid ${form.slot===s.id?"#0090B3":"#E5E5EA"}`,background:form.slot===s.id?"#0090B312":"#F5F5F7",cursor:"pointer",textAlign:"center"}} onClick={()=>setForm(p=>({...p,slot:s.id}))}>
                     <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:form.slot===s.id?"#00B4D8":"#6E6E73"}}>{s.label}</p>
-                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#8E8E93"}}>{s.start}–{s.end}</p>
+                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#6E6E73"}}>{s.start}–{s.end}</p>
                   </div>
                 ))}
               </div>
@@ -1948,7 +1972,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
                 </select>
               </div>
               <input className="input" placeholder="Note (optionnel)" value={form.note} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>⏱ L'option expire automatiquement après 72h si non confirmée.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>⏱ L'option expire automatiquement après 72h si non confirmée.</p>
               <button className="btn btn-primary" onClick={addOption} disabled={!form.client.trim()}>Poser l'option</button>
             </div>
           </div>
@@ -1973,8 +1997,8 @@ function OrgModule({sheets,setSheets,onNotif}){
     <div style={{display:"flex",gap:16,height:"calc(100vh - 120px)",overflow:"hidden"}}>
       <div style={{width:220,display:"flex",flexDirection:"column",gap:5,overflowY:"auto",flexShrink:0}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
-          <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em"}}>Fiches</span>
-          <button style={{background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:4,color:"#00B4D8",fontFamily:"'Inter'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>setShowNew(true)}>+ Nouveau</button>
+          <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em"}}>Fiches</span>
+          <button style={{background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:4,color:"#0077B6",fontFamily:"'Inter'",fontSize:11,padding:"2px 7px",cursor:"pointer"}} onClick={()=>setShowNew(true)}>+ Nouveau</button>
         </div>
         {sheets.map(s=>(
           <div key={s.id} className={`sidebar-proj ${selId===s.id?"active":""}`} onClick={()=>setSelId(s.id)}>
@@ -1982,7 +2006,7 @@ function OrgModule({sheets,setSheets,onNotif}){
               <p style={{fontWeight:500,color:"inherit",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{s.projectTitle}</p>
               <div style={{display:"flex",gap:5,marginTop:2,alignItems:"center"}}>
                 <span style={{fontSize:10,color:tc(s.team),fontWeight:600}}>Éq.{s.team}</span>
-                <span style={{fontSize:10,color:"#8E8E93"}}>{s.shootType}</span>
+                <span style={{fontSize:10,color:"#6E6E73"}}>{s.shootType}</span>
                 {s.clickupTaskId&&<span style={{fontSize:9,color:"#7B68EE",background:"#7B68EE18",borderRadius:3,padding:"0 3px"}}>CU</span>}
               </div>
               <div style={{marginTop:4}}><div className="progress-bar"><div className="progress-fill" style={{width:`${pct(s)}%`}}/></div></div>
@@ -1991,7 +2015,7 @@ function OrgModule({sheets,setSheets,onNotif}){
         ))}
       </div>
       <div style={{flex:1,overflowY:"auto"}}>
-        {sel?<SheetDetail sheet={sel} onUpdate={upd} onNotif={onNotif}/>:<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"40px 0"}}>Sélectionne une fiche</p>}
+        {sel?<SheetDetail sheet={sel} onUpdate={upd} onNotif={onNotif}/>:<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"40px 0"}}>Sélectionne une fiche</p>}
       </div>
       {showNew&&<NewSheetModal onClose={()=>setShowNew(false)} onCreate={s=>{setSheets(ss=>[...ss,s]);setSelId(s.id);setShowNew(false);onNotif("Fiche créée !");}}/>}
     </div>
@@ -2010,7 +2034,7 @@ function NewSheetModal({onClose,onCreate}){
   return(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
-        <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:18}}>NOUVELLE FICHE</h3>
+        <h3 style={{fontFamily:"'Urbanist'",fontSize:20,fontWeight:800,color:"#1D1D1F",letterSpacing:"-0.01em",marginBottom:18}}>Nouvelle fiche</h3>
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div><Lbl>Titre</Lbl><input className="input" value={form.projectTitle} onChange={e=>s("projectTitle",e.target.value)} placeholder="Spot 30s – Marque X"/></div>
           <div><Lbl>Client</Lbl><input className="input" value={form.client} onChange={e=>s("client",e.target.value)} placeholder="Nom de l'entreprise"/></div>
@@ -2047,10 +2071,10 @@ function SheetDetail({sheet,onUpdate,onNotif}){
           </div>
         </div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-          {sheet.dates.map((d,i)=><span key={i} style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#00B4D8",background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:5,padding:"2px 7px"}}>{fmtS(d)}</span>)}
+          {sheet.dates.map((d,i)=><span key={i} style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#0077B6",background:"#00B4D818",border:"1px solid #00B4D830",borderRadius:5,padding:"2px 7px"}}>{fmtS(d)}</span>)}
         </div>
       </div>
-      <div style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
+      <div className="hscroll" style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
         {tabs.map(t=><button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
       </div>
       {tab==="info"&&<SheetInfo sheet={sheet} onUpdate={onUpdate} onNotif={onNotif}/>}
@@ -2075,7 +2099,7 @@ function SheetInfo({sheet,onUpdate,onNotif}){
         <div style={{display:"flex",flexDirection:"column",gap:5}}>
           {sheet.dates.map((d,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA"}}>
-              <span style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#00B4D8",background:"#00B4D818",padding:"1px 6px",borderRadius:3}}>J{i+1}</span>
+              <span style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#0077B6",background:"#00B4D818",padding:"1px 6px",borderRadius:3}}>J{i+1}</span>
               <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{fmtD(d)}</span>
             </div>
           ))}
@@ -2134,7 +2158,7 @@ function SheetEquip({sheet,onUpdate}){
         <div style={{marginBottom:12}}><div className="progress-bar"><div className="progress-fill" style={{width:`${Math.min(100,(sheet.equipment.length/all.length)*100)}%`}}/></div></div>
         {cats.map(cat=>(
           <div key={cat} style={{marginBottom:14}}>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>{cat}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>{cat}</p>
             <div style={{display:"flex",flexDirection:"column",gap:4}}>
               {all.filter(e=>e.cat===cat).map(e=>{const on=sheet.equipment.includes(e.id);return(
                 <div key={e.id} className={`equip-item ${on?"included":""}`} onClick={()=>toggle(e.id)} style={{cursor:"pointer"}}>
@@ -2225,7 +2249,7 @@ function SheetTime({sheet,onUpdate}){
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
         {[["Jours",sheet.timesheet.length,"#00B4D8"],["Heures totales",`${totH.toFixed(1)}h`,"#4ECDC4"],["Moy./jour",sheet.timesheet.length?`${(totH/sheet.timesheet.length).toFixed(1)}h`:"—","#7B9CFF"]].map(([l,v,c])=>(
           <div key={l} style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,padding:"10px 12px"}}>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{l}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{l}</p>
             <p style={{fontFamily:"'Urbanist'",fontSize:22,color:c,letterSpacing:"0.05em"}}>{v}</p>
           </div>
         ))}
@@ -2250,7 +2274,7 @@ function SheetTime({sheet,onUpdate}){
         </div>
         {sheet.timesheet.some(r=>calcH(r.start,r.end)>10)&&(
           <div style={{marginTop:10,padding:"8px 12px",background:"#FF9F4318",border:"1px solid #FF9F4340",borderRadius:7}}>
-            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#FF9F43"}}>⚠️ Journée(s) dépassant 10h détectée(s) — valider les heures supplémentaires.</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#B45309"}}>⚠️ Journée(s) dépassant 10h détectée(s) — valider les heures supplémentaires.</p>
           </div>
         )}
       </div>
@@ -2291,7 +2315,7 @@ function ClientEstimationWidget({pricing,clientData}){
             <div key={p.id} className={`option-card ${form.prestationId===p.id?"selected":""}`} onClick={()=>s("prestationId",p.id)}>
               <div className={`option-check ${form.prestationId===p.id?"checked":""}`}>{form.prestationId===p.id&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}</div>
               <div><div style={{display:"flex",alignItems:"center",gap:7}}><span>{p.icon}</span><span style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{p.label}</span></div>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>{p.minDays===p.maxDays?`${p.minDays}j`:`${p.minDays}–${p.maxDays}j`} recommandés</p></div>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>{p.minDays===p.maxDays?`${p.minDays}j`:`${p.minDays}–${p.maxDays}j`} recommandés</p></div>
             </div>
           ))}
           <button className="btn btn-primary" style={{alignSelf:"flex-end",marginTop:4}} disabled={!form.prestationId} onClick={()=>setStep(1)}>Suivant →</button>
@@ -2303,13 +2327,13 @@ function ClientEstimationWidget({pricing,clientData}){
             {Object.entries(pricing.teams).map(([id,t])=>(
               <div key={id} className={`option-card ${form.team===id?"selected":""}`} onClick={()=>s("team",id)}>
                 <div className={`option-check ${form.team===id?"checked":""}`}>{form.team===id&&<span style={{fontSize:9,color:"#FFFFFF",fontWeight:700}}>✓</span>}</div>
-                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{t.description}</p></div>
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{t.description}</p></div>
               </div>
             ))}
           </div>
           <div style={{display:"flex",alignItems:"center",gap:12,justifyContent:"center"}}>
             <button className="btn btn-ghost" style={{padding:"8px 14px",fontSize:18}} onClick={()=>s("days",Math.max(prest?.minDays||1,form.days-1))}>−</button>
-            <div style={{textAlign:"center"}}><span style={{fontFamily:"'Urbanist'",fontSize:36,color:"#00B4D8"}}>{form.days}</span><span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginLeft:5}}>jour{form.days>1?"s":""}</span></div>
+            <div style={{textAlign:"center"}}><span style={{fontFamily:"'Urbanist'",fontSize:36,color:"#0077B6"}}>{form.days}</span><span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginLeft:5}}>jour{form.days>1?"s":""}</span></div>
             <button className="btn btn-ghost" style={{padding:"8px 14px",fontSize:18}} onClick={()=>s("days",Math.min(prest?.maxDays||10,form.days+1))}>+</button>
           </div>
           <div style={{display:"flex",gap:8,justifyContent:"space-between"}}><button className="btn btn-ghost" onClick={()=>setStep(0)}>← Retour</button><button className="btn btn-primary" onClick={()=>setStep(2)}>Suivant →</button></div>
@@ -2333,12 +2357,12 @@ function ClientEstimationWidget({pricing,clientData}){
           <div className="price-range countUp">
             <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Estimation indicative</p>
             <div style={{display:"flex",alignItems:"baseline",justifyContent:"center",gap:10}}>
-              <span style={{fontFamily:"'Urbanist'",fontSize:38,color:"#00B4D8",letterSpacing:"0.03em"}}>{fmtEur(result.min)}</span>
+              <span style={{fontFamily:"'Urbanist'",fontSize:38,color:"#0077B6",letterSpacing:"0.03em"}}>{fmtEur(result.min)}</span>
               <span style={{color:"#6E6E73",fontSize:16}}>→</span>
-              <span style={{fontFamily:"'Urbanist'",fontSize:38,color:"#00B4D8",letterSpacing:"0.03em"}}>{fmtEur(result.max)}</span>
+              <span style={{fontFamily:"'Urbanist'",fontSize:38,color:"#0077B6",letterSpacing:"0.03em"}}>{fmtEur(result.max)}</span>
             </div>
             {result.discount>0&&<div style={{marginTop:6}}><span className="discount-badge">✓ Tarif préférentiel appliqué</span></div>}
-            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:10}}>Estimation indicative — devis personnalisé sur demande</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:10}}>Estimation indicative — devis personnalisé sur demande</p>
           </div>
           <button className="btn btn-ghost" style={{justifyContent:"center"}} onClick={()=>{setStep(0);setForm({prestationId:"",team:"A",days:1,options:[]});setResult(null);}}>Nouvelle estimation</button>
         </div>
@@ -2364,7 +2388,7 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
   const typeColors={PME:"#7B9CFF",Institutionnel:"#4ECDC4",Agence:"#FF9F43"};
   return(
     <div style={{display:"flex",flexDirection:"column",gap:14}}>
-      <div style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
+      <div className="hscroll" style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
         {tabs.map(t=><button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
       </div>
       {tab==="tarifs"&&(
@@ -2373,8 +2397,8 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
             <SH icon="💰" title="TARIFS JOURNÉE ÉQUIPE"/>
             {Object.entries(pricing.teams).map(([id,t])=>(
               <div key={id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"9px 12px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA",marginBottom:6}}>
-                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{t.description}</p></div>
-                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:90}} type="number" value={t.dayRate} onChange={e=>setTeam(id,e.target.value)}/><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>€/j</span></div>
+                <div><p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{t.label}</p><p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{t.description}</p></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:90}} type="number" value={t.dayRate} onChange={e=>setTeam(id,e.target.value)}/><span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>€/j</span></div>
               </div>
             ))}
           </div>
@@ -2394,8 +2418,8 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
             <SH icon="⚙" title="OPTIONS"/>
             {pricing.options.map(o=>(
               <div key={o.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,padding:"7px 12px",background:"#F5F5F7",borderRadius:7,border:"1px solid #E5E5EA",marginBottom:5}}>
-                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{o.icon}</span><span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{o.label}</span><span style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",background:"#F2F2F7",border:"1px solid #E5E5EA",borderRadius:7,padding:"0 5px"}}>{o.unit}</span></div>
-                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:80}} type="number" value={o.price} onChange={e=>setOpt(o.id,e.target.value)}/><span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>€</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:7}}><span>{o.icon}</span><span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{o.label}</span><span style={{fontFamily:"'Inter'",fontSize:9,color:"#6E6E73",background:"#F2F2F7",border:"1px solid #E5E5EA",borderRadius:7,padding:"0 5px"}}>{o.unit}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:6}}><input className="admin-input" style={{width:80}} type="number" value={o.price} onChange={e=>setOpt(o.id,e.target.value)}/><span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>€</span></div>
               </div>
             ))}
           </div>
@@ -2404,7 +2428,7 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
             <div style={{display:"flex",alignItems:"center",gap:8}}>
               <input className="admin-input" style={{width:70}} type="number" min="5" max="30" value={pricing.rangeMargin} onChange={e=>setPricing(p=>({...p,rangeMargin:Number(e.target.value)}))}/>
               <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>%</span>
-              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>→ pour 3 000€ : {fmtEur(3000*(1-pricing.rangeMargin/200))} – {fmtEur(3000*(1+pricing.rangeMargin/200))}</span>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>→ pour 3 000€ : {fmtEur(3000*(1-pricing.rangeMargin/200))} – {fmtEur(3000*(1+pricing.rangeMargin/200))}</span>
             </div>
           </div>
         </div>
@@ -2412,7 +2436,7 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
       {tab==="clients"&&(
         <div className="card" style={{padding:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-            <div><SH icon="👥" title="CLIENTS & REMISES"/><p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:-10,marginBottom:10}}>Les remises sont invisibles côté client. Active le simulateur client par client.</p></div>
+            <div><SH icon="👥" title="CLIENTS & REMISES"/><p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:-10,marginBottom:10}}>Les remises sont invisibles côté client. Active le simulateur client par client.</p></div>
             <button className="btn btn-primary" style={{fontSize:11,flexShrink:0}} onClick={()=>setShowAddClient(!showAddClient)}>{showAddClient?"✕":"+ Ajouter"}</button>
           </div>
           {showAddClient&&(
@@ -2436,12 +2460,12 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
                     <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:500,color:"#1D1D1F"}}>{c.name}</p>
                     <span style={{fontFamily:"'Inter'",fontSize:9,color:(typeColors[c.type]||"#6E6E73"),background:(typeColors[c.type]||"#6E6E73")+"22",border:`1px solid ${(typeColors[c.type]||"#6E6E73")}44`,borderRadius:7,padding:"0 5px"}}>{c.type}</span>
                   </div>
-                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{c.email}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{c.email}</p>
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{display:"flex",alignItems:"center",gap:5}}>
                     <input className="admin-input" style={{width:50}} type="number" min="0" max="50" value={c.discount} onChange={e=>updDiscount(c.id,e.target.value)}/>
-                    <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>%</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>%</span>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:5,borderLeft:"1px solid #E5E5EA",paddingLeft:8}}>
                     <span style={{fontFamily:"'Inter'",fontSize:10,color:c.simulatorEnabled?"#4ECDC4":"#8E8E93"}}>Simulateur</span>
@@ -2456,15 +2480,15 @@ function AdminPricingModule({pricing,setPricing,clients,setClients,estimates,set
       {tab==="historique"&&(
         <div className="card" style={{padding:16}}>
           <SH icon="📊" title="ESTIMATIONS REÇUES"/>
-          {estimates.length===0?<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune estimation</p>:(
+          {estimates.length===0?<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"20px 0"}}>Aucune estimation</p>:(
             <div style={{display:"flex",flexDirection:"column",gap:7}}>
               {estimates.map(e=>(
                 <div key={e.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                   <div style={{flex:1,minWidth:0}}>
                     <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:500,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.client} — {e.prestation}</p>
                     <div style={{display:"flex",gap:8,marginTop:2}}>
-                      <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#00B4D8",fontWeight:600}}>{fmtEur(e.min)} – {fmtEur(e.max)}</span>
-                      <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>Éq.{e.team} · {e.days}j · {fmtS(e.date)}</span>
+                      <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#0077B6",fontWeight:600}}>{fmtEur(e.min)} – {fmtEur(e.max)}</span>
+                      <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>Éq.{e.team} · {e.days}j · {fmtS(e.date)}</span>
                     </div>
                   </div>
                   <div style={{display:"flex",gap:5,alignItems:"center"}}>
@@ -2494,10 +2518,10 @@ const NETWORKS = [
 ];
 
 const POST_STATUSES = [
-  { id:"draft",    label:"Brouillon",   color:"#8E8E93", bg:"#8E8E9322" },
-  { id:"review",   label:"À valider",   color:"#FF9F43", bg:"#FF9F4322" },
-  { id:"approved", label:"Validé",      color:"#4ECDC4", bg:"#4ECDC422" },
-  { id:"published",label:"Publié",      color:"#00B4D8", bg:"#00B4D822" },
+  { id:"draft",    label:"Brouillon",   color:"#6E6E73", bg:"#8E8E9322" },
+  { id:"review",   label:"À valider",   color:"#B45309", bg:"#FF9F4322" },
+  { id:"approved", label:"Validé",      color:"#0F766E", bg:"#4ECDC422" },
+  { id:"published",label:"Publié",      color:"#0077B6", bg:"#00B4D822" },
 ];
 
 // INIT_POSTS removed
@@ -2536,14 +2560,14 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
       {/* Header */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:10 }}>
         <div>
-          <h2 style={{ fontFamily:"'Urbanist'", fontSize:26, color:"#1D1D1F", letterSpacing:"0.04em" }}>COMMUNITY MANAGEMENT</h2>
+          <h2 style={{ fontFamily:"'Urbanist'", fontSize:26, fontWeight:800, color:"#1D1D1F", letterSpacing:"-0.02em" }}>Community management</h2>
           <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginTop:2 }}>Planification, captions et validation des posts</p>
         </div>
         <div style={{ display:"flex", gap:8, alignItems:"center" }}>
           {pendingReview > 0 && (
             <div style={{ background:"#FF9F4318", border:"1px solid #FF9F4340", borderRadius:8, padding:"6px 12px", display:"flex", alignItems:"center", gap:6 }}>
-              <span style={{ color:"#FF9F43", fontSize:14 }}>⏳</span>
-              <span style={{ fontFamily:"'Inter'", fontSize:12, color:"#FF9F43", fontWeight:600 }}>{pendingReview} en attente de validation</span>
+              <span style={{ color:"#B45309", fontSize:14 }}>⏳</span>
+              <span style={{ fontFamily:"'Inter'", fontSize:12, color:"#B45309", fontWeight:600 }}>{pendingReview} en attente de validation</span>
             </div>
           )}
           <button className="btn btn-primary" onClick={() => setShowNewPost(true)}>+ Nouveau post</button>
@@ -2586,7 +2610,7 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
       {/* LIST VIEW */}
       {view === "list" && (
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-          {filtered.length === 0 && <p style={{ fontFamily:"'Inter'", fontSize:13, color:"#8E8E93", textAlign:"center", padding:"30px 0" }}>Aucun post trouvé</p>}
+          {filtered.length === 0 && <p style={{ fontFamily:"'Inter'", fontSize:13, color:"#6E6E73", textAlign:"center", padding:"30px 0" }}>Aucun post trouvé</p>}
           {filtered.map(post => (
             <CMPostRow key={post.id} post={post} netData={netData(post.network)} stData={stData(post.status)}
               projectTitle={getProjectTitle(post.projectId)}
@@ -2636,7 +2660,7 @@ function CMCalendarView({ posts, postsByDate, netData, stData, onEdit, getProjec
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3, marginBottom:4 }}>
         {["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].map(d => (
-          <div key={d} style={{ textAlign:"center", fontFamily:"'Inter'", fontSize:10, color:"#8E8E93", padding:"3px 0" }}>{d}</div>
+          <div key={d} style={{ textAlign:"center", fontFamily:"'Inter'", fontSize:10, color:"#6E6E73", padding:"3px 0" }}>{d}</div>
         ))}
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3 }}>
@@ -2669,7 +2693,7 @@ function CMCalendarView({ posts, postsByDate, netData, stData, onEdit, getProjec
                 );
               })}
               {dayPosts.length > 3 && (
-                <span style={{ fontFamily:"'Inter'", fontSize:9, color:"#8E8E93", textAlign:"center" }}>+{dayPosts.length-3}</span>
+                <span style={{ fontFamily:"'Inter'", fontSize:9, color:"#6E6E73", textAlign:"center" }}>+{dayPosts.length-3}</span>
               )}
             </div>
           );
@@ -2689,8 +2713,8 @@ function CMPostRow({ post, netData, stData, projectTitle, onEdit, onDelete, onSt
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap" }}>
           <span style={{ fontFamily:"'Inter'", fontSize:12, fontWeight:600, color:netData.color }}>{netData.label}</span>
-          <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93" }}>· {projectTitle}</span>
-          <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:"#8E8E93" }}>{fmtS(post.scheduledAt)}</span>
+          <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73" }}>· {projectTitle}</span>
+          <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:"#6E6E73" }}>{fmtS(post.scheduledAt)}</span>
         </div>
         <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
           {post.caption.slice(0,80)}…
@@ -2807,10 +2831,10 @@ Génère UNIQUEMENT la caption (200 mots max), avec emojis adaptés et hashtags 
                 {aiLoading ? <span style={{ animation:"spin 1s linear infinite", display:"inline-block" }}>⟳</span> : "✦ Générer avec IA"}
               </button>
             </div>
-            {aiError && <p style={{ fontFamily:"'Inter'", fontSize:11, color:"#FF3B30", marginBottom:4 }}>{aiError}</p>}
+            {aiError && <p style={{ fontFamily:"'Inter'", fontSize:11, color:"#D70015", marginBottom:4 }}>{aiError}</p>}
             <textarea className="input" rows={5} placeholder={`Rédigez votre caption ${net.label}...`} value={form.caption} onChange={e => s("caption", e.target.value)}/>
             <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
-              <span style={{ fontFamily:"'Inter'", fontSize:10, color:"#8E8E93" }}>
+              <span style={{ fontFamily:"'Inter'", fontSize:10, color:"#6E6E73" }}>
                 {form.network==="twitter"?"280":"2200"} caractères max
               </span>
               <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:form.caption.length>2000?"#FF3B30":"#8E8E93" }}>
@@ -2895,7 +2919,7 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
       {/* À valider */}
       {toValidate.length > 0 && (
         <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#FF9F43", letterSpacing:"0.05em" }}>⏳ EN ATTENTE</h3>
+          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#B45309", letterSpacing:"0.05em" }}>⏳ EN ATTENTE</h3>
           {toValidate.map(post => (
             <CMClientPostCard key={post.id} post={post} netData={netData(post.network)}
               projectTitle={projects.find(p=>p.id===post.projectId)?.title||""}
@@ -2909,7 +2933,7 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
       {/* Approuvés */}
       {approved.length > 0 && (
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#4ECDC4", letterSpacing:"0.05em" }}>✓ VALIDÉS</h3>
+          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#0F766E", letterSpacing:"0.05em" }}>✓ VALIDÉS</h3>
           {approved.map(post => <CMClientPostMini key={post.id} post={post} netData={netData(post.network)} projects={projects}/>)}
         </div>
       )}
@@ -2917,7 +2941,7 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
       {/* Publiés */}
       {published.length > 0 && (
         <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#00B4D8", letterSpacing:"0.05em" }}>✦ PUBLIÉS</h3>
+          <h3 style={{ fontFamily:"'Urbanist'", fontSize:16, color:"#0077B6", letterSpacing:"0.05em" }}>✦ PUBLIÉS</h3>
           {published.map(post => <CMClientPostMini key={post.id} post={post} netData={netData(post.network)} projects={projects}/>)}
         </div>
       )}
@@ -2936,9 +2960,9 @@ function CMClientPostCard({ post, netData, projectTitle, onApprove, onRevision }
         <div>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontFamily:"'Inter'", fontSize:13, fontWeight:600, color:netData.color }}>{netData.label}</span>
-            <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93" }}>· {projectTitle}</span>
+            <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73" }}>· {projectTitle}</span>
           </div>
-          <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:"#8E8E93" }}>Prévu le {fmtS(post.scheduledAt)}</span>
+          <span style={{ fontFamily:"'JetBrains Mono'", fontSize:10, color:"#6E6E73" }}>Prévu le {fmtS(post.scheduledAt)}</span>
         </div>
       </div>
 
@@ -2974,11 +2998,11 @@ function CMClientPostMini({ post, netData, projects }) {
       <span style={{ fontSize:16 }}>{netData.icon}</span>
       <div style={{ flex:1, minWidth:0 }}>
         <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{post.caption.slice(0,60)}…</p>
-        <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#8E8E93" }}>{netData.label} · {fmtS(post.scheduledAt)}</p>
+        <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#6E6E73" }}>{netData.label} · {fmtS(post.scheduledAt)}</p>
       </div>
       {post.comment && (
         <div style={{ background:"#4ECDC410", border:"1px solid #4ECDC430", borderRadius:6, padding:"3px 8px", maxWidth:160 }}>
-          <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#4ECDC4", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>"{post.comment}"</p>
+          <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#0F766E", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>"{post.comment}"</p>
         </div>
       )}
     </div>
@@ -3048,16 +3072,16 @@ function J2AlertBanner({projects,clients}){
             <div style={{fontSize:28}}>{emoji||"🎬"}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                <span style={{fontFamily:"'Urbanist'",fontSize:16,color:"#00B4D8",letterSpacing:"0.05em"}}>J-2 — TOURNAGE</span>
+                <span style={{fontFamily:"'Urbanist'",fontSize:16,color:"#0077B6",letterSpacing:"0.05em"}}>J-2 — TOURNAGE</span>
                 <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:600}}>{project.title}</span>
                 {client&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>· {client.name}</span>}
               </div>
               {weather?(
                 <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:3}}>
                   {label} · {Math.round(weather.tmin||22)}°–{Math.round(weather.tmax||28)}°C
-                  {weather.rain>1?<span style={{color:"#7B9CFF"}}> · 🌧 {weather.rain?.toFixed(1)} mm prévus</span>:null}
+                  {weather.rain>1?<span style={{color:"#4F46E5"}}> · 🌧 {weather.rain?.toFixed(1)} mm prévus</span>:null}
                 </p>
-              ):<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Météo indisponible</p>}
+              ):<p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>Météo indisponible</p>}
             </div>
             <a href={mailto} style={{textDecoration:"none"}} title={client?.email?"Envoyer à "+client.email:"Email client non renseigné"}>
               <button className="btn btn-primary" style={{fontSize:12,whiteSpace:"nowrap"}}>📧 Envoyer le rappel</button>
@@ -3074,11 +3098,11 @@ function J2AlertBanner({projects,clients}){
 // qui a parlé en dernier → à traiter par l'équipe ; si c'est l'équipe → en attente client.
 // Catégorisation auto par mots-clés + tri par importance puis ancienneté.
 const MSG_CATS = [
-  { k:"urgent",     l:"⚠ Urgent",      color:"#FF3B30", re:/urgent|probl[èe]me|souci|erreur|bug|pas re[çc]u|inquiet|retard/i, w:0 },
-  { k:"validation", l:"✓ Validation",  color:"#34C759", re:/valid|approuv|storyboard|maquette|version|retour sur/i, w:1 },
-  { k:"facturation",l:"💰 Facturation", color:"#FF9F43", re:/factur|paiement|devis|tarif|prix|acompte|virement/i, w:1 },
-  { k:"planning",   l:"📅 Planning",    color:"#7B9CFF", re:/date|planning|tournage|dispo|report|rdv|horaire|cal[ée]/i, w:2 },
-  { k:"question",   l:"💬 Question",    color:"#00B4D8", re:/./, w:3 },
+  { k:"urgent",     l:"⚠ Urgent",      color:"#D70015", re:/urgent|probl[èe]me|souci|erreur|bug|pas re[çc]u|inquiet|retard/i, w:0 },
+  { k:"validation", l:"✓ Validation",  color:"#15803D", re:/valid|approuv|storyboard|maquette|version|retour sur/i, w:1 },
+  { k:"facturation",l:"💰 Facturation", color:"#B45309", re:/factur|paiement|devis|tarif|prix|acompte|virement/i, w:1 },
+  { k:"planning",   l:"📅 Planning",    color:"#4F46E5", re:/date|planning|tournage|dispo|report|rdv|horaire|cal[ée]/i, w:2 },
+  { k:"question",   l:"💬 Question",    color:"#0077B6", re:/./, w:3 },
 ];
 const msgCat = (text) => MSG_CATS.find(c => c.re.test(text||"")) || MSG_CATS[MSG_CATS.length-1];
 const daysSince = (d) => d ? Math.max(0, Math.floor((Date.now() - new Date(d+"T12:00:00").getTime()) / 86400000)) : 0;
@@ -3111,7 +3135,7 @@ function MessagesATraiter({ projects, clients, onSelectProject, onSectionChange 
         </div>
       </div>
       {items.length === 0 ? (
-        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#8E8E93", textAlign:"center", padding:"14px 0" }}>
+        <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", textAlign:"center", padding:"14px 0" }}>
           {side==="equipe" ? "✓ Aucun message en attente de réponse de l'équipe." : "Aucune réponse client attendue."}
         </p>
       ) : (
@@ -3125,7 +3149,7 @@ function MessagesATraiter({ projects, clients, onSelectProject, onSectionChange 
               <span className="tag" style={{ background:cat.color+"18", color:cat.color, border:`1px solid ${cat.color}40`, flexShrink:0 }}>{cat.l}</span>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontFamily:"'Inter'", fontSize:12, fontWeight:600, color:"#1D1D1F", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-                  {p.title} <span style={{ color:"#8E8E93", fontWeight:400 }}>· {clientName}</span>
+                  {p.title} <span style={{ color:"#6E6E73", fontWeight:400 }}>· {clientName}</span>
                 </div>
                 <div style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", marginTop:2 }}>
                   {last.author} : {typeof last.text==="string" ? last.text.slice(0,90) : "(pièce jointe)"}
@@ -3182,7 +3206,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
     <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
       {/* Header */}
       <div>
-        <h2 style={{ fontFamily:"'Urbanist'", fontSize:28, color:"#1D1D1F", letterSpacing:"0.04em" }}>TABLEAU DE BORD</h2>
+        <h2 style={{ fontFamily:"'Urbanist'", fontSize:30, fontWeight:800, color:"#1D1D1F", letterSpacing:"-0.02em" }}>Tableau de bord</h2>
         <p style={{ fontFamily:"'Inter'", fontSize:12, color:"#6E6E73", marginTop:2 }}>Vue d ensemble de tous vos projets et clients</p>
       </div>
 
@@ -3190,12 +3214,12 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:8 }}>
         {[
           { label:"Total projets", value:totalProjects, color:"#1D1D1F" },
-          { label:"En brief", value:byStatus("brief"), color:"#7B9CFF" },
-          { label:"Storyboard", value:byStatus("storyboard"), color:"#00B4D8" },
-          { label:"En tournage", value:byStatus("tournage"), color:"#FF9F43" },
-          { label:"Livrés", value:byStatus("livraison"), color:"#4ECDC4" },
+          { label:"En brief", value:byStatus("brief"), color:"#4F46E5" },
+          { label:"Storyboard", value:byStatus("storyboard"), color:"#0077B6" },
+          { label:"En tournage", value:byStatus("tournage"), color:"#B45309" },
+          { label:"Livrés", value:byStatus("livraison"), color:"#0F766E" },
         ].map(({ label, value, color }) => (
-          <div key={label} style={{ background:"#FFFFFF", border:`1px solid ${color}33`, borderRadius:8, padding:"12px 14px" }}>
+          <div key={label} style={{ background:"#FFFFFF", border:`1px solid ${color}26`, borderRadius:12, padding:"14px 16px", boxShadow:"0 1px 2px rgba(16,24,40,0.04)" }}>
             <p style={{ fontFamily:"'Urbanist'", fontSize:28, color, letterSpacing:"0.05em" }}>{value}</p>
             <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#6E6E73", textTransform:"uppercase", letterSpacing:"0.08em" }}>{label}</p>
           </div>
@@ -3207,12 +3231,12 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
 
       {/* Tri */}
       <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-        <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93", textTransform:"uppercase", letterSpacing:"0.08em" }}>Trier par</span>
+        <span style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73", textTransform:"uppercase", letterSpacing:"0.08em" }}>Trier par</span>
         <div style={{ display:"flex", gap:4, background:"#F5F5F7", padding:3, borderRadius:7, border:"1px solid #E5E5EA" }}>
           {[
-            { key:"tournage", label:"📅 Date tournage" },
-            { key:"livraison", label:"🏁 Avancement" },
-            { key:"statut", label:"📊 Statut" },
+            { key:"tournage", label:"Date tournage" },
+            { key:"livraison", label:"Avancement" },
+            { key:"statut", label:"Statut" },
           ].map(s => (
             <button key={s.key} className={sortBy===s.key?"tab active":"tab"} style={{ fontSize:11, padding:"4px 10px", whiteSpace:"nowrap" }} onClick={() => setSortBy(s.key)}>
               {s.label}
@@ -3225,12 +3249,12 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       {Object.entries(grouped).map(([clientName, clientProjects]) => (
         <div key={clientName}>
           <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:10 }}>
-            <div style={{ width:32, height:32, borderRadius:"50%", background:"#00B4D822", border:"1px solid #00B4D844", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Urbanist'", fontSize:14, color:"#00B4D8", flexShrink:0 }}>
+            <div style={{ width:32, height:32, borderRadius:"50%", background:"#00B4D822", border:"1px solid #00B4D844", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Urbanist'", fontSize:14, color:"#0077B6", flexShrink:0 }}>
               {clientName[0]}
             </div>
             <div>
               <h3 style={{ fontFamily:"'Inter'", fontSize:14, fontWeight:600, color:"#1D1D1F" }}>{clientName}</h3>
-              <p style={{ fontFamily:"'Inter'", fontSize:11, color:"#8E8E93" }}>{clientProjects.length} projet{clientProjects.length>1?"s":""}</p>
+              <p style={{ fontFamily:"'Inter'", fontSize:11, color:"#6E6E73" }}>{clientProjects.length} projet{clientProjects.length>1?"s":""}</p>
             </div>
           </div>
           <div style={{ display:"flex", flexDirection:"column", gap:6, paddingLeft:42 }}>
@@ -3243,7 +3267,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                 <div style={{ width:8, height:8, borderRadius:"50%", background:statusColor(p.status), flexShrink:0 }}/>
                 <div style={{ flex:1, minWidth:0 }}>
                   <p style={{ fontFamily:"'Inter'", fontSize:13, fontWeight:500, color:"#1D1D1F", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{p.title}</p>
-                  <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#8E8E93", marginTop:1 }}>Créé le {p.createdAt ? new Date(p.createdAt+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}) : "—"}</p>
+                  <p style={{ fontFamily:"'Inter'", fontSize:10, color:"#6E6E73", marginTop:1 }}>Créé le {p.createdAt ? new Date(p.createdAt+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"}) : "—"}</p>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
                   {p.deliveryDate&&(
@@ -3252,7 +3276,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                     </span>
                   )}
                   {assignments.filter(a=>a.projectId===p.id).length>0&&(
-                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",whiteSpace:"nowrap"}}>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#7C3AED",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",whiteSpace:"nowrap"}}>
                       👥 {assignments.filter(a=>a.projectId===p.id).length}
                     </span>
                   )}
@@ -3264,7 +3288,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                   <span style={{ fontFamily:"'Inter'", fontSize:11, color:statusColor(p.status), background:statusColor(p.status)+"22", border:`1px solid ${statusColor(p.status)}44`, borderRadius:10, padding:"2px 8px", whiteSpace:"nowrap" }}>
                     {statusLabel(p.status)}
                   </span>
-                  <span style={{ color:"#8E8E93", fontSize:12 }}>→</span>
+                  <span style={{ color:"#6E6E73", fontSize:12 }}>→</span>
                 </div>
               </div>
             ))}
@@ -3273,7 +3297,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       ))}
 
       {projects.length === 0 && (
-        <div style={{ textAlign:"center", padding:"40px 0", color:"#8E8E93", fontFamily:"'Inter'", fontSize:13 }}>
+        <div style={{ textAlign:"center", padding:"40px 0", color:"#6E6E73", fontFamily:"'Inter'", fontSize:13 }}>
           Aucun projet pour l instant. Crée ton premier projet dans la section Projets.
         </div>
       )}
@@ -3288,11 +3312,11 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
         return(
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-              <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#00B4D8",letterSpacing:"0.06em"}}>PROCHAINES RÉSERVATIONS</h3>
+              <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#0077B6",letterSpacing:"0.06em"}}>PROCHAINES RÉSERVATIONS</h3>
               {onGoToCalendar&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={onGoToCalendar}>Voir le calendrier →</button>}
             </div>
             {upcoming.length===0?(
-              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>Aucune réservation à venir</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"16px 0"}}>Aucune réservation à venir</p>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {upcoming.map(b=>{
@@ -3310,7 +3334,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                         {b.status==="confirmed"?"Confirmé":"Option"}
                       </span>
                       {linkedProject&&(
-                        <span style={{fontFamily:"'Inter'",fontSize:10,color:"#B47FFF",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",flexShrink:0}}>
+                        <span style={{fontFamily:"'Inter'",fontSize:10,color:"#7C3AED",background:"#B47FFF18",border:"1px solid #B47FFF30",borderRadius:8,padding:"1px 7px",flexShrink:0}}>
                           📁 {linkedProject.title}
                         </span>
                       )}
@@ -3332,9 +3356,9 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
         const statusLabel2=s=>({brief:"Brief",storyboard:"Storyboard",tournage:"Tournage",montage:"Montage",livraison:"Livré"}[s]||s);
         return(
           <div>
-            <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#00B4D8",letterSpacing:"0.06em",marginBottom:12}}>ACTIVITÉ RÉCENTE</h3>
+            <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#0077B6",letterSpacing:"0.06em",marginBottom:12}}>ACTIVITÉ RÉCENTE</h3>
             {recent.length===0?(
-              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>Aucun projet</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"16px 0"}}>Aucun projet</p>
             ):(
               <div style={{display:"flex",flexDirection:"column",gap:6}}>
                 {recent.map(p=>{
@@ -3352,7 +3376,7 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
                           <div style={{flex:1,height:3,background:"#F2F2F7",borderRadius:2,overflow:"hidden",maxWidth:80}}>
                             <div style={{height:"100%",width:`${p.progress||0}%`,background:sc,borderRadius:2}}/>
                           </div>
-                          <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{p.progress||0}%</span>
+                          <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{p.progress||0}%</span>
                         </div>
                       </div>
                       <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px",flexShrink:0}} onClick={()=>{onSelectProject(p.id);onSectionChange("projets");}}>→</button>
@@ -3368,12 +3392,12 @@ function AdminDashboard({ projects, clients, assignments, onSelectProject, onSec
       {/* ── 1c. Stats équipe ──────────────────────────────────────────────── */}
       {teamMembers&&teamMembers.length>0&&(
         <div>
-          <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#00B4D8",letterSpacing:"0.06em",marginBottom:12}}>STATS ÉQUIPE</h3>
+          <h3 style={{fontFamily:"'Urbanist'",fontSize:20,color:"#0077B6",letterSpacing:"0.06em",marginBottom:12}}>STATS ÉQUIPE</h3>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
             {[
-              {label:"Membres Équipe A",value:teamMembers.filter(m=>m.team==="A").length,color:"#7B9CFF"},
-              {label:"Membres Équipe B",value:teamMembers.filter(m=>m.team==="B").length,color:"#FF9F43"},
-              {label:"Projets assignés",value:projects.filter(p=>assignments.some(a=>a.projectId===p.id)).length,color:"#B47FFF"},
+              {label:"Membres Équipe A",value:teamMembers.filter(m=>m.team==="A").length,color:"#4F46E5"},
+              {label:"Membres Équipe B",value:teamMembers.filter(m=>m.team==="B").length,color:"#B45309"},
+              {label:"Projets assignés",value:projects.filter(p=>assignments.some(a=>a.projectId===p.id)).length,color:"#7C3AED"},
             ].map(({label,value,color})=>(
               <div key={label} style={{background:"#FFFFFF",border:`1px solid ${color}33`,borderRadius:8,padding:"12px 14px"}}>
                 <p style={{fontFamily:"'Urbanist'",fontSize:28,color,letterSpacing:"0.05em"}}>{value}</p>
@@ -3430,7 +3454,7 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
           </div>
         )}
         {projectAssignments.length===0?(
-          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"16px 0"}}>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"16px 0"}}>
             {teamMembers.length===0?"Créez des membres dans Planning → Gérer l'équipe.":"Aucun membre assigné à ce projet."}
           </p>
         ):(
@@ -3491,9 +3515,9 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
       .sub{color:#666;font-size:13px;margin-bottom:24px}
       .label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:6px;font-weight:600}
       .box{border:1px solid #ddd;border-radius:6px;padding:14px 16px;margin-bottom:16px;font-size:14px;line-height:1.7;white-space:pre-wrap}
-      .decisions{border-color:#4ECDC4;background:#f0fffe}
+      .decisions{border-color:#0F766E;background:#f0fffe}
       .decision-item{display:flex;gap:8px;margin-bottom:4px}
-      .decision-item::before{content:"→";color:#4ECDC4;font-weight:700;flex-shrink:0}
+      .decision-item::before{content:"→";color:#0F766E;font-weight:700;flex-shrink:0}
       @media print{body{padding:20px}button{display:none}}
     </style></head><body>
       <h1>Note de réunion</h1>
@@ -3525,7 +3549,7 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
           </div>
         </div>
       )}
-      {notes.length===0&&!showAdd&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93",textAlign:"center",padding:"20px 0"}}>Aucune note de réunion</p>}
+      {notes.length===0&&!showAdd&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"20px 0"}}>Aucune note de réunion</p>}
       {[...notes].sort((a,b)=>b.date.localeCompare(a.date)).map(note=>(
         <div key={note.id} className="card fadeUp" style={{padding:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10,flexWrap:"wrap",gap:6}}>
@@ -3541,10 +3565,10 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
           {note.content&&<div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:7,padding:12,marginBottom:8}}><p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{note.content}</p></div>}
           {note.decisions&&(
             <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:7,padding:10}}>
-              <p style={{fontFamily:"'Inter'",fontSize:10,color:"#4ECDC4",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>✓ Décisions</p>
+              <p style={{fontFamily:"'Inter'",fontSize:10,color:"#0F766E",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>✓ Décisions</p>
               {note.decisions.split("\n").filter(Boolean).map((dec,i)=>(
                 <div key={i} style={{display:"flex",gap:7,alignItems:"flex-start",marginBottom:3}}>
-                  <span style={{color:"#4ECDC4",fontSize:11,marginTop:1,flexShrink:0}}>→</span>
+                  <span style={{color:"#0F766E",fontSize:11,marginTop:1,flexShrink:0}}>→</span>
                   <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{dec}</p>
                 </div>
               ))}
@@ -3572,13 +3596,13 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
   const[editSlot,setEditSlot]=useState(null);
   const[slotForm,setSlotForm]=useState({type:"tournage",projectId:"",startTime:"09:00",endTime:"17:00",note:""});
   const[showAddMember,setShowAddMember]=useState(false);
-  const[memberForm,setMemberForm]=useState({nom:"",role:"cadreur",email:"",team:"A",color:"#00B4D8"});
+  const[memberForm,setMemberForm]=useState({nom:"",role:"cadreur",email:"",team:"A",color:"#0077B6"});
 
   const SLOT_TYPES=[
-    {id:"tournage",  label:"Tournage",  color:"#00B4D8"},
-    {id:"montage",   label:"Montage",   color:"#7B9CFF"},
-    {id:"reunion",   label:"Réunion",   color:"#FF9F43"},
-    {id:"post-prod", label:"Post-prod", color:"#B47FFF"},
+    {id:"tournage",  label:"Tournage",  color:"#0077B6"},
+    {id:"montage",   label:"Montage",   color:"#4F46E5"},
+    {id:"reunion",   label:"Réunion",   color:"#B45309"},
+    {id:"post-prod", label:"Post-prod", color:"#7C3AED"},
   ];
   const MEMBER_ROLES=["cadreur","monteur","chef de projet","alternant","photographe"];
   const MEMBER_COLORS=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#FF3B30"];
@@ -3631,7 +3655,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
     const{data}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
     if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8"}]);
     onNotif("Membre ajouté !");
-    setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#00B4D8"});
+    setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#0077B6"});
     setShowAddMember(false);
   };
   const deleteMember=async(id)=>{
@@ -3681,7 +3705,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
           </div>
           {teamMembers.length===0?(
             <div className="card" style={{padding:40,textAlign:"center"}}>
-              <p style={{fontFamily:"'Inter'",fontSize:14,color:"#8E8E93"}}>Aucun membre configuré.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:14,color:"#6E6E73"}}>Aucun membre configuré.</p>
               <button className="btn btn-primary" style={{marginTop:12}} onClick={()=>setView("equipe")}>+ Ajouter des membres</button>
             </div>
           ):(
@@ -3689,7 +3713,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
               <table style={{width:"100%",borderCollapse:"collapse",minWidth:700,background:"#FFFFFF"}}>
                 <thead>
                   <tr>
-                    <th style={{width:130,padding:"10px 12px",textAlign:"left",fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:"1px solid #E5E5EA",position:"sticky",left:0,background:"#F7F7F7",zIndex:2}}>Membre</th>
+                    <th style={{width:130,padding:"10px 12px",textAlign:"left",fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",borderBottom:"1px solid #E5E5EA",position:"sticky",left:0,background:"#F7F7F7",zIndex:2}}>Membre</th>
                     {weekDays.map(date=>{
                       const isToday=date===isoToday();
                       const dn=new Date(date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short"});
@@ -3699,7 +3723,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                         <th key={date} style={{padding:"8px 4px",textAlign:"center",fontFamily:"'Inter'",fontSize:11,color:isToday?"#00B4D8":"#6E6E73",borderBottom:"1px solid #E5E5EA",borderLeft:"1px solid #E5E5EA",background:isToday?"#00B4D810":"#F7F7F7",minWidth:110}}>
                           <div style={{textTransform:"capitalize",fontSize:10}}>{dn}</div>
                           <div style={{fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.05em"}}>{dd}</div>
-                          {bks.map(b=><div key={b.id} style={{background:"#4ECDC418",border:"1px solid #4ECDC440",borderRadius:3,padding:"1px 5px",margin:"2px auto",fontSize:9,color:"#4ECDC4",display:"inline-block",whiteSpace:"nowrap"}}>📅 Éq.{b.team}</div>)}
+                          {bks.map(b=><div key={b.id} style={{background:"#4ECDC418",border:"1px solid #4ECDC440",borderRadius:3,padding:"1px 5px",margin:"2px auto",fontSize:9,color:"#0F766E",display:"inline-block",whiteSpace:"nowrap"}}>📅 Éq.{b.team}</div>)}
                         </th>
                       );
                     })}
@@ -3715,7 +3739,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                             <div style={{width:26,height:26,borderRadius:"50%",background:col+"22",border:`1px solid ${col}44`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:12,color:col,flexShrink:0}}>{member.nom[0]}</div>
                             <div>
                               <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",whiteSpace:"nowrap"}}>{member.nom}</p>
-                              <p style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93"}}>{member.role}</p>
+                              <p style={{fontFamily:"'Inter'",fontSize:9,color:"#6E6E73"}}>{member.role}</p>
                             </div>
                           </div>
                         </td>
@@ -3736,7 +3760,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                                       <span style={{fontFamily:"'Inter'",fontSize:9,color:typeColor(slot.type),fontWeight:600,lineHeight:1.4,flex:1,wordBreak:"break-word"}}>
                                         {slot.startTime&&slot.endTime?`${slot.startTime}–${slot.endTime} `:""}{slot.projectId?projTitle(slot.projectId):SLOT_TYPES.find(t=>t.id===slot.type)?.label||slot.type}
                                       </span>
-                                      <button onClick={e=>{e.stopPropagation();deleteSlot(slot.id);}} style={{background:"none",border:"none",color:"#8E8E93",cursor:"pointer",fontSize:9,lineHeight:1,padding:0,flexShrink:0,marginTop:1}}>✕</button>
+                                      <button onClick={e=>{e.stopPropagation();deleteSlot(slot.id);}} style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:9,lineHeight:1,padding:0,flexShrink:0,marginTop:1}}>✕</button>
                                     </div>
                                   </div>
                                 ))}
@@ -3777,7 +3801,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
             </div>
           )}
           {teamMembers.length===0?(
-            <div style={{textAlign:"center",padding:"30px 0",color:"#8E8E93",fontFamily:"'Inter'",fontSize:13}}>Aucun membre. Ajoutez votre équipe.</div>
+            <div style={{textAlign:"center",padding:"30px 0",color:"#6E6E73",fontFamily:"'Inter'",fontSize:13}}>Aucun membre. Ajoutez votre équipe.</div>
           ):(
             <div style={{display:"flex",flexDirection:"column",gap:6}}>
               {teamMembers.map((m,idx)=>{
@@ -3865,9 +3889,9 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
               <span style={{fontFamily:"'Inter'",fontSize:10,color:"#1D1D1F"}}>{m.nom.split(" ")[0]}</span>
             </div>
           ))}
-          {members.length===0&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Aucun membre</span>}
+          {members.length===0&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>Aucun membre</span>}
         </div>
-        <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{slots} créneau{slots!==1?"x":""} dans les 30 prochains jours</p>
+        <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{slots} créneau{slots!==1?"x":""} dans les 30 prochains jours</p>
       </div>
     );
   };
@@ -3885,7 +3909,7 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
       <div className="card fadeUp" style={{width:"100%",maxWidth:500,padding:28,background:"#FFFFFF"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}}>
           <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.05em"}}>NOUVEAU PROJET</h2>
-          <button style={{background:"none",border:"none",color:"#8E8E93",cursor:"pointer",fontSize:18,lineHeight:1}} onClick={onClose}>✕</button>
+          <button style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:18,lineHeight:1}} onClick={onClose}>✕</button>
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
           <div>
@@ -4033,7 +4057,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
       {showPass&&createdPass&&(
         <div className="fadeUp" style={{background:"#4ECDC415",border:"1px solid #4ECDC444",borderRadius:8,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
           <div>
-            <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#4ECDC4"}}>✓ Compte créé — transmettez ce mot de passe au client</p>
+            <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#0F766E"}}>✓ Compte créé — transmettez ce mot de passe au client</p>
             <p style={{fontFamily:"'JetBrains Mono'",fontSize:14,color:"#1D1D1F",marginTop:4,letterSpacing:"0.05em"}}>{createdPass}</p>
           </div>
           <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>{setShowPass(false);setCreatedPass(null);}}>✕</button>
@@ -4046,19 +4070,19 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
       {/* Comptes en attente de validation */}
       {clients.filter(c=>!c.isActive).length>0&&(
         <div style={{background:"#FF9F4310",border:"1px solid #FF9F4340",borderRadius:10,padding:"14px 18px"}}>
-          <p style={{fontFamily:"'Urbanist'",fontSize:15,color:"#FF9F43",letterSpacing:"0.06em",marginBottom:10}}>
+          <p style={{fontFamily:"'Urbanist'",fontSize:15,color:"#B45309",letterSpacing:"0.06em",marginBottom:10}}>
             ⏳ EN ATTENTE DE VALIDATION — {clients.filter(c=>!c.isActive).length} compte{clients.filter(c=>!c.isActive).length>1?"s":""}
           </p>
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
             {clients.filter(c=>!c.isActive).map(c=>(
               <div key={c.id} style={{background:"#FFFFFF",border:"1px solid #FF9F4330",borderRadius:8,padding:"10px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:32,height:32,borderRadius:"50%",background:"#FF9F4320",border:"1px solid #FF9F4340",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:14,color:"#FF9F43",flexShrink:0}}>
+                  <div style={{width:32,height:32,borderRadius:"50%",background:"#FF9F4320",border:"1px solid #FF9F4340",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:14,color:"#B45309",flexShrink:0}}>
                     {(c.name||"?")[0].toUpperCase()}
                   </div>
                   <div>
                     <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{c.name}</p>
-                    <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{c.email}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{c.email}</p>
                   </div>
                 </div>
                 <div style={{display:"flex",gap:8}}>
@@ -4073,22 +4097,22 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 
       {/* Comptes actifs */}
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
-        {clients.filter(c=>c.isActive).length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#8E8E93",fontFamily:"'Inter'",fontSize:13}}>Aucun compte client actif — créez le premier ci-dessus</div>}
+        {clients.filter(c=>c.isActive).length===0&&<div className="card" style={{padding:32,textAlign:"center",color:"#6E6E73",fontFamily:"'Inter'",fontSize:13}}>Aucun compte client actif — créez le premier ci-dessus</div>}
         {clients.filter(c=>c.isActive).map(c=>(
           <div key={c.id} className="card fadeUp" style={{padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <div style={{width:38,height:38,borderRadius:"50%",background:"#00B4D820",border:"1px solid #00B4D840",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:16,color:"#00B4D8",flexShrink:0}}>
+              <div style={{width:38,height:38,borderRadius:"50%",background:"#00B4D820",border:"1px solid #00B4D840",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:16,color:"#0077B6",flexShrink:0}}>
                 {(c.name||"?")[0].toUpperCase()}
               </div>
               <div>
                 <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{c.name}</p>
-                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{c.email}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{c.email}</p>
               </div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
               <span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E5E5EA",color:"#6E6E73"}}>{c.type}</span>
-              {c.discount>0&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#00B4D820",color:"#00B4D8"}}>-{c.discount}%</span>}
-              {c.simulatorEnabled&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#4ECDC4"}}>Simulateur</span>}
+              {c.discount>0&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#00B4D820",color:"#0077B6"}}>-{c.discount}%</span>}
+              {c.simulatorEnabled&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#0F766E"}}>Simulateur</span>}
               <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#E5E5EA"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#8E8E93",cursor:"pointer"}}>◆ Shortone</button>
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
               {onCreateProject&&<button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onCreateProject(c)}>+ Projet</button>}
@@ -4107,7 +4131,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 // ROOT APP
 // ─────────────────────────────────────────────────────────────────────────────
 // SETTINGS PANEL
-const ACCENT_COLORS={or:"#00B4D8",cyan:"#4ECDC4",bleu:"#7B9CFF",violet:"#B47FFF",rouge:"#FF3B30"};
+const ACCENT_COLORS={or:"#0077B6",cyan:"#0F766E",bleu:"#4F46E5",violet:"#7C3AED",rouge:"#D70015"};
 const DEFAULT_SETTINGS={fontSize:"normale",density:"normale",accent:"or",contrast:false};
 
 function SettingsPanel({settings,onChange,onClose,user,onLogout}){
@@ -4120,7 +4144,7 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
         {/* Header */}
         <div style={{padding:"18px 20px",borderBottom:"1px solid #E5E5EA",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <span style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.06em"}}>PARAMÈTRES</span>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"#8E8E93",cursor:"pointer",fontSize:18,lineHeight:1}}>✕</button>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:18,lineHeight:1}}>✕</button>
         </div>
 
         <div style={{flex:1,overflowY:"auto",padding:"18px 20px",display:"flex",flexDirection:"column",gap:22}}>
@@ -4132,13 +4156,13 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
             </div>
             <div style={{minWidth:0}}>
               <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.email||"—"}</p>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:1}}>Connecté</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:1}}>Connecté</p>
             </div>
           </div>
 
           {/* Taille de police */}
           <div>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Taille du texte</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Taille du texte</p>
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
               {[["petite","A"],["normale","A"],["grande","A"],["tres-grande","A"]].map(([k,l],i)=>(
                 <button key={k} onClick={()=>S("fontSize",k)} style={{padding:"8px 4px",background:settings.fontSize===k?ACCENT_COLORS[settings.accent]+"22":"#FFFFFF",border:`1px solid ${settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#E5E5EA"}`,borderRadius:7,color:settings.fontSize===k?ACCENT_COLORS[settings.accent]:"#6E6E73",fontFamily:"'Inter'",fontSize:[11,13,16,19][i],fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
@@ -4148,14 +4172,14 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginTop:4}}>
               {["Petite","Normale","Grande","XL"].map((l,i)=>(
-                <span key={l} style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",textAlign:"center"}}>{l}</span>
+                <span key={l} style={{fontFamily:"'Inter'",fontSize:9,color:"#6E6E73",textAlign:"center"}}>{l}</span>
               ))}
             </div>
           </div>
 
           {/* Densité */}
           <div>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Densité de l'interface</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Densité de l'interface</p>
             <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
               {Object.entries(densityLabel).map(([k,l])=>(
                 <button key={k} onClick={()=>S("density",k)} style={{padding:"8px 6px",background:settings.density===k?ACCENT_COLORS[settings.accent]+"22":"#FFFFFF",border:`1px solid ${settings.density===k?ACCENT_COLORS[settings.accent]:"#E5E5EA"}`,borderRadius:7,color:settings.density===k?ACCENT_COLORS[settings.accent]:"#6E6E73",fontFamily:"'Inter'",fontSize:12,fontWeight:600,cursor:"pointer",transition:"all .15s"}}>
@@ -4167,20 +4191,20 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
 
           {/* Couleur d'accent */}
           <div>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Couleur d'accent</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Couleur d'accent</p>
             <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
               {Object.entries(ACCENT_COLORS).map(([k,v])=>(
                 <button key={k} onClick={()=>S("accent",k)} style={{width:32,height:32,borderRadius:"50%",background:v,border:`3px solid ${settings.accent===k?"#1D1D1F":"transparent"}`,cursor:"pointer",transition:"all .15s",boxShadow:settings.accent===k?`0 0 12px ${v}66`:"none"}}/>
               ))}
             </div>
-            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:6,textTransform:"capitalize"}}>{settings.accent}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:6,textTransform:"capitalize"}}>{settings.accent}</p>
           </div>
 
           {/* Contraste */}
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
             <div>
               <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:600}}>Contraste élevé</p>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Améliore la lisibilité</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>Améliore la lisibilité</p>
             </div>
             <button onClick={()=>S("contrast",!settings.contrast)} className={`toggle ${settings.contrast?"on":""}`}/>
           </div>
@@ -4189,7 +4213,7 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
 
         {/* Footer — déconnexion */}
         <div style={{padding:"16px 20px",borderTop:"1px solid #E5E5EA"}}>
-          <button onClick={onLogout} style={{width:"100%",padding:"10px",background:"#FF3B3018",border:"1px solid #FF3B3030",borderRadius:8,color:"#FF3B30",fontFamily:"'Inter'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}
+          <button onClick={onLogout} style={{width:"100%",padding:"10px",background:"#FF3B3018",border:"1px solid #FF3B3030",borderRadius:8,color:"#D70015",fontFamily:"'Inter'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}
             onMouseEnter={e=>e.currentTarget.style.background="#FF3B3028"} onMouseLeave={e=>e.currentTarget.style.background="#FF3B3018"}>
             ↩ Se déconnecter
           </button>
@@ -4256,7 +4280,7 @@ function GuestView(){
       <div style={{borderBottom:"1px solid #1A1A28",background:"#FFFFFFcc",backdropFilter:"blur(12px)",position:"sticky",top:0,zIndex:10,padding:"12px 24px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
         <img src="/logo192.png" alt="Third-One Studio" style={{height:32}}/>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          {guestName&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Bonjour, <span style={{color:"#6E6E73",fontWeight:600}}>{guestName}</span></span>}
+          {guestName&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Bonjour, <span style={{color:"#6E6E73",fontWeight:600}}>{guestName}</span></span>}
           <span style={{fontFamily:"'Inter'",fontSize:10,padding:"3px 8px",borderRadius:4,background:"#0090B318",color:"#0090B3",border:"1px solid #0090B333",letterSpacing:"0.05em",textTransform:"uppercase"}}>Accès invité</span>
         </div>
       </div>
@@ -4265,7 +4289,7 @@ function GuestView(){
       <div style={{maxWidth:700,margin:"0 auto",padding:"32px 20px 48px"}}>
         {/* Project header */}
         <div style={{marginBottom:24}}>
-          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Validation vidéo</p>
+          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",letterSpacing:"0.12em",textTransform:"uppercase",marginBottom:6}}>Validation vidéo</p>
           <h1 style={{fontFamily:"'Urbanist'",fontSize:32,color:"#1D1D1F",letterSpacing:"0.04em",lineHeight:1}}>{project.title}</h1>
         </div>
 
@@ -4365,7 +4389,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
       {/* ── RADAR ── */}
       {view==="radar"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
-          {trendsLoading&&<div style={{textAlign:"center",padding:"30px 0",fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block",marginRight:8}}>⟳</span>Chargement des tendances...</div>}
+          {trendsLoading&&<div style={{textAlign:"center",padding:"30px 0",fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block",marginRight:8}}>⟳</span>Chargement des tendances...</div>}
           {/* Stats */}
           <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
             {[{v:trends[0]?.growth||"—",l:"Top croissance",c:"#4ECDC4"},{v:`${trends.length}`,l:"Tendances actives",c:"#B47FFF"},{v:`${[...new Set(trends.map(t=>t.niche))].length||6}`,l:"Niches suivies",c:"#00B4D8"}].map(s=>(
@@ -4389,7 +4413,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
               </button>
             )}
           </div>
-          {lastFetch&&<div style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>Dernière mise à jour : {new Date(lastFetch).toLocaleDateString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})}</div>}
+          {lastFetch&&<div style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>Dernière mise à jour : {new Date(lastFetch).toLocaleDateString("fr-FR",{day:"numeric",month:"long",hour:"2-digit",minute:"2-digit"})}</div>}
 
           {/* Trend cards */}
           {filteredTrends.map(t=>(
@@ -4397,20 +4421,20 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
               <div onClick={()=>setExpanded(expanded===t.id?null:t.id)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 16px",cursor:"pointer",gap:8}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",minWidth:0,flex:1}}>
                   <span style={{fontFamily:"'Inter'",fontWeight:700,fontSize:14,color:"#1D1D1F",whiteSpace:"nowrap"}}>{t.tag}</span>
-                  <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:"#4ECDC4",background:"#4ECDC418",border:"1px solid #4ECDC430",borderRadius:999,padding:"2px 8px",whiteSpace:"nowrap"}}>{t.growth}</span>
-                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",whiteSpace:"nowrap"}}>{t.platform} · {t.views}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:"#0F766E",background:"#4ECDC418",border:"1px solid #4ECDC430",borderRadius:999,padding:"2px 8px",whiteSpace:"nowrap"}}>{t.growth}</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",whiteSpace:"nowrap"}}>{t.platform} · {t.views}</span>
                 </div>
-                <span style={{color:"#8E8E93",fontSize:10,transform:expanded===t.id?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
+                <span style={{color:"#6E6E73",fontSize:10,transform:expanded===t.id?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
               </div>
               {expanded===t.id&&(
                 <div style={{padding:"0 16px 16px",borderTop:"1px solid #E5E5EA",paddingTop:14,display:"flex",flexDirection:"column",gap:14}}>
                   <div>
-                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#00B4D8",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:6}}>Pourquoi ça explose</div>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#0077B6",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:6}}>Pourquoi ça explose</div>
                     <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6,margin:0}}>{t.why}</p>
                   </div>
                   <div style={{borderLeft:"3px solid #00d4ff",paddingLeft:12,fontFamily:"'Inter'",fontSize:12,fontStyle:"italic",color:"#6666AA"}}>"{t.hook}"</div>
                   <div>
-                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#00B4D8",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Shotlist — {t.plans.length} plans</div>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#0077B6",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Shotlist — {t.plans.length} plans</div>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(52px,1fr))",gap:6}}>
                       {t.plans.map((p,i)=>{
                         const cols=["#7B9CFF","#4ECDC4","#FF9F43","#B47FFF","#FF3B30"];
@@ -4419,7 +4443,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                             <div style={{aspectRatio:"9/16",borderRadius:6,background:cols[i]+"18",border:`1px solid ${cols[i]}30`,display:"flex",alignItems:"center",justifyContent:"center"}}>
                               <div style={{width:14,height:14,borderRadius:3,background:cols[i]+"60"}}/>
                             </div>
-                            <div style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",textAlign:"center"}}>{p}</div>
+                            <div style={{fontFamily:"'Inter'",fontSize:9,color:"#6E6E73",textAlign:"center"}}>{p}</div>
                           </div>
                         );
                       })}
@@ -4441,7 +4465,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {projects.length===0?(
             <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:"40px 20px",textAlign:"center"}}>
-              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucune mission en cours — détecte une tendance dans le Radar pour commencer.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Aucune mission en cours — détecte une tendance dans le Radar pour commencer.</p>
               <button className="btn btn-primary" style={{marginTop:12,fontSize:12}} onClick={()=>setView("radar")}>⚡ Aller au Radar</button>
             </div>
           ):(
@@ -4452,7 +4476,7 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
                     <div style={{width:8,height:8,borderRadius:"50%",background:statusColor(status)}}/>
                     <span style={{fontFamily:"'Inter'",fontSize:11,color:statusColor(status),fontWeight:700,textTransform:"uppercase",letterSpacing:".08em"}}>{statusLabel(status)}</span>
-                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",marginLeft:2}}>{col.length}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",marginLeft:2}}>{col.length}</span>
                   </div>
                   {col.length===0?(
                     <div style={{background:"#F5F5F7",border:"1px dashed #E5E5EA",borderRadius:8,padding:"10px 14px"}}>
@@ -4467,13 +4491,13 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
                           onMouseLeave={e=>e.currentTarget.style.background="#FFFFFF"}>
                           <div>
                             <div style={{fontFamily:"'Inter'",fontWeight:600,fontSize:13,color:"#1D1D1F"}}>{p.title}</div>
-                            <div style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>{clientName(p.clientId)}</div>
+                            <div style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>{clientName(p.clientId)}</div>
                           </div>
                           <div style={{display:"flex",alignItems:"center",gap:8}}>
                             <div style={{width:60,height:3,background:"#F2F2F7",borderRadius:99}}>
                               <div style={{height:"100%",width:`${p.progress}%`,background:statusColor(p.status),borderRadius:99}}/>
                             </div>
-                            <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{p.progress}%</span>
+                            <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>{p.progress}%</span>
                             <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}>→</span>
                           </div>
                         </div>
@@ -4500,13 +4524,13 @@ function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject
     {icon:"📲",k:"cm",title:"Mes contenus",desc:"Publications planifiées pour vos réseaux"},
     {icon:"💬",k:"projets",title:"Messagerie",desc:"Échangez avec votre équipe"},
   ];
-  const statusColor=s=>({brief:"#00B4D8",storyboard:"#FF9500",tournage:"#FF9F43",montage:"#AF52DE",livraison:"#34C759"}[s]||"#6E6E73");
+  const statusColor=s=>({brief:"#0077B6",storyboard:"#B45309",tournage:"#C2410C",montage:"#7C3AED",livraison:"#15803D"}[s]||"#6E6E73");
   const statusLabel=s=>({brief:"Brief en cours",storyboard:"Storyboard",tournage:"En tournage",montage:"Montage",livraison:"Livré ✓"}[s]||s);
   const statusIcon=s=>({brief:"✏️",storyboard:"🎞",tournage:"🎬",montage:"✂️",livraison:"✅"}[s]||"📌");
   const STEPS=[{k:"brief",l:"Brief"},{k:"storyboard",l:"Storyboard"},{k:"tournage",l:"Tournage"},{k:"montage",l:"Montage"},{k:"livraison",l:"Livraison"}];
   const topProjects=projects.slice(0,4);
-  const prenom=(client.name||"").split(" ")[0]||"vous";
-  const primaryBtn={background:"linear-gradient(135deg,#00B4D8,#0090B3)",color:"#FFFFFF",border:"none",borderRadius:12,padding:"13px 26px",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:"0.02em",fontFamily:"'Inter'",boxShadow:"0 6px 18px rgba(0,180,216,0.32)",transition:"transform .15s,box-shadow .15s"};
+  const prenom=prettyName(client.name)||"vous";
+  const primaryBtn={background:"linear-gradient(135deg,#0096C7,#0077B6)",color:"#FFFFFF",border:"none",borderRadius:12,padding:"13px 26px",fontSize:13,fontWeight:800,cursor:"pointer",letterSpacing:"0.02em",fontFamily:"'Inter'",boxShadow:"0 6px 18px rgba(0,180,216,0.32)",transition:"transform .15s,box-shadow .15s"};
   return(
     <div style={{display:"flex",flexDirection:"column",gap:28}} className="fadeUp">
 
@@ -4514,7 +4538,7 @@ function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject
       <div style={{background:"linear-gradient(135deg,rgba(0,180,216,0.07) 0%,rgba(175,82,222,0.04) 50%,rgba(0,180,216,0.03) 100%)",border:"1px solid rgba(0,180,216,0.12)",borderRadius:16,padding:"28px 30px",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",top:-20,right:-20,width:120,height:120,borderRadius:"50%",background:"rgba(0,180,216,0.04)",border:"1px solid rgba(0,180,216,0.08)",pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:10,right:40,width:60,height:60,borderRadius:"50%",background:"rgba(175,82,222,0.04)",border:"1px solid rgba(175,82,222,0.08)",pointerEvents:"none"}}/>
-        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8,fontWeight:700}}>Votre espace de création</p>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#0077B6",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:8,fontWeight:700}}>Votre espace de création</p>
         <h1 style={{fontFamily:"'Urbanist'",fontSize:34,color:"#1D1D1F",letterSpacing:"0.02em",marginBottom:6,lineHeight:1.15,fontWeight:800}}>
           Bonjour, {prenom} 👋
         </h1>
@@ -4530,7 +4554,7 @@ function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject
 
       {/* Raccourcis */}
       <div>
-        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12,fontWeight:700}}>Accès rapide</p>
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",letterSpacing:"0.1em",textTransform:"uppercase",marginBottom:12,fontWeight:700}}>Accès rapide</p>
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(170px,1fr))",gap:10}}>
           {shortcuts.map(c=>(
             <button key={c.title} onClick={()=>onGoTo(c.k)} style={{background:"#FFFFFF",border:"1.5px solid #E5E5EA",borderRadius:12,padding:"16px 14px",textAlign:"left",cursor:"pointer",transition:"border-color .2s,box-shadow .2s",width:"100%",boxShadow:"0 2px 6px rgba(0,0,0,0.04)"}}
@@ -4538,7 +4562,7 @@ function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject
               onMouseLeave={e=>{e.currentTarget.style.borderColor="#E5E5EA";e.currentTarget.style.boxShadow="0 2px 6px rgba(0,0,0,0.04)";}}>
               <div style={{fontSize:24,marginBottom:10}}>{c.icon}</div>
               <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:"#1D1D1F",marginBottom:4}}>{c.title}</p>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",lineHeight:1.5}}>{c.desc}</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",lineHeight:1.5}}>{c.desc}</p>
             </button>
           ))}
         </div>
@@ -4547,7 +4571,7 @@ function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject
       {/* Projets — cœur de l'app */}
       <div>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700}}>Vos projets en cours</p>
+          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700}}>Vos projets en cours</p>
           {projects.length>4&&<button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>onGoTo("projets")}>Voir tout →</button>}
         </div>
         {projects.length===0?(
@@ -4598,7 +4622,7 @@ function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject
                 </button>
               );
             })}
-            <button onClick={onCreateProject} style={{background:"transparent",border:"1.5px dashed rgba(0,180,216,0.4)",borderRadius:14,padding:"15px",fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:"#00B4D8",cursor:"pointer",transition:"all .2s",width:"100%"}}
+            <button onClick={onCreateProject} style={{background:"transparent",border:"1.5px dashed rgba(0,180,216,0.4)",borderRadius:14,padding:"15px",fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:"#0077B6",cursor:"pointer",transition:"all .2s",width:"100%"}}
               onMouseEnter={e=>{e.currentTarget.style.background="rgba(0,180,216,0.05)";e.currentTarget.style.borderColor="#00B4D8";}}
               onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.borderColor="rgba(0,180,216,0.4)";}}>+ Démarrer un nouveau projet</button>
           </div>
@@ -4611,7 +4635,7 @@ function ClientWelcomePage({client,projects,onGoTo,onCreateProject,onOpenProject
           <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:700,color:"#1D1D1F",marginBottom:2}}>Une question ? Nous sommes là pour vous.</p>
           <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Notre équipe répond sous 24h.</p>
         </div>
-        <a href="mailto:contact@thirdone.studio" style={{background:"transparent",border:"1.5px solid rgba(0,180,216,0.3)",borderRadius:8,padding:"8px 16px",color:"#00B4D8",fontFamily:"'Inter'",fontSize:12,fontWeight:600,textDecoration:"none",cursor:"pointer",whiteSpace:"nowrap"}}>Nous écrire →</a>
+        <a href="mailto:contact@thirdone.studio" style={{background:"transparent",border:"1.5px solid rgba(0,180,216,0.3)",borderRadius:8,padding:"8px 16px",color:"#0077B6",fontFamily:"'Inter'",fontSize:12,fontWeight:600,textDecoration:"none",cursor:"pointer",whiteSpace:"nowrap"}}>Nous écrire →</a>
       </div>
     </div>
   );
@@ -4726,13 +4750,13 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
           </div>
           <div className="card" style={{padding:18}}>
             <SH icon="🏷️" title="TYPES EXISTANTS"/>
-            {serviceTypes.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Aucun type — ajoutez-en un ci-dessus.</p>}
+            {serviceTypes.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Aucun type — ajoutez-en un ci-dessus.</p>}
             <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:8}}>
               {serviceTypes.map(t=>(
                 <div key={t.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:"1px solid #E5E5EA"}}>
                   <span style={{fontSize:18}}>{t.icone}</span>
                   <span style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",flex:1}}>{t.label}</span>
-                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{prestataires.filter(p=>p.service_type_id===t.id).length} prestataire(s)</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{prestataires.filter(p=>p.service_type_id===t.id).length} prestataire(s)</span>
                   <button className="btn btn-red" style={{padding:"4px 10px",fontSize:11}} onClick={()=>deleteType(t.id)}>Supprimer</button>
                 </div>
               ))}
@@ -4768,7 +4792,7 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
             </div>
           </div>
           <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-            <span style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Filtrer :</span>
+            <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Filtrer :</span>
             <button className={`type-pill ${filterType==="all"?"selected":""}`} onClick={()=>setFilterType("all")}>Tous ({prestataires.length})</button>
             {serviceTypes.map(t=>(
               <button key={t.id} className={`type-pill ${filterType===t.id?"selected":""}`} onClick={()=>setFilterType(t.id)}>
@@ -4776,7 +4800,7 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
               </button>
             ))}
           </div>
-          {filtered.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",textAlign:"center",padding:20}}>Aucun prestataire{filterType!=="all"?" pour ce type":""}.</p>}
+          {filtered.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",textAlign:"center",padding:20}}>Aucun prestataire{filterType!=="all"?" pour ce type":""}.</p>}
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {filtered.map(p=>(
               <div key={p.id} className="card fadeUp" style={{padding:16}}>
@@ -4791,10 +4815,10 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
                       <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>✉ {p.email}</span>
                       {p.telephone&&<span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>📞 {p.telephone}</span>}
                     </div>
-                    {p.description&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginTop:4}}>{p.description}</p>}
+                    {p.description&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>{p.description}</p>}
                     {(p.portfolio_urls||[]).length>0&&(
                       <div style={{marginTop:6,display:"flex",gap:6,flexWrap:"wrap"}}>
-                        {p.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
+                        {p.portfolio_urls.map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#4F46E5",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
                       </div>
                     )}
                   </div>
@@ -4815,7 +4839,7 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
           <div className="modal" style={{padding:24}} onClick={e=>e.stopPropagation()}>
             <h3 style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.05em",marginBottom:4}}>CRÉER UN ACCÈS PARTENAIRE</h3>
             <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:16}}>{accessModal.nom} — {accessModal.email}</p>
-            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginBottom:12}}>Le partenaire pourra se connecter sur thirdone.studio avec son email et ce mot de passe. Il accèdera à un espace dédié pour voir et répondre à ses missions.</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:12}}>Le partenaire pourra se connecter sur thirdone.studio avec son email et ce mot de passe. Il accèdera à un espace dédié pour voir et répondre à ses missions.</p>
             <div style={{marginBottom:16}}>
               <Lbl>Mot de passe initial</Lbl>
               <input className="input" type="password" value={accessPass} onChange={e=>setAccessPass(e.target.value)} placeholder="Minimum 6 caractères"/>
@@ -4835,8 +4859,8 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
           </div>
           {missions.length===0&&!loadingMissions&&(
             <div className="card" style={{padding:30,textAlign:"center"}}>
-              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucune mission envoyée.</p>
-              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginTop:6}}>Envoyez des missions depuis l'onglet "Prestataires" d'une fiche projet.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Aucune mission envoyée.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:6}}>Envoyez des missions depuis l'onglet "Prestataires" d'une fiche projet.</p>
             </div>
           )}
           {missions.map(m=>{
@@ -4852,14 +4876,14 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
                       <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>→ {proj?.title||"Projet inconnu"}</span>
                       <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
                     </div>
-                    {m.brief_extrait&&<p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#8E8E93",background:"#F5F5F7",padding:"8px 12px",borderRadius:6,whiteSpace:"pre-line",marginBottom:8}}>{m.brief_extrait}</p>}
+                    {m.brief_extrait&&<p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#6E6E73",background:"#F5F5F7",padding:"8px 12px",borderRadius:6,whiteSpace:"pre-line",marginBottom:8}}>{m.brief_extrait}</p>}
                     {m.message_dispo&&(
                       <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:8,padding:"10px 14px",marginBottom:8}}>
-                        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#4ECDC4",fontWeight:600,marginBottom:4}}>Réponse reçue</p>
+                        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#0F766E",fontWeight:600,marginBottom:4}}>Réponse reçue</p>
                         <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F"}}>{m.message_dispo}</p>
                       </div>
                     )}
-                    <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Envoyé le {m.created_at?new Date(m.created_at).toLocaleDateString("fr-FR"):"-"}{m.responded_at&&` · Réponse le ${new Date(m.responded_at).toLocaleDateString("fr-FR")}`}</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>Envoyé le {m.created_at?new Date(m.created_at).toLocaleDateString("fr-FR"):"-"}{m.responded_at&&` · Réponse le ${new Date(m.responded_at).toLocaleDateString("fr-FR")}`}</p>
                   </div>
                   <div style={{display:"flex",gap:6,flexDirection:"column",alignItems:"flex-end"}}>
                     {m.statut==="envoyé"&&(
@@ -4956,7 +4980,7 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
 
   if(briefServices.length===0)return(
     <div className="card" style={{padding:24,textAlign:"center",display:"flex",flexDirection:"column",gap:12,alignItems:"center"}}>
-      <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Le client n'a pas encore coché de services prestataires dans son brief.</p>
+      <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Le client n'a pas encore coché de services prestataires dans son brief.</p>
       <button className="btn btn-ghost" style={{fontSize:11}} disabled={refreshing} onClick={refreshBrief}>{refreshing?"↻ Actualisation...":"↻ Actualiser le brief"}</button>
     </div>
   );
@@ -4978,9 +5002,9 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
               <span style={{fontSize:20}}>{type.icone}</span>
               <span style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>{type.label}</span>
-              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{prests.length} prestataire(s) disponible(s)</span>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{prests.length} prestataire(s) disponible(s)</span>
             </div>
-            {prests.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Aucun prestataire pour ce type — ajoutez-en dans l'espace Prestataires.</p>}
+            {prests.length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Aucun prestataire pour ce type — ajoutez-en dans l'espace Prestataires.</p>}
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
               {prests.map(p=>{
                 const mission=missionsForProject.find(m=>m.prestataire_id===p.id);
@@ -4988,7 +5012,7 @@ function ProjectPrestatairesPanel({project,serviceTypes,prestataires,missions,se
                   <div key={p.id} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:"#F5F5F7",borderRadius:8,border:`1px solid ${mission?"#00B4D840":"#E5E5EA"}`,flexWrap:"wrap"}}>
                     <div style={{flex:1}}>
                       <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{p.nom}</p>
-                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{p.email}{p.telephone?` · ${p.telephone}`:""}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{p.email}{p.telephone?` · ${p.telephone}`:""}</p>
                     </div>
                     {mission?(
                       <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
@@ -5100,8 +5124,8 @@ function PartenaireView({user,userProfile,onLogout}){
   if(!prestataire)return(
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <FontLoader/>
-      <p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20}}>COMPTE NON LIÉ</p>
-      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'est pas encore associé à un prestataire. Contactez Third-One Studio.</p>
+      <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20}}>COMPTE NON LIÉ</p>
+      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'est pas encore associé à un prestataire. Contactez Third-One Studio.</p>
       <button className="btn btn-ghost" onClick={onLogout}>Se déconnecter</button>
     </div>
   );
@@ -5117,7 +5141,7 @@ function PartenaireView({user,userProfile,onLogout}){
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:24,display:"block"}}/>
             <span style={{color:"#E5E5EA"}}>|</span>
-            <span style={{fontFamily:"'Inter'",fontSize:11,color:"#4ECDC4"}}>Espace Partenaire</span>
+            <span style={{fontFamily:"'Inter'",fontSize:11,color:"#0F766E"}}>Espace Partenaire</span>
           </div>
           <button className="btn btn-ghost" style={{fontSize:12}} onClick={onLogout}>Déconnexion</button>
         </div>
@@ -5127,18 +5151,18 @@ function PartenaireView({user,userProfile,onLogout}){
             <div style={{width:52,height:52,borderRadius:"50%",background:"#4ECDC422",border:"1.5px solid #4ECDC455",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>{tIcon(prestataire.service_type_id)}</div>
             <div style={{flex:1}}>
               <h1 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>{prestataire.nom}</h1>
-              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#4ECDC4"}}>{tLabel(prestataire.service_type_id)}</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#0F766E"}}>{tLabel(prestataire.service_type_id)}</p>
               {prestataire.description&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>{prestataire.description}</p>}
             </div>
             <div style={{textAlign:"right"}}>
-              <p style={{fontFamily:"'JetBrains Mono'",fontSize:12,color:"#00B4D8",fontWeight:600}}>{pending.length} mission{pending.length!==1?"s":""} en attente</p>
-              <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#4ECDC4"}}>{historic.filter(m=>m.statut==="accepté").length} acceptée(s)</p>
+              <p style={{fontFamily:"'JetBrains Mono'",fontSize:12,color:"#0077B6",fontWeight:600}}>{pending.length} mission{pending.length!==1?"s":""} en attente</p>
+              <p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#0F766E"}}>{historic.filter(m=>m.statut==="accepté").length} acceptée(s)</p>
             </div>
           </div>
 
           {pending.length>0&&(
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
-              <h2 style={{fontFamily:"'Urbanist'",fontSize:18,color:"#00B4D8",letterSpacing:"0.05em"}}>MISSIONS EN ATTENTE</h2>
+              <h2 style={{fontFamily:"'Urbanist'",fontSize:18,color:"#0077B6",letterSpacing:"0.05em"}}>MISSIONS EN ATTENTE</h2>
               {pending.map(m=>(
                 <div key={m.id} className="card fadeUp" style={{padding:20,borderColor:"#00B4D830"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:12,flexWrap:"wrap",gap:8}}>
@@ -5146,11 +5170,11 @@ function PartenaireView({user,userProfile,onLogout}){
                       <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{m.projects?.title||"Projet"}</p>
                       {m.projects?.shoot_date&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>📅 Date souhaitée : {new Date(m.projects.shoot_date+"T12:00:00").toLocaleDateString("fr-FR")}</p>}
                     </div>
-                    <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#00B4D8",background:"#00B4D822",border:"1px solid #00B4D844",borderRadius:10,padding:"2px 8px"}}>En attente</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#0077B6",background:"#00B4D822",border:"1px solid #00B4D844",borderRadius:10,padding:"2px 8px"}}>En attente</span>
                   </div>
                   {m.brief_extrait&&(
                     <div style={{background:"#F5F5F7",borderRadius:8,padding:"12px 16px",marginBottom:14}}>
-                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>Brief du projet</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.08em"}}>Brief du projet</p>
                       <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",lineHeight:1.7,whiteSpace:"pre-line"}}>{m.brief_extrait}</p>
                     </div>
                   )}
@@ -5170,12 +5194,12 @@ function PartenaireView({user,userProfile,onLogout}){
                         <label style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:4}}>Message *</label>
                         <textarea className="input" rows={3} placeholder="Votre disponibilité, conditions particulières..." value={replyMsg} onChange={e=>setReplyMsg(e.target.value)}/>
                       </div>
-                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Vos liens portfolio seront automatiquement joints à la proposition.</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>Vos liens portfolio seront automatiquement joints à la proposition.</p>
                       <div style={{background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:8,padding:"12px 14px"}}>
                         <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",userSelect:"none"}}>
                           <input type="checkbox" checked={nonConcurrence} onChange={e=>setNonConcurrence(e.target.checked)} style={{marginTop:3,flexShrink:0,accentColor:"#FF9F43"}}/>
                           <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",lineHeight:1.5}}>
-                            <strong style={{color:"#FF9F43"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
+                            <strong style={{color:"#B45309"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
                           </span>
                         </label>
                       </div>
@@ -5200,7 +5224,7 @@ function PartenaireView({user,userProfile,onLogout}){
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
                     <div>
                       <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{m.projects?.title||"Projet"}</p>
-                      {m.responded_at&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>Répondu le {new Date(m.responded_at).toLocaleDateString("fr-FR")}</p>}
+                      {m.responded_at&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>Répondu le {new Date(m.responded_at).toLocaleDateString("fr-FR")}</p>}
                     </div>
                     <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:statColor(m.statut),background:statColor(m.statut)+"22",border:`1px solid ${statColor(m.statut)}44`,borderRadius:10,padding:"2px 8px"}}>{m.statut}</span>
                   </div>
@@ -5212,8 +5236,8 @@ function PartenaireView({user,userProfile,onLogout}){
 
           {missions.length===0&&(
             <div className="card" style={{padding:30,textAlign:"center"}}>
-              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucune mission reçue pour l'instant.</p>
-              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",marginTop:6}}>Vous serez contacté directement par l'équipe Third-One Studio.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Aucune mission reçue pour l'instant.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:6}}>Vous serez contacté directement par l'équipe Third-One Studio.</p>
             </div>
           )}
 
@@ -5223,7 +5247,7 @@ function PartenaireView({user,userProfile,onLogout}){
             <textarea className="input" rows={4} value={portfolioInput} onChange={e=>setPortfolioInput(e.target.value)} placeholder={"https://instagram.com/votre-compte\nhttps://votre-site.com\nhttps://drive.google.com/..."}/>
             <div style={{marginTop:10,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
               <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                {(prestataire.portfolio_urls||[]).map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
+                {(prestataire.portfolio_urls||[]).map((url,i)=>{const safe=safePortfolioUrl(url);return safe?(<a key={i} href={safe} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:11,color:"#4F46E5",textDecoration:"none",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:4,padding:"2px 8px"}}>↗ Lien {i+1}</a>):null;})}
               </div>
               <button className="btn btn-primary" onClick={savePortfolio} disabled={savingPortfolio}>{savingPortfolio?"Enregistrement...":"Enregistrer"}</button>
             </div>
@@ -5275,12 +5299,12 @@ function PrestaireResponsePage({token}){
   };
 
   if(loading)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{color:"#0090B3",fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
-  if(errMsg)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20}}>LIEN INVALIDE</p><p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13}}>{errMsg}</p></div>;
+  if(errMsg)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20}}>LIEN INVALIDE</p><p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13}}>{errMsg}</p></div>;
   if(done)return(
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <FontLoader/>
       <span style={{fontSize:48}}>✅</span>
-      <p style={{color:"#4ECDC4",fontFamily:"'Urbanist'",fontSize:22,letterSpacing:"0.1em"}}>RÉPONSE ENVOYÉE</p>
+      <p style={{color:"#0F766E",fontFamily:"'Urbanist'",fontSize:22,letterSpacing:"0.1em"}}>RÉPONSE ENVOYÉE</p>
       <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Merci ! L'équipe Third-One Studio a bien reçu votre disponibilité. Ils vous recontacteront directement.</p>
     </div>
   );
@@ -5297,7 +5321,7 @@ function PrestaireResponsePage({token}){
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
             <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Projet</p>
             <p style={{fontFamily:"'Inter'",fontSize:15,fontWeight:600,color:"#1D1D1F"}}>{mission.projects?.title||"—"}</p>
-            {mission.prestataires&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Demande pour : <span style={{color:"#00B4D8"}}>{mission.prestataires.nom}</span></p>}
+            {mission.prestataires&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Demande pour : <span style={{color:"#0077B6"}}>{mission.prestataires.nom}</span></p>}
           </div>
           {mission.brief_extrait&&(
             <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
@@ -5307,7 +5331,7 @@ function PrestaireResponsePage({token}){
           )}
           {mission.statut!=="envoyé"?(
             <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:10,padding:24,textAlign:"center"}}>
-              <p style={{fontFamily:"'Inter'",color:"#4ECDC4",fontSize:14,fontWeight:600}}>Vous avez déjà répondu à cette mission.</p>
+              <p style={{fontFamily:"'Inter'",color:"#0F766E",fontSize:14,fontWeight:600}}>Vous avez déjà répondu à cette mission.</p>
               <p style={{fontFamily:"'Inter'",color:"#6E6E73",fontSize:12,marginTop:6}}>Statut : {mission.statut}</p>
             </div>
           ):(
@@ -5339,7 +5363,7 @@ function PrestaireResponsePage({token}){
                 <label style={{display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",userSelect:"none"}}>
                   <input type="checkbox" checked={nonConcurrence} onChange={e=>setNonConcurrence(e.target.checked)} style={{marginTop:3,flexShrink:0,accentColor:"#FF9F43"}}/>
                   <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",lineHeight:1.5}}>
-                    <strong style={{color:"#FF9F43"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
+                    <strong style={{color:"#B45309"}}>Clause de non-concurrence</strong> — Je m'engage à ne pas démarcher directement les clients de Third-One Studio présentés dans le cadre de ces missions, pendant une durée de 24 mois à compter de la fin de la mission.
                   </span>
                 </label>
               </div>
@@ -5347,7 +5371,7 @@ function PrestaireResponsePage({token}){
                 disabled={submitting||!message.trim()||!nonConcurrence} onClick={submit}>
                 {submitting?"Envoi en cours...":"✓ Envoyer ma proposition"}
               </button>
-              {!nonConcurrence&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#FF9F43",textAlign:"center",marginTop:-8}}>Veuillez accepter la clause de non-concurrence pour continuer.</p>}
+              {!nonConcurrence&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#B45309",textAlign:"center",marginTop:-8}}>Veuillez accepter la clause de non-concurrence pour continuer.</p>}
             </div>
           )}
         </div>
@@ -5422,15 +5446,15 @@ function AccessManager({onNotif}){
 
       {showAdd&&(
         <div className="card" style={{padding:20,display:"flex",flexDirection:"column",gap:12}}>
-          <p style={{fontFamily:"'Urbanist'",fontSize:16,color:"#00B4D8",letterSpacing:"0.05em"}}>ACCORDER UN ACCÈS COLLABORATEUR</p>
+          <p style={{fontFamily:"'Urbanist'",fontSize:16,color:"#0077B6",letterSpacing:"0.05em"}}>ACCORDER UN ACCÈS COLLABORATEUR</p>
           <div style={{background:"#00B4D810",border:"1px solid #00B4D830",borderRadius:8,padding:"10px 14px"}}>
-            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#00B4D8",lineHeight:1.6}}>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#0077B6",lineHeight:1.6}}>
               Le collaborateur doit d'abord <strong>créer son compte</strong> sur thirdone.studio (page de connexion → S'inscrire). Une fois fait, entre son email ci-dessous pour lui accorder l'accès.
             </p>
           </div>
           <div><Lbl>Email du collaborateur</Lbl><input className="input" type="email" placeholder="lucas@thirdone.studio" value={email} onChange={e=>setEmail(e.target.value)}/></div>
           <div style={{background:"#4ECDC410",border:"1px solid #4ECDC430",borderRadius:8,padding:"12px 14px"}}>
-            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#4ECDC4",fontWeight:600,marginBottom:8}}>Modules accessibles</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#0F766E",fontWeight:600,marginBottom:8}}>Modules accessibles</p>
             <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
               {MODULES.map(m=><span key={m} style={{fontFamily:"'Inter'",fontSize:11,background:"#4ECDC415",border:"1px solid #4ECDC430",borderRadius:4,padding:"2px 8px",color:"#1D1D1F"}}>✓ {m}</span>)}
               <span style={{fontFamily:"'Inter'",fontSize:11,background:"#FF3B3015",border:"1px solid #FF3B3030",borderRadius:4,padding:"2px 8px",color:"#FF3B3088",textDecoration:"line-through"}}>Estimation / Tarifs</span>
@@ -5443,22 +5467,22 @@ function AccessManager({onNotif}){
         </div>
       )}
 
-      {loading?<p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",padding:"20px 0"}}>Chargement...</p>
+      {loading?<p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",padding:"20px 0"}}>Chargement...</p>
       :collabs.length===0?(
         <div className="card" style={{padding:24,textAlign:"center"}}>
-          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#8E8E93"}}>Aucun collaborateur. Ajoutez un accès ci-dessus.</p>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Aucun collaborateur. Ajoutez un accès ci-dessus.</p>
         </div>
       ):collabs.map(c=>(
         <div key={c.id} className="card" style={{padding:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-          <div style={{width:38,height:38,borderRadius:"50%",background:"#7B9CFF22",border:"1px solid #7B9CFF44",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:18,color:"#7B9CFF",flexShrink:0}}>
+          <div style={{width:38,height:38,borderRadius:"50%",background:"#7B9CFF22",border:"1px solid #7B9CFF44",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:18,color:"#4F46E5",flexShrink:0}}>
             {(c.nom||c.email||"?")[0].toUpperCase()}
           </div>
           <div style={{flex:1}}>
             <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{c.nom||"—"}</p>
-            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>{c.email}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>{c.email}</p>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <span style={{fontFamily:"'Inter'",fontSize:11,background:"#7B9CFF22",border:"1px solid #7B9CFF44",borderRadius:10,padding:"2px 10px",color:"#7B9CFF"}}>collaborateur</span>
+            <span style={{fontFamily:"'Inter'",fontSize:11,background:"#7B9CFF22",border:"1px solid #7B9CFF44",borderRadius:10,padding:"2px 10px",color:"#4F46E5"}}>collaborateur</span>
             <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>revoke(c)}>Révoquer</button>
           </div>
         </div>
@@ -5504,21 +5528,21 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
     <div style={{display:"flex",flexDirection:"column",gap:14}}>
       <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:10,padding:"14px 18px",display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:14,flexWrap:"wrap"}}>
         <div>
-          <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>PROJETS</h2>
+          <h2 style={{fontFamily:"'Urbanist'",fontSize:24,fontWeight:800,color:"#1D1D1F",letterSpacing:"-0.02em"}}>Projets</h2>
           <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>{projects.length} projets · {invoices.length} factures</p>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"6px 12px",minWidth:120}}>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em"}}>Encaissé</p>
-            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#34C759",fontWeight:700}}>{fmt(totals.paid)}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em"}}>Encaissé</p>
+            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#15803D",fontWeight:700}}>{fmt(totals.paid)}</p>
           </div>
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"6px 12px",minWidth:120}}>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em"}}>En attente</p>
-            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#FF9F43",fontWeight:700}}>{fmt(totals.sent)}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em"}}>En attente</p>
+            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#B45309",fontWeight:700}}>{fmt(totals.sent)}</p>
           </div>
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"6px 12px",minWidth:120}}>
-            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.08em"}}>En retard</p>
-            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#FF3B30",fontWeight:700}}>{fmt(totals.overdue)}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em"}}>En retard</p>
+            <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#D70015",fontWeight:700}}>{fmt(totals.overdue)}</p>
           </div>
         </div>
       </div>
@@ -5557,7 +5581,7 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
             </thead>
             <tbody>
               {list.length===0 && (
-                <tr><td colSpan={6} style={{padding:"24px 14px",textAlign:"center",color:"#8E8E93"}}>Aucun projet ne correspond.</td></tr>
+                <tr><td colSpan={6} style={{padding:"24px 14px",textAlign:"center",color:"#6E6E73"}}>Aucun projet ne correspond.</td></tr>
               )}
               {list.map(p=>{
                 const c = clientById(p.clientId);
@@ -5569,15 +5593,15 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
                   <tr key={p.id} style={{borderTop:"1px solid #F2F2F7"}}>
                     <td style={{padding:"12px 14px",verticalAlign:"top"}}>
                       <p style={{fontWeight:600,color:"#1D1D1F"}}>{p.title}</p>
-                      <p style={{fontSize:11,color:"#8E8E93",marginTop:2}}>Créé {p.createdAt||"—"}</p>
+                      <p style={{fontSize:11,color:"#6E6E73",marginTop:2}}>Créé {p.createdAt||"—"}</p>
                     </td>
                     <td style={{padding:"12px 14px",verticalAlign:"top"}}>
                       {c ? (
                         <>
                           <p style={{color:"#1D1D1F"}}>{c.name}</p>
-                          <p style={{fontSize:11,color:"#8E8E93"}}>{c.email}</p>
+                          <p style={{fontSize:11,color:"#6E6E73"}}>{c.email}</p>
                         </>
-                      ) : <span style={{color:"#8E8E93",fontStyle:"italic"}}>—</span>}
+                      ) : <span style={{color:"#6E6E73",fontStyle:"italic"}}>—</span>}
                     </td>
                     <td style={{padding:"12px 14px",verticalAlign:"top"}}>
                       <span style={{background:statusColors[p.status||"brief"]+"22",color:statusColors[p.status||"brief"],border:`1px solid ${statusColors[p.status||"brief"]}55`,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:600}}>{statusLabel[p.status||"brief"]||p.status}</span>
@@ -5585,15 +5609,15 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
                         <div style={{height:"100%",width:`${p.progress||0}%`,background:statusColors[p.status||"brief"],borderRadius:2}}/>
                       </div>
                     </td>
-                    <td style={{padding:"12px 14px",verticalAlign:"top",color:"#1D1D1F"}}>{p.deliveryDate||<span style={{color:"#8E8E93"}}>—</span>}</td>
+                    <td style={{padding:"12px 14px",verticalAlign:"top",color:"#1D1D1F"}}>{p.deliveryDate||<span style={{color:"#6E6E73"}}>—</span>}</td>
                     <td style={{padding:"12px 14px",verticalAlign:"top"}}>
                       {ivs.length===0 ? (
-                        <span style={{background:"#8E8E9322",color:"#8E8E93",border:"1px solid #8E8E9355",borderRadius:6,padding:"2px 8px",fontSize:11}}>Aucune facture</span>
+                        <span style={{background:"#8E8E9322",color:"#6E6E73",border:"1px solid #8E8E9355",borderRadius:6,padding:"2px 8px",fontSize:11}}>Aucune facture</span>
                       ) : (
                         <div style={{display:"flex",flexDirection:"column",gap:3}}>
-                          {paid.length>0 && <span style={{background:"#34C75922",color:"#34C759",border:"1px solid #34C75955",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>✓ Payé {fmt(paid.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
-                          {sent.length>0 && <span style={{background:"#FF9F4322",color:"#FF9F43",border:"1px solid #FF9F4355",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⏳ À payer {fmt(sent.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
-                          {overdue.length>0 && <span style={{background:"#FF3B3022",color:"#FF3B30",border:"1px solid #FF3B3055",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⚠ Retard {fmt(overdue.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
+                          {paid.length>0 && <span style={{background:"#34C75922",color:"#15803D",border:"1px solid #34C75955",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>✓ Payé {fmt(paid.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
+                          {sent.length>0 && <span style={{background:"#FF9F4322",color:"#B45309",border:"1px solid #FF9F4355",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⏳ À payer {fmt(sent.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
+                          {overdue.length>0 && <span style={{background:"#FF3B3022",color:"#D70015",border:"1px solid #FF3B3055",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⚠ Retard {fmt(overdue.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
                         </div>
                       )}
                     </td>
@@ -5855,8 +5879,8 @@ function AppMain() {
   if (!user) return <Login onLogin={setUser} />;
   if (user && userProfile === null && userRole !== null) return (
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-      <p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>COMPTE SUPPRIMÉ</p>
-      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'existe plus. Contactez Third-One Studio.</p>
+      <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>COMPTE SUPPRIMÉ</p>
+      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'existe plus. Contactez Third-One Studio.</p>
       <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
     </div>
   );
@@ -5864,8 +5888,8 @@ function AppMain() {
   if (userProfile && userProfile.role === "client" && userProfile.is_active === false) return (
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.6}}/>
-      <p style={{color:"#FF3B30",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>ACCÈS SUSPENDU</p>
-      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Votre accès a été suspendu. Contactez Third-One Studio pour plus d'informations.</p>
+      <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>ACCÈS SUSPENDU</p>
+      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Votre accès a été suspendu. Contactez Third-One Studio pour plus d'informations.</p>
       <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
     </div>
   );
@@ -5979,22 +6003,22 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     showNotif(`Facture ${data.number||"#"+data.id.slice(0,6)} marquée payée`);
   };
 
-  const statusColor=s=>({brief:"#7B9CFF",storyboard:"#00B4D8",review:"#FF9F43",livraison:"#4ECDC4"}[s]||"#6E6E73");
+  const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
 
   // ── PROD NAV ────────────────────────────────────────────────────────────────
   const prodNavAll=[
-    {k:"dashboard",   l:"Dashboard",     icon:"📊"},
-    {k:"inbox",       l:"Inbox",         icon:"✉️"},
-    {k:"taches",      l:"Tâches",        icon:"✓"},
-    {k:"projets",     l:"Projets",       icon:"📁"},
-    {k:"calendrier",  l:"Calendrier",    icon:"📅"},
-    {k:"organisation",l:"Organisation",  icon:"🗂️"},
-    {k:"planning",    l:"Planning",      icon:"📆"},
-    {k:"cm",          l:"Social Media",  icon:"📲"},
-    {k:"prestataires",l:"Prestataires",  icon:"🤝"},
-    {k:"tarifs",      l:"Tarifs",        icon:"💰"},
-    {k:"comptes",     l:"Comptes",       icon:"👥"},
-    {k:"shortone",    l:"Shortone",      icon:"◆"},
+    {k:"dashboard",   l:"Dashboard",     g:"Production"},
+    {k:"inbox",       l:"Inbox",         g:"Production"},
+    {k:"taches",      l:"Tâches",        g:"Production"},
+    {k:"projets",     l:"Projets",       g:"Production"},
+    {k:"calendrier",  l:"Calendrier",    g:"Production"},
+    {k:"planning",    l:"Planning",      g:"Production"},
+    {k:"organisation",l:"Organisation",  g:"Gestion"},
+    {k:"prestataires",l:"Prestataires",  g:"Gestion"},
+    {k:"tarifs",      l:"Tarifs",        g:"Gestion"},
+    {k:"comptes",     l:"Comptes",       g:"Gestion"},
+    {k:"cm",          l:"Social Media",  g:"Communication"},
+    {k:"shortone",    l:"Shortone",      g:"Communication"},
   ];
   const COLLAB_BLOCKED=["tarifs"];
   const prodNav=isCollab?prodNavAll.filter(n=>!COLLAB_BLOCKED.includes(n.k)):prodNavAll;
@@ -6009,7 +6033,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     ...(activeClient?.shortoneEnabled?[{k:"shortone",l:"Shortone",icon:"◆"}]:[]),
   ];
 
-  const densityPad={"compact":"14px 14px 70px","normale":"22px 24px","spacieux":"32px 36px"};
+  const densityPad={"compact":"14px 14px 110px","normale":"22px 24px 120px","spacieux":"32px 36px 130px"};
   const fontSizePx={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
   const accentColor=ACCENT_COLORS[settings.accent]||ACCENT_COLORS.or;
 
@@ -6030,25 +6054,25 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             <button className="mob-only" onClick={()=>setSidebarOpen(o=>!o)} style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:18,padding:"4px",lineHeight:1,flexShrink:0}}>☰</button>
             <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:24,display:"block"}}/>
             <span className="desk-only" style={{color:"#E5E5EA",alignItems:"center"}}>|</span>
-            <span className="desk-only" style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",alignItems:"center"}}>
-              {appView==="prod"?"Back-office":`Espace client${activeClient?.name?` — ${activeClient.name}`:""}`}
+            <span className="desk-only" style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",alignItems:"center"}}>
+              {appView==="prod"?"Back-office":`Espace client${activeClient?.name?` — ${activeClient.name.includes("@")?prettyName(activeClient.name):activeClient.name}`:""}`}
             </span>
           </div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
               {userRole==="admin"&&previewClientId&&appView==="client"&&(
                 <div className="desk-only" style={{display:"flex",alignItems:"center",gap:6,background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>
-                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF"}}>👁 {previewClient?.name}</span>
-                  <button style={{background:"none",border:"none",color:"#7B9CFF",cursor:"pointer",fontSize:12,padding:"0 2px"}} onClick={()=>{setPreviewClientId(null);setAppView("prod");setProdSection("comptes");}}>✕</button>
+                  <span style={{fontFamily:"'Inter'",fontSize:11,color:"#4F46E5"}}>👁 {previewClient?.name}</span>
+                  <button style={{background:"none",border:"none",color:"#4F46E5",cursor:"pointer",fontSize:12,padding:"0 2px"}} onClick={()=>{setPreviewClientId(null);setAppView("prod");setProdSection("comptes");}}>✕</button>
                 </div>
               )}
               {isAdmin&&(
                 <div style={{display:"flex",gap:3,background:"#FFFFFF",padding:3,borderRadius:7,border:"1px solid #E5E5EA"}}>
-                  <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("prod");setSidebarOpen(false);}}>⚙ <span className="desk-only" style={{display:"inline"}}>Prod</span></button>
-                  <button className={appView==="client"?"tab active":"tab"} style={{fontSize:10,padding:"4px 9px"}} onClick={()=>{setAppView("client");setSidebarOpen(false);}}>👤 <span className="desk-only" style={{display:"inline"}}>Client</span></button>
+                  <button className={appView==="prod"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>{setAppView("prod");setSidebarOpen(false);}}>Prod</button>
+                  <button className={appView==="client"?"tab active":"tab"} style={{fontSize:11,padding:"4px 11px"}} onClick={()=>{setAppView("client");setSidebarOpen(false);}}>Client</button>
                 </div>
               )}
               {isCollab&&(
-                <span style={{fontFamily:"'Inter'",fontSize:11,color:"#7B9CFF",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>Collaborateur</span>
+                <span style={{fontFamily:"'Inter'",fontSize:11,color:"#4F46E5",background:"#7B9CFF15",border:"1px solid #7B9CFF30",borderRadius:6,padding:"3px 10px"}}>Collaborateur</span>
               )}
               {/* Avatar / menu utilisateur */}
               <button onClick={()=>setShowSettings(true)} style={{width:34,height:34,borderRadius:"50%",background:accentColor+"22",border:`1.5px solid ${accentColor}55`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:15,color:accentColor,cursor:"pointer",flexShrink:0,transition:"all .15s"}}
@@ -6067,18 +6091,23 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
 
           {/* ── SIDEBAR ── */}
           <div className={`app-sidebar${sidebarOpen?" open":""}`}>
-            {(appView==="prod"?prodNav:clientNav).map(n=>(
-              <div key={n.k} className={`nav-item ${(appView==="prod"?prodSection:clientSection)===n.k?"active":""}`}
-                onClick={()=>{appView==="prod"?setProdSection(n.k):setClientSection(n.k);setSidebarOpen(false);}}>
-                <span style={{fontSize:14}}>{n.icon}</span>
-                <span>{n.l}</span>
-              </div>
+            {(appView==="prod"?prodNav:clientNav).map((n,i,arr)=>(
+              <Fragment key={n.k}>
+                {appView==="prod"&&n.g&&(i===0||arr[i-1].g!==n.g)&&(
+                  <span style={{fontFamily:"'Inter'",fontSize:9,fontWeight:600,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",padding:i===0?"0 6px 2px":"12px 6px 2px",display:"block"}}>{n.g}</span>
+                )}
+                <div className={`nav-item ${(appView==="prod"?prodSection:clientSection)===n.k?"active":""}`}
+                  onClick={()=>{appView==="prod"?setProdSection(n.k):setClientSection(n.k);setSidebarOpen(false);}}>
+                  <NavIcon k={n.k}/>
+                  <span>{n.l}</span>
+                </div>
+              </Fragment>
             ))}
 
             {/* Project list — prod: only on section "projets", client: always */}
             {((appView==="prod"&&prodSection==="projets")||appView==="client")&&(
               <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid #F2F2F7"}}>
-                <span style={{fontFamily:"'Inter'",fontSize:9,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
+                <span style={{fontFamily:"'Inter'",fontSize:9,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
                 {(appView==="prod"?projects:clientProjects).map(p=>(
                   <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client")setClientSection("projets");setSidebarOpen(false);}}>
                     <div style={{flex:1,minWidth:0}}>
@@ -6089,11 +6118,11 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     </div>
                   </div>
                 ))}
-                <button style={{width:"100%",marginTop:6,background:"#00B4D810",border:"1px solid #00B4D825",borderRadius:6,color:"#00B4D8",fontFamily:"'Inter'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setShowCreateModal(true)}>
+                <button style={{width:"100%",marginTop:6,background:"#00B4D810",border:"1px solid #00B4D825",borderRadius:6,color:"#0077B6",fontFamily:"'Inter'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setShowCreateModal(true)}>
                   + Nouveau projet
                 </button>
                 {appView==="client"&&clientProjects.length===0&&(
-                  <button style={{width:"100%",marginTop:4,background:"#4ECDC410",border:"1px solid #4ECDC425",borderRadius:6,color:"#4ECDC4",fontFamily:"'Inter'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setClientSection("calendrier")}>
+                  <button style={{width:"100%",marginTop:4,background:"#4ECDC410",border:"1px solid #4ECDC425",borderRadius:6,color:"#0F766E",fontFamily:"'Inter'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setClientSection("calendrier")}>
                     📅 Prendre un RDV →
                   </button>
                 )}
@@ -6136,7 +6165,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                   </>
                 )}
                 {projetsView==="detail" && !selProject && (
-                  <div className="card" style={{padding:24,textAlign:"center",color:"#8E8E93"}}>Sélectionnez un projet dans la liste.</div>
+                  <div className="card" style={{padding:24,textAlign:"center",color:"#6E6E73"}}>Sélectionnez un projet dans la liste.</div>
                 )}
               </div>
             )}

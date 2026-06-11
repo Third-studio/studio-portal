@@ -53,11 +53,11 @@ export default function Assistant({ isTeam = false, currentProjectId = null }) {
           onClick={() => setOpen(true)}
           title="Assistant ThirdOne"
           style={{
-            position: "fixed", bottom: 24, right: 24, zIndex: 150,
-            width: 56, height: 56, borderRadius: 28, border: "none",
-            background: "linear-gradient(180deg,#0BC2E6,#00A8CA)", color: "#fff",
-            fontSize: 24, cursor: "pointer",
-            boxShadow: "0 2px 6px rgba(0,144,179,0.35), 0 10px 32px rgba(0,180,216,0.35)",
+            position: "fixed", bottom: 22, right: 22, zIndex: 150,
+            width: 52, height: 52, borderRadius: 26, border: "none",
+            background: "linear-gradient(180deg,#0096C7,#0077B6)", color: "#fff",
+            fontSize: 21, cursor: "pointer",
+            boxShadow: "0 1px 2px rgba(2,62,92,0.4), 0 8px 24px rgba(0,119,182,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
             transition: "transform .2s cubic-bezier(.4,0,.2,1)",
           }}
           onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.06)")}
@@ -80,13 +80,13 @@ export default function Assistant({ isTeam = false, currentProjectId = null }) {
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", borderBottom: "1px solid #F2F2F7" }}>
             <div style={{
               width: 32, height: 32, borderRadius: 16, display: "flex", alignItems: "center", justifyContent: "center",
-              background: "linear-gradient(180deg,#0BC2E6,#00A8CA)", color: "#fff", fontSize: 15,
+              background: "linear-gradient(180deg,#0096C7,#0077B6)", color: "#fff", fontSize: 15,
             }}>✦</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: "#1D1D1F" }}>Assistant ThirdOne</div>
-              <div style={{ fontSize: 10, color: "#8E8E93" }}>{isTeam ? "Accès équipe — tous les projets" : "Vos projets"}</div>
+              <div style={{ fontSize: 10, color: "#6E6E73" }}>{isTeam ? "Accès équipe — tous les projets" : "Vos projets"}</div>
             </div>
-            <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "none", color: "#8E8E93", fontSize: 18, cursor: "pointer", padding: 4 }}>✕</button>
+            <button onClick={() => setOpen(false)} style={{ background: "transparent", border: "none", color: "#6E6E73", fontSize: 18, cursor: "pointer", padding: 4 }}>✕</button>
           </div>
 
           {/* Messages */}
@@ -111,13 +111,13 @@ export default function Assistant({ isTeam = false, currentProjectId = null }) {
                 alignSelf: m.role === "user" ? "flex-end" : "flex-start",
                 maxWidth: "85%", padding: "9px 13px", borderRadius: 12, fontSize: 13, lineHeight: 1.5,
                 whiteSpace: "pre-wrap",
-                background: m.role === "user" ? "linear-gradient(180deg,#0BC2E6,#00A8CA)" : m.error ? "rgba(255,59,48,0.06)" : "#F5F5F7",
+                background: m.role === "user" ? "linear-gradient(180deg,#0096C7,#0077B6)" : m.error ? "rgba(255,59,48,0.06)" : "#F5F5F7",
                 color: m.role === "user" ? "#fff" : m.error ? "#FF3B30" : "#1D1D1F",
                 border: m.error ? "1px solid rgba(255,59,48,0.2)" : "none",
               }}>{m.content}</div>
             ))}
             {loading && (
-              <div style={{ alignSelf: "flex-start", padding: "9px 13px", borderRadius: 12, background: "#F5F5F7", color: "#8E8E93", fontSize: 13 }}>
+              <div style={{ alignSelf: "flex-start", padding: "9px 13px", borderRadius: 12, background: "#F5F5F7", color: "#6E6E73", fontSize: 13 }}>
                 <span style={{ animation: "pulse 1.2s infinite" }}>Je consulte les projets…</span>
               </div>
             )}

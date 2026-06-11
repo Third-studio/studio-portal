@@ -138,7 +138,7 @@ export default function TasksReminders({ onOpenProject }) {
                        {t.due_date || "sans date"}
                      </span>
                      {t.project_id && (
-                       <span style={{ color: "#00B4D8", cursor: "pointer" }}
+                       <span style={{ color: "#0077B6", cursor: "pointer" }}
                              onClick={() => onOpenProject?.(t.project_id)}>
                          {projTitle(t.project_id)}
                        </span>

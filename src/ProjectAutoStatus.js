@@ -8,10 +8,10 @@ import { supabase } from "./supabase";
 //   - bouton rafraîchir → re-déclenche project-radar pour ce projet seul
 
 const HEALTH = {
-  ok:      { bg: "#34C75918", color: "#34C759", label: "✓ En piste", border: "#34C75940" },
-  watch:   { bg: "#00B4D818", color: "#00B4D8", label: "● À surveiller", border: "#00B4D840" },
-  risk:    { bg: "#FF950018", color: "#FF9500", label: "⚠ À risque", border: "#FF950040" },
-  blocked: { bg: "#FF3B3018", color: "#FF3B30", label: "■ Bloqué", border: "#FF3B3040" },
+  ok:      { bg: "#34C75918", color: "#15803D", label: "✓ En piste", border: "#34C75940" },
+  watch:   { bg: "#00B4D818", color: "#0077B6", label: "● À surveiller", border: "#00B4D840" },
+  risk:    { bg: "#FF950018", color: "#B45309", label: "⚠ À risque", border: "#FF950040" },
+  blocked: { bg: "#FF3B3018", color: "#D70015", label: "■ Bloqué", border: "#FF3B3040" },
 };
 
 export default function ProjectAutoStatus({ project, onRefreshed }) {
@@ -68,7 +68,7 @@ export default function ProjectAutoStatus({ project, onRefreshed }) {
             padding: "3px 10px",
           }}>{h.label}</span>
         )}
-        <span style={{ fontSize: 11, color: "#8E8E93" }}>
+        <span style={{ fontSize: 11, color: "#6E6E73" }}>
           analyse {timeAgo(project.auto_status_at)}
         </span>
         <button
@@ -94,7 +94,7 @@ export default function ProjectAutoStatus({ project, onRefreshed }) {
           alignItems: "center",
           gap: 8,
         }}>
-          <span style={{ color: "#00B4D8", fontWeight: 600, fontSize: 11, textTransform: "uppercase" }}>
+          <span style={{ color: "#0077B6", fontWeight: 600, fontSize: 11, textTransform: "uppercase" }}>
             Prochaine action
           </span>
           <span style={{ color: "#1D1D1F" }}>{project.auto_next_action}</span>

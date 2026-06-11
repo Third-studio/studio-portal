@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 
 const S = `
   .li { width:100%; background:#F5F5F7; border:1.5px solid #E5E5EA; border-radius:10px; padding:12px 16px; color:#1D1D1F; font-size:14px; font-family:'Inter',sans-serif; outline:none; box-sizing:border-box; transition:border-color .2s,box-shadow .2s,background .2s; }
-  .li:focus { border-color:#00B4D8; background:#FFFFFF; box-shadow:0 0 0 4px rgba(0,180,216,0.10); }
+  .li:focus { border-color:#0077B6; background:#FFFFFF; box-shadow:0 0 0 4px rgba(0,180,216,0.10); }
   .li::placeholder { color:#C7C7CC; }
   .ltab { flex:1; padding:8px 0; border-radius:8px; border:none; cursor:pointer; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; transition:all .2s; }
 `;
@@ -61,9 +61,9 @@ export default function Login({ onLogin }) {
         <div style={{ textAlign:"center", marginBottom:36 }}>
           <img src="/logo192.png" alt="ThirdOne Studio" style={{ height:56, marginBottom:16, borderRadius:14 }}/>
           <div style={{ marginBottom:6, lineHeight:1 }}>
-            <span style={{ fontFamily:"'Urbanist',sans-serif", fontSize:28, fontWeight:800, color:"#162040", letterSpacing:"-0.02em" }}>Third</span><span style={{ fontFamily:"'Urbanist',sans-serif", fontSize:28, fontWeight:800, color:"#00B4D8", letterSpacing:"-0.02em" }}>One</span>
+            <span style={{ fontFamily:"'Urbanist',sans-serif", fontSize:28, fontWeight:800, color:"#162040", letterSpacing:"-0.02em" }}>Third</span><span style={{ fontFamily:"'Urbanist',sans-serif", fontSize:28, fontWeight:800, color:"#0077B6", letterSpacing:"-0.02em" }}>One</span>
           </div>
-          <p style={{ color:"#8E8E93", fontSize:12, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:"'Inter',sans-serif" }}>Production Interface</p>
+          <p style={{ color:"#6E6E73", fontSize:12, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:"'Inter',sans-serif" }}>Production Interface</p>
         </div>
 
         <div style={{ background:"rgba(255,255,255,0.85)", backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)", border:"1px solid #E8E8ED", borderRadius:22, padding:"32px 28px", boxShadow:"0 1px 2px rgba(16,24,40,0.04), 0 12px 48px rgba(16,24,40,0.10)" }}>
@@ -86,14 +86,14 @@ export default function Login({ onLogin }) {
               <div><Lbl>Mot de passe</Lbl>
                 <input type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key==="Enter"&&handleLogin()} className="li"/>
               </div>
-              {error && <p style={{ color:"#FF3B30", fontSize:12, textAlign:"center", background:"rgba(255,59,48,0.06)", border:"1px solid rgba(255,59,48,0.2)", borderRadius:8, padding:"8px 12px" }}>{error}</p>}
+              {error && <p style={{ color:"#D70015", fontSize:12, textAlign:"center", background:"rgba(255,59,48,0.06)", border:"1px solid rgba(255,59,48,0.2)", borderRadius:8, padding:"8px 12px" }}>{error}</p>}
               <button onClick={handleLogin} disabled={loading || !email || !password}
-                style={{ width:"100%", background:loading||!email||!password?"#F5F5F7":"linear-gradient(180deg,#0BC2E6,#00A8CA)", color:loading||!email||!password?"#C7C7CC":"#FFFFFF", border:"none", borderRadius:10, padding:"13px 0", fontSize:13, fontWeight:700, cursor:loading?"not-allowed":"pointer", letterSpacing:"0.04em", textTransform:"uppercase", transition:"all .2s", marginTop:4,
+                style={{ width:"100%", background:loading||!email||!password?"#F5F5F7":"linear-gradient(180deg,#0096C7,#0077B6)", color:loading||!email||!password?"#C7C7CC":"#FFFFFF", border:"none", borderRadius:10, padding:"13px 0", fontSize:13, fontWeight:700, cursor:loading?"not-allowed":"pointer", letterSpacing:"0.04em", textTransform:"uppercase", transition:"all .2s", marginTop:4,
                   boxShadow:loading||!email||!password?"none":"0 4px 12px rgba(0,180,216,0.3)" }}>
                 {loading ? "Connexion en cours…" : "Se connecter →"}
               </button>
               <button onClick={handleReset}
-                style={{ background:"transparent", color:"#8E8E93", border:"none", fontSize:12, cursor:"pointer", textDecoration:"underline", textAlign:"center", marginTop:-8 }}>
+                style={{ background:"transparent", color:"#6E6E73", border:"none", fontSize:12, cursor:"pointer", textDecoration:"underline", textAlign:"center", marginTop:-8 }}>
                 Mot de passe oublié ?
               </button>
             </div>
@@ -103,10 +103,10 @@ export default function Login({ onLogin }) {
           {mode === "login" && resetSent && (
             <div style={{ textAlign:"center", padding:"16px 0" }}>
               <div style={{ fontSize:40, marginBottom:14 }}>📬</div>
-              <p style={{ color:"#00B4D8", fontSize:14, fontWeight:600, marginBottom:8 }}>Email envoyé !</p>
+              <p style={{ color:"#0077B6", fontSize:14, fontWeight:600, marginBottom:8 }}>Email envoyé !</p>
               <p style={{ color:"#6E6E73", fontSize:13, lineHeight:1.6 }}>Vérifiez votre boite mail pour réinitialiser votre mot de passe.</p>
               <button onClick={() => setResetSent(false)}
-                style={{ marginTop:20, background:"transparent", color:"#8E8E93", border:"none", fontSize:12, cursor:"pointer", textDecoration:"underline" }}>
+                style={{ marginTop:20, background:"transparent", color:"#6E6E73", border:"none", fontSize:12, cursor:"pointer", textDecoration:"underline" }}>
                 Retour à la connexion
               </button>
             </div>
@@ -127,9 +127,9 @@ export default function Login({ onLogin }) {
               <div><Lbl>Confirmer le mot de passe</Lbl>
                 <input type="password" placeholder="••••••••" value={confirm} onChange={e => setConfirm(e.target.value)} onKeyDown={e => e.key==="Enter"&&handleRegister()} className="li"/>
               </div>
-              {error && <p style={{ color:"#FF3B30", fontSize:12, textAlign:"center", background:"rgba(255,59,48,0.06)", border:"1px solid rgba(255,59,48,0.2)", borderRadius:8, padding:"8px 12px" }}>{error}</p>}
+              {error && <p style={{ color:"#D70015", fontSize:12, textAlign:"center", background:"rgba(255,59,48,0.06)", border:"1px solid rgba(255,59,48,0.2)", borderRadius:8, padding:"8px 12px" }}>{error}</p>}
               <button onClick={handleRegister} disabled={loading || !email || !password || !nom}
-                style={{ width:"100%", background:loading||!email||!password||!nom?"#F5F5F7":"linear-gradient(180deg,#0BC2E6,#00A8CA)", color:loading||!email||!password||!nom?"#C7C7CC":"#FFFFFF", border:"none", borderRadius:10, padding:"13px 0", fontSize:13, fontWeight:700, cursor:loading?"not-allowed":"pointer", letterSpacing:"0.04em", textTransform:"uppercase", transition:"all .2s", marginTop:4,
+                style={{ width:"100%", background:loading||!email||!password||!nom?"#F5F5F7":"linear-gradient(180deg,#0096C7,#0077B6)", color:loading||!email||!password||!nom?"#C7C7CC":"#FFFFFF", border:"none", borderRadius:10, padding:"13px 0", fontSize:13, fontWeight:700, cursor:loading?"not-allowed":"pointer", letterSpacing:"0.04em", textTransform:"uppercase", transition:"all .2s", marginTop:4,
                   boxShadow:loading||!email||!password||!nom?"none":"0 4px 12px rgba(0,180,216,0.3)" }}>
                 {loading ? "Création en cours…" : "Créer mon compte →"}
               </button>
@@ -140,14 +140,14 @@ export default function Login({ onLogin }) {
           {mode === "register" && registered && (
             <div style={{ textAlign:"center", padding:"16px 0" }}>
               <div style={{ fontSize:40, marginBottom:14 }}>✨</div>
-              <p style={{ color:"#00B4D8", fontSize:15, fontWeight:600, marginBottom:10 }}>Bienvenue !</p>
+              <p style={{ color:"#0077B6", fontSize:15, fontWeight:600, marginBottom:10 }}>Bienvenue !</p>
               <p style={{ color:"#6E6E73", fontSize:13, lineHeight:1.7 }}>
                 Un email de confirmation a été envoyé à<br/>
                 <strong style={{color:"#1D1D1F"}}>{email}</strong>.<br/>
                 Validez votre compte puis connectez-vous.
               </p>
               <button onClick={() => switchMode("login")}
-                style={{ marginTop:22, background:"linear-gradient(180deg,#0BC2E6,#00A8CA)", color:"#FFFFFF", border:"none", borderRadius:10, padding:"11px 28px", fontSize:12, fontWeight:700, cursor:"pointer", letterSpacing:"0.04em", textTransform:"uppercase", boxShadow:"0 4px 12px rgba(0,180,216,0.3)" }}>
+                style={{ marginTop:22, background:"linear-gradient(180deg,#0096C7,#0077B6)", color:"#FFFFFF", border:"none", borderRadius:10, padding:"11px 28px", fontSize:12, fontWeight:700, cursor:"pointer", letterSpacing:"0.04em", textTransform:"uppercase", boxShadow:"0 4px 12px rgba(0,180,216,0.3)" }}>
                 Se connecter →
               </button>
             </div>
