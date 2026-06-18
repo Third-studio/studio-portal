@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+// Smoke test : l'app monte sans planter et affiche l'écran de chargement initial.
+test('App se monte et affiche l\'écran de chargement', () => {
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByText(/chargement/i)).toBeInTheDocument();
 });

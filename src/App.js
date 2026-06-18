@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, memo, Fragment } from "react";
 import { supabase } from "./supabase";
 import Login from "./Login";
 import Inbox from "./Inbox";
@@ -26,6 +26,8 @@ const FontLoader = () => (
     @keyframes spin    { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
     @keyframes countUp { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
     .fadeUp  { animation:fadeUp .35s ease both; }
+    @keyframes sectionIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .section-fade { animation:sectionIn .2s cubic-bezier(.16,1,.3,1) both; }
     .countUp { animation:countUp .4s cubic-bezier(.34,1.56,.64,1) both; }
 
     .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);white-space:nowrap; }
@@ -860,8 +862,19 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."},{k:"deliveryWished",l:"Livraison souhaitée",p:"Date ou délai souhaité"}];
   const[brief,setBrief]=useState({...project.brief});
   const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||"",replayUrl:project.replayUrl||""});
-  const addSB=sb=>{onUpdate({...project,storyboards:[...project.storyboards,sb]});setShowGen(false);onNotif("Storyboard généré !");};
-  const updSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif("Statut mis à jour");};
+  const addSB=async sb=>{
+    const{data,error}=await supabase.from("storyboards").insert({project_id:project.id,title:sb.title||"Storyboard",frames:sb.frames||[],validation_status:sb.validationStatus||"pending"}).select().single();
+    if(error){onNotif("Erreur storyboard : "+error.message);return;}
+    const saved={id:data.id,title:data.title,frames:data.frames||[],validationStatus:data.validation_status||"pending",createdAt:data.created_at?.split("T")[0]||sb.createdAt};
+    onUpdate({...project,storyboards:[...project.storyboards,saved]});
+    setShowGen(false);onNotif("Storyboard généré !");
+  };
+  const updSB=async(id,st)=>{
+    const{error}=await supabase.from("storyboards").update({validation_status:st}).eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});
+    onNotif("Statut mis à jour");
+  };
   const addMsg=async(text,role)=>{
     const author=role==="prod"?fmtProdAuthor(userProfile):fmtClientAuthor(userProfile);
     const date=new Date().toISOString().split("T")[0];
@@ -1328,7 +1341,12 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
     setSaving(false);
   };
 
-  const valSB=(id,st)=>{onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});onNotif(st==="approved"?"Storyboard approuvé !":"Révision demandée");};
+  const valSB=async(id,st)=>{
+    const{error}=await supabase.from("storyboards").update({validation_status:st}).eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});
+    onNotif(st==="approved"?"Storyboard approuvé !":"Révision demandée");
+  };
   const addMsg=async(text)=>{
     const author=fmtClientAuthor(clientData?.name, clientData?.company);
     const date=new Date().toISOString().split("T")[0];
@@ -2539,8 +2557,24 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
     (filterStatus === "all" || p.status === filterStatus)
   );
 
-  const updatePost = updated => setPosts(ps => ps.map(p => p.id === updated.id ? updated : p));
-  const deletePost = id => { setPosts(ps => ps.filter(p => p.id !== id)); onNotif("Post supprimé"); };
+  const postToRow = p => ({project_id:p.projectId||null,network:p.network,caption:p.caption||"",asset_name:p.assetName||"",scheduled_at:p.scheduledAt||null,status:p.status||"draft",comment:p.comment||"",cm_note:p.cmNote||""});
+  const updatePost = async updated => {
+    const{error}=await supabase.from("posts").update(postToRow(updated)).eq("id",updated.id);
+    if(error){onNotif("Erreur : "+error.message);return false;}
+    setPosts(ps => ps.map(p => p.id === updated.id ? updated : p));
+    return true;
+  };
+  const createPost = async p => {
+    const{data,error}=await supabase.from("posts").insert(postToRow(p)).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    const np={id:data.id,projectId:data.project_id,network:data.network,caption:data.caption||"",assetName:data.asset_name||"",scheduledAt:data.scheduled_at,status:data.status||"draft",comment:data.comment||"",cmNote:data.cm_note||"",createdAt:data.created_at?.split("T")[0]};
+    setPosts(ps => [...ps, np]); onNotif("Post créé !");
+  };
+  const deletePost = async id => {
+    const{error}=await supabase.from("posts").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setPosts(ps => ps.filter(p => p.id !== id)); onNotif("Post supprimé");
+  };
 
   const getProjectTitle = id => projects.find(p => p.id === id)?.title || "Projet inconnu";
   const netData = id => NETWORKS.find(n => n.id === id) || NETWORKS[0];
@@ -2615,7 +2649,7 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
             <CMPostRow key={post.id} post={post} netData={netData(post.network)} stData={stData(post.status)}
               projectTitle={getProjectTitle(post.projectId)}
               onEdit={() => setEditPost(post)} onDelete={() => deletePost(post.id)}
-              onStatusChange={st => { updatePost({...post, status:st}); onNotif("Statut mis à jour"); }}
+              onStatusChange={async st => { if(await updatePost({...post, status:st})) onNotif("Statut mis à jour"); }}
             />
           ))}
         </div>
@@ -2624,7 +2658,7 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
       {/* EDIT MODAL */}
       {editPost && (
         <CMPostModal post={editPost} projects={projects} onClose={() => setEditPost(null)}
-          onSave={p => { updatePost(p); setEditPost(null); onNotif("Post mis à jour !"); }}
+          onSave={async p => { if(await updatePost(p)){ setEditPost(null); onNotif("Post mis à jour !"); } }}
           onDelete={() => { deletePost(editPost.id); setEditPost(null); }}
         />
       )}
@@ -2632,7 +2666,7 @@ function CMModule({ posts, setPosts, projects, onNotif }) {
       {/* NEW POST MODAL */}
       {showNewPost && (
         <CMPostModal post={null} projects={projects} onClose={() => setShowNewPost(false)}
-          onSave={p => { setPosts(ps => [...ps, {...p, id:Date.now(), createdAt:new Date().toISOString().split("T")[0]}]); setShowNewPost(false); onNotif("Post créé !"); }}
+          onSave={async p => { await createPost(p); setShowNewPost(false); }}
         />
       )}
     </div>
@@ -2897,12 +2931,16 @@ function CMClientView({ posts, setPosts, projects, onNotif }) {
   const approved   = posts.filter(p => p.status === "approved");
   const netData = id => NETWORKS.find(n => n.id === id) || NETWORKS[0];
 
-  const approve = (id, comment="") => {
+  const approve = async (id, comment="") => {
+    const{error}=await supabase.from("posts").update({status:"approved",comment}).eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setPosts(ps => ps.map(p => p.id===id ? {...p, status:"approved", comment} : p));
     onNotif("Post approuvé !");
   };
-  const requestRevision = (id, comment) => {
+  const requestRevision = async (id, comment) => {
     if (!comment.trim()) return;
+    const{error}=await supabase.from("posts").update({status:"draft",comment}).eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setPosts(ps => ps.map(p => p.id===id ? {...p, status:"draft", comment} : p));
     onNotif("Révision demandée");
   };
@@ -3951,7 +3989,7 @@ function CreateProjectModal({isAdmin,clients,teamMembers,planningSlots,onClose,o
 // ─────────────────────────────────────────────────────────────────────────────
 function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProject}){
   const TYPES=["PME","Startup","Association","Collectivité","Particulier","Autre"];
-  const emptyForm={nom:"",email:"",password:"",company:"",client_type:"PME",discount:0,simulator_enabled:false,shortone_enabled:false};
+  const emptyForm={nom:"",email:"",password:"",company:"",client_type:"PME",discount:0,simulator_enabled:false,shortone_enabled:false,is_supervisor:false};
   const[tab,setTab]=useState("liste");
   const[form,setForm]=useState(emptyForm);
   const[editId,setEditId]=useState(null);
@@ -3960,7 +3998,7 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
   const[showPass,setShowPass]=useState(false);
   const F=(k,v)=>setForm(p=>({...p,[k]:v}));
 
-  const openEdit=(c)=>{setEditId(c.id);setForm({nom:c.name,email:c.email,password:"",company:c.company||"",client_type:c.type,discount:c.discount,simulator_enabled:c.simulatorEnabled,shortone_enabled:c.shortoneEnabled||false});setTab("edit");};
+  const openEdit=(c)=>{setEditId(c.id);setForm({nom:c.name,email:c.email,password:"",company:c.company||"",client_type:c.type,discount:c.discount,simulator_enabled:c.simulatorEnabled,shortone_enabled:c.shortoneEnabled||false,is_supervisor:c.isSupervisor||false});setTab("edit");};
   const cancelEdit=()=>{setEditId(null);setForm(emptyForm);setTab("liste");};
 
   const createAccount=async()=>{
@@ -3970,8 +4008,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
     if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
     const uid=data.user?.id;
     if(!uid){onNotif("Erreur création compte");setSaving(false);return;}
-    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",company:form.company||null,client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_active:true});
-    const nc={id:uid,name:form.nom||form.email,email:form.email,company:form.company||"",type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isActive:true};
+    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",company:form.company||null,client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_supervisor:form.is_supervisor,is_active:true});
+    const nc={id:uid,name:form.nom||form.email,email:form.email,company:form.company||"",type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isSupervisor:form.is_supervisor,isActive:true};
     setClients(cs=>[...cs,nc]);
     setCreatedPass(form.password);
     setShowPass(true);
@@ -3983,8 +4021,9 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 
   const saveEdit=async()=>{
     setSaving(true);
-    await supabase.from("profiles").update({nom:form.nom,company:form.company||null,client_type:form.client_type,discount:Number(form.discount),simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled}).eq("id",editId);
-    setClients(cs=>cs.map(c=>c.id===editId?{...c,name:form.nom||c.email,company:form.company||"",type:form.client_type,discount:Number(form.discount),simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled}:c));
+    const{error}=await supabase.from("profiles").update({nom:form.nom,company:form.company||null,client_type:form.client_type,discount:Number(form.discount),simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_supervisor:form.is_supervisor}).eq("id",editId);
+    if(error){setSaving(false);onNotif(/is_supervisor/.test(error.message)?"Colonne is_supervisor manquante — lance le SQL 2026-06-18_supervision.sql":"Erreur : "+error.message);return;}
+    setClients(cs=>cs.map(c=>c.id===editId?{...c,name:form.nom||c.email,company:form.company||"",type:form.client_type,discount:Number(form.discount),simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isSupervisor:form.is_supervisor}:c));
     setSaving(false);
     onNotif("Compte mis à jour");
     cancelEdit();
@@ -4033,7 +4072,12 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
             <Lbl>Accès Shortone</Lbl>
             <button className={`btn ${form.shortone_enabled?"btn-primary":"btn-ghost"}`} style={{fontSize:12}} onClick={()=>F("shortone_enabled",!form.shortone_enabled)}>{form.shortone_enabled?"◆ Activé":"◆ Désactivé"}</button>
           </div>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            <Lbl>Superviseur d'entreprise</Lbl>
+            <button className={`btn ${form.is_supervisor?"btn-green":"btn-ghost"}`} style={{fontSize:12}} onClick={()=>F("is_supervisor",!form.is_supervisor)} title="Voit et valide les projets des comptes partageant la même entreprise">{form.is_supervisor?"👁 Superviseur":"✗ Standard"}</button>
+          </div>
         </div>
+        {form.is_supervisor&&!form.company&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#B45309",margin:0}}>⚠️ Renseigne le champ Entreprise : le superviseur voit les comptes ayant exactement la même entreprise.</p>}
         <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}}>
           {!isNew&&<button className="btn btn-ghost" onClick={cancelEdit}>Annuler</button>}
           <button className="btn btn-primary" disabled={saving} onClick={isNew?createAccount:saveEdit}>{saving?"...":(isNew?"Créer le compte":"Enregistrer")}</button>
@@ -5692,6 +5736,15 @@ function InvoiceModal({ project, client, existing, onClose, onSave }){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Versions mémoïsées des sections lourdes (évite les re-renders quand les props
+// passées par AppMain sont inchangées — cf. handlers/valeurs mémoïsés).
+const ClientProjectViewMemo = memo(ClientProjectView);
+const CMClientViewMemo      = memo(CMClientView);
+const CalendarModuleMemo    = memo(CalendarModule);
+const AdminDashboardMemo    = memo(AdminDashboard);
+const CMModuleMemo          = memo(CMModule);
+const ProjectsListViewMemo  = memo(ProjectsListView);
+
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -5756,7 +5809,7 @@ function AppMain() {
       const isAdminUser = myProfile?.role === "admin" || myProfile?.role === "collaborateur";
 
       const queries = [
-        supabase.from("projects").select("*, messages(*), files(*)").order("created_at",{ascending:false}),
+        supabase.from("projects").select("*, messages(*), files(*), storyboards(*)").order("created_at",{ascending:false}),
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
         supabase.from("bookings").select("*").order("date",{ascending:true}),
         supabase.from("service_types").select("*").order("label"),
@@ -5832,7 +5885,7 @@ function AppMain() {
       }
       if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
       if(bookingsData) setBookings(bookingsData.map(b=>({...b,projectId:b.project_id||null,client:b.client_name||"",team:b.team||"A",status:b.status||"option",note:b.note||"",startTime:b.start_time||"08:00",endTime:b.end_time||"17:00",createdAt:b.created_at?.split("T")[0],expiresAt:b.expires_at||null,extras:b.extras||[],confirmType:b.confirm_type||null})));
-      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",company:p.company||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isActive:p.is_active!==false})));
+      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",company:p.company||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isSupervisor:p.is_supervisor===true,isActive:p.is_active!==false})));
       if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#00B4D8"})));
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
@@ -5862,15 +5915,51 @@ function AppMain() {
     }
   }, [user]);
 
+  // ── Handlers & valeurs dérivées mémoïsés ────────────────────────────────────
+  // (placés AVANT les return conditionnels ci-dessous → règle des hooks respectée)
+  const showNotif = useCallback(msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); },[]);
+  const updProject = useCallback(p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x)),[]);
+  const goToCalendarProd = useCallback(()=>setProdSection("calendrier"),[]);
+  const openProjectFromCalendar = useCallback((id)=>{setSelectedProjectId(id);setProdSection("projets");},[]);
+
+  // ── Supervision : un client "superviseur" voit les comptes de sa company ─────
+  const [companyMembers,setCompanyMembers]=useState([]);
+  useEffect(()=>{
+    if(userRole!=="client" || !userProfile?.is_supervisor || !userProfile?.company){ setCompanyMembers([]); return; }
+    let cancelled=false;
+    supabase.from("profiles").select("id,nom,email,company").eq("company",userProfile.company)
+      .then(({data,error})=>{ if(!cancelled && !error && Array.isArray(data)) setCompanyMembers(data); })
+      .catch(()=>{ /* SQL non déployé : on n'altère pas l'app */ });
+    return ()=>{ cancelled=true; };
+  },[userRole,userProfile]);
+
+  const isClient = userRole === "client";
+  const isAdmin = userRole === "admin";
+  const isCollab = userRole === "collaborateur";
+  const isSupervisor = isClient && !!userProfile?.is_supervisor && !!userProfile?.company;
+  const supervisedClientIds = useMemo(()=> isSupervisor ? companyMembers.map(m=>m.id) : [], [isSupervisor,companyMembers]);
+  const memberNameById = useMemo(()=>Object.fromEntries(companyMembers.map(m=>[m.id, prettyName(m.nom||m.email||"Client")])),[companyMembers]);
+
+  const previewClient = useMemo(()=> previewClientId ? clients.find(c=>c.id===previewClientId) : null, [previewClientId,clients]);
+  const clientProjects = useMemo(()=>{
+    if(!isClient) return previewClientId ? projects.filter(p=>p.clientId===previewClientId) : projects;
+    if(isSupervisor) return projects.filter(p=>p.clientId===(user?.id||null) || supervisedClientIds.includes(p.clientId));
+    return projects.filter(p=>p.clientId===(user?.id||null));
+  },[isClient,isSupervisor,previewClientId,projects,user,supervisedClientIds]);
+  const clientSelProject = useMemo(()=> clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null, [clientProjects,selectedProjectId]);
+  const selProject = useMemo(()=> projects.find(p=>p.id===selectedProjectId) || null, [projects,selectedProjectId]);
+  const activeClient = useMemo(()=> isClient && userProfile
+    ? { id:user?.id, name:userProfile.nom||user?.email, email:user?.email, company:userProfile.company||"", simulatorEnabled:userProfile.simulator_enabled||false, shortoneEnabled:userProfile.shortone_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME", isSupervisor }
+    : previewClient || clients[0]
+  ,[isClient,userProfile,user,previewClient,clients,isSupervisor]);
+
   useEffect(() => {
     if (appView !== "client") return;
-    const effClientId = userRole === "client" && user ? user.id : (previewClientId || null);
-    const cProjects = effClientId ? projects.filter(p => p.clientId === effClientId) : projects;
-    if (cProjects.length === 0) return;
-    if (cProjects.find(p => p.id === selectedProjectId)) return;
-    setSelectedProjectId(cProjects[0].id);
+    if (clientProjects.length === 0) return;
+    if (clientProjects.find(p => p.id === selectedProjectId)) return;
+    setSelectedProjectId(clientProjects[0].id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [appView, userRole, user, previewClientId, projects]);
+  }, [appView, clientProjects, selectedProjectId]);
 
   if (authLoading || dataLoading) return <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
     <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.8}}/>
@@ -5894,7 +5983,6 @@ function AppMain() {
     </div>
   );
 
-  const showNotif=msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); };
   // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
   // kind ∈ "livrable" | "modif_done" | "delivered" | "invoice_sent" | "custom"
   const notifyClient = async({ project, client, kind="custom", subject, html, text, extra="" }) => {
@@ -5933,8 +6021,6 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
       if(error) console.warn("notifyClient",error);
     }catch(e){ console.warn("notifyClient", e); }
   };
-  const updProject=p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x));
-  const selProject=projects.find(p=>p.id===selectedProjectId);
   const createProject=async(title,clientId,team)=>{
     const newClientId = userRole==="client" ? user.id : (clientId||null);
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:newClientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
@@ -5957,17 +6043,6 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     return np;
   };
 
-  const isClient = userRole === "client";
-  const isAdmin = userRole === "admin";
-  const isCollab = userRole === "collaborateur";
-  const previewClient = previewClientId ? clients.find(c=>c.id===previewClientId) : null;
-  const effectiveClientId = isClient ? user.id : (previewClientId || null);
-  const clientProjects = effectiveClientId ? projects.filter(p => p.clientId === effectiveClientId) : projects;
-  const clientSelProject = clientProjects.find(p=>p.id===selectedProjectId) || clientProjects[0] || null;
-
-  const activeClient = isClient && userProfile
-    ? { id:user.id, name:userProfile.nom||user.email, email:user.email, company:userProfile.company||"", simulatorEnabled:userProfile.simulator_enabled||false, shortoneEnabled:userProfile.shortone_enabled||false, discount:userProfile.discount||0, type:userProfile.client_type||"PME" }
-    : previewClient || clients[0];
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
 
   const saveInvoice=async(row)=>{
@@ -6004,6 +6079,25 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
   };
 
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
+
+  const renderProjRow=(p)=>(
+    <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client")setClientSection("projets");setSidebarOpen(false);}}>
+      <div style={{flex:1,minWidth:0}}>
+        <p style={{fontWeight:500,color:"inherit",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{p.title}</p>
+        <div style={{height:2,background:"#F2F2F7",borderRadius:1,marginTop:3,overflow:"hidden"}}>
+          <div style={{height:"100%",width:`${p.progress}%`,background:statusColor(p.status),borderRadius:1,transition:"width .5s"}}/>
+        </div>
+      </div>
+    </div>
+  );
+  // Liste projets superviseur regroupée par alternant (sinon liste à plat).
+  const supervisorGroups=()=>{
+    const byOwner=new Map();
+    clientProjects.forEach(p=>{ const k=p.clientId||"_"; if(!byOwner.has(k)) byOwner.set(k,[]); byOwner.get(k).push(p); });
+    const myId=user?.id;
+    const entries=[...byOwner.entries()].sort((a,b)=> (a[0]===myId?-1:b[0]===myId?1:0));
+    return entries.map(([ownerId,projs])=>({ ownerId, label: ownerId===myId?"Mes projets":(memberNameById[ownerId]||"Compte"), projs }));
+  };
 
   // ── PROD NAV ────────────────────────────────────────────────────────────────
   const prodNavAll=[
@@ -6108,16 +6202,14 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             {((appView==="prod"&&prodSection==="projets")||appView==="client")&&(
               <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid #F2F2F7"}}>
                 <span style={{fontFamily:"'Inter'",fontSize:9,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
-                {(appView==="prod"?projects:clientProjects).map(p=>(
-                  <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client")setClientSection("projets");setSidebarOpen(false);}}>
-                    <div style={{flex:1,minWidth:0}}>
-                      <p style={{fontWeight:500,color:"inherit",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{p.title}</p>
-                      <div style={{height:2,background:"#F2F2F7",borderRadius:1,marginTop:3,overflow:"hidden"}}>
-                        <div style={{height:"100%",width:`${p.progress}%`,background:statusColor(p.status),borderRadius:1,transition:"width .5s"}}/>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {appView==="client"&&isSupervisor
+                  ? supervisorGroups().map(g=>(
+                      <Fragment key={g.ownerId}>
+                        <span style={{fontFamily:"'Inter'",fontSize:9,fontWeight:600,color:"#0077B6",textTransform:"uppercase",letterSpacing:"0.08em",padding:"8px 6px 2px",display:"block"}}>{g.label}</span>
+                        {g.projs.map(renderProjRow)}
+                      </Fragment>
+                    ))
+                  : (appView==="prod"?projects:clientProjects).map(renderProjRow)}
                 <button style={{width:"100%",marginTop:6,background:"#00B4D810",border:"1px solid #00B4D825",borderRadius:6,color:"#0077B6",fontFamily:"'Inter'",fontSize:11,padding:"6px 0",cursor:"pointer"}} onClick={()=>setShowCreateModal(true)}>
                   + Nouveau projet
                 </button>
@@ -6136,9 +6228,10 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             {/* J-2 banner — visible sur toutes les sections prod */}
             {appView==="prod"&&<J2AlertBanner projects={projects} clients={clients}/>}
 
+            <div className="section-fade" key={`${appView}-${appView==="prod"?prodSection:clientSection}`}>
             {/* PROD SECTIONS */}
             {appView==="prod"&&prodSection==="dashboard"&&(
-              <AdminDashboard projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection} bookings={bookings} onGoToCalendar={()=>setProdSection("calendrier")} teamMembers={teamMembers}/>
+              <AdminDashboardMemo projects={projects} clients={clients} assignments={assignments} onSelectProject={setSelectedProjectId} onSectionChange={setProdSection} bookings={bookings} onGoToCalendar={goToCalendarProd} teamMembers={teamMembers}/>
             )}
             {appView==="prod"&&prodSection==="projets"&&(
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -6147,7 +6240,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                   <button className={`tab ${projetsView==="detail"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("detail")} disabled={!selProject}>📁 Détail{selProject?` — ${selProject.title}`:""}</button>
                 </div>
                 {projetsView==="liste" && (
-                  <ProjectsListView
+                  <ProjectsListViewMemo
                     projects={projects}
                     clients={clients}
                     invoices={invoices}
@@ -6170,7 +6263,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
               </div>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
-              <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif} projects={projects} onGoToProject={(id)=>{setSelectedProjectId(id);setProdSection("projets");}}/>
+              <CalendarModuleMemo bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif} projects={projects} onGoToProject={openProjectFromCalendar}/>
             )}
             {appView==="prod"&&prodSection==="organisation"&&(
               <OrgModule sheets={sheets} setSheets={setSheets} onNotif={showNotif}/>
@@ -6182,7 +6275,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
               <PlanningModule teamMembers={teamMembers} setTeamMembers={setTeamMembers} planningSlots={planningSlots} setPlanningSlots={setPlanningSlots} projects={projects} bookings={bookings} onNotif={showNotif}/>
             )}
             {appView==="prod"&&prodSection==="cm"&&(
-              <CMModule posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
+              <CMModuleMemo posts={posts} setPosts={setPosts} projects={projects} onNotif={showNotif}/>
             )}
             {appView==="prod"&&prodSection==="comptes"&&(isAdmin||isCollab)&&(
               <ComptesSection clients={clients} setClients={setClients} onNotif={showNotif} onPreviewClient={handlePreviewClient} onCreateProject={(c)=>{setCreateForClientId(c.id);setShowCreateModal(true);}} isAdmin={isAdmin}/>
@@ -6227,7 +6320,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             {/* CLIENT SECTIONS */}
             {appView==="client"&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection} onCreateProject={()=>createProject()} onOpenProject={(id)=>{setSelectedProjectId(id);setClientSection("projets");}}/>}
             {appView==="client"&&clientSection==="projets"&&clientSelProject&&(
-              <ClientProjectView key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing} serviceTypes={serviceTypes}/>
+              <ClientProjectViewMemo key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing} serviceTypes={serviceTypes}/>
             )}
             {appView==="client"&&clientSection==="calendrier"&&(
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
@@ -6235,11 +6328,11 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                   <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>DISPONIBILITÉS</h2>
                   <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>Consultez les disponibilités et posez une option sur une date.</p>
                 </div>
-                <CalendarModule bookings={bookings} setBookings={setBookings} isAdmin={false} onNotif={showNotif} projects={clientProjects}/>
+                <CalendarModuleMemo bookings={bookings} setBookings={setBookings} isAdmin={false} onNotif={showNotif} projects={clientProjects}/>
               </div>
             )}
             {appView==="client"&&clientSection==="cm"&&(
-              <CMClientView posts={posts} setPosts={setPosts} projects={clientProjects} onNotif={showNotif}/>
+              <CMClientViewMemo posts={posts} setPosts={setPosts} projects={clientProjects} onNotif={showNotif}/>
             )}
             {appView==="client"&&clientSection==="shortone"&&activeClient?.shortoneEnabled&&(
               <ShortoneModule
@@ -6261,6 +6354,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                 <ClientEstimationWidget pricing={pricing} clientData={activeClient}/>
               </div>
             )}
+            </div>
           </div>
         </div>
 
