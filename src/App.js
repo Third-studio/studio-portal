@@ -5576,7 +5576,7 @@ function AccessManager({onNotif}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess, onInviteClient }){
+function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject }){
   const[busyId,setBusyId]=useState(null);
   const[q,setQ]=useState("");
   const[fStatus,setFStatus]=useState("all"); // brief|storyboard|review|livraison
@@ -5721,6 +5721,9 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
                         {sent.concat(overdue).length>0
                           ? <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onMarkPaid(sent[0]||overdue[0],p,c)}>Marquer payée</button>
                           : <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onAddInvoice(p,c)}>+ Facture</button>}
+                        {onDeleteProject && (
+                          <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px",opacity:0.85}} title="Supprimer définitivement le projet" onClick={()=>onDeleteProject(p)}>🗑</button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -6190,7 +6193,26 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     updProject({...project,brief:newBrief});
     showNotif(v?"Accès client ouvert":"Accès client restreint au brief");
   };
+  // Invite le client à créer son accès et compléter le brief. Renvoie true si envoyé.
+  const sendClientInvite=async(project)=>{
+    const c=clients.find(cl=>cl.id===project.clientId);
+    const email=c?.email||project.brief?.pendingClientEmail;
+    const name=c?.name||project.brief?.pendingClientName||"";
+    if(!email){showNotif("Aucun email client à inviter");return false;}
+    const link=`https://thirdone.studio/?invite=${encodeURIComponent(email)}`;
+    const{error}=await supabase.functions.invoke("send-email",{body:{
+      to:email,subject:`Votre espace projet – ${project.title}`,
+      kicker:"Invitation",title:`Votre projet ${project.title}`,
+      html:`<p style="margin:0 0 14px;">Bonjour ${name||""},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${project.title}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
+      text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
+      cta:{label:"Créer mon accès",url:link},
+    }});
+    if(error){showNotif("Erreur envoi : "+error.message);return false;}
+    showNotif("Invitation envoyée au client ✉️");
+    return true;
+  };
   // Crée un projet depuis un brief extrait d'un email (Inbox → brief-from-email)
+  // puis invite automatiquement le nouveau client dans la foulée.
   const createProjectFromEmail=async(extract,emailId)=>{
     const c=extract?.client||{};
     const existing=c.email?clients.find(cl=>(cl.email||"").toLowerCase()===c.email.toLowerCase()):null;
@@ -6208,24 +6230,18 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     setProjects(ps=>[np,...ps]);
     setSelectedProjectId(np.id);
     setAppView("prod");setProdSection("projets");setProjetsView("detail");
-    showNotif(existing?`Projet créé pour ${existing.name} — brief pré-rempli`:"Projet créé — brief pré-rempli, invitez le client");
+    if(existing){ showNotif(`Projet créé pour ${existing.name} — brief pré-rempli`); }
+    else if(c.email){ const sent=await sendClientInvite(np); if(!sent) showNotif("Projet créé — pense à inviter le client"); }
+    else { showNotif("Projet créé — brief pré-rempli"); }
   };
-  // Invite le client à créer son accès et compléter le brief
-  const sendClientInvite=async(project)=>{
-    const c=clients.find(cl=>cl.id===project.clientId);
-    const email=c?.email||project.brief?.pendingClientEmail;
-    const name=c?.name||project.brief?.pendingClientName||"";
-    if(!email){showNotif("Aucun email client à inviter");return;}
-    const link=`https://thirdone.studio/?invite=${encodeURIComponent(email)}`;
-    const{error}=await supabase.functions.invoke("send-email",{body:{
-      to:email,subject:`Votre espace projet – ${project.title}`,
-      kicker:"Invitation",title:`Votre projet ${project.title}`,
-      html:`<p style="margin:0 0 14px;">Bonjour ${name||""},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${project.title}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
-      text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
-      cta:{label:"Créer mon accès",url:link},
-    }});
-    if(error){showNotif("Erreur envoi : "+error.message);return;}
-    showNotif("Invitation envoyée au client ✉️");
+  // Suppression d'un projet (depuis la liste) — irréversible, avec confirmation.
+  const deleteProject=async(project)=>{
+    if(!window.confirm(`Supprimer définitivement le projet « ${project.title} » ?\n\nCette action est irréversible : brief, messages, livrables, storyboards et factures liés seront perdus.`))return;
+    const{error}=await supabase.from("projects").delete().eq("id",project.id);
+    if(error){showNotif("Erreur suppression : "+error.message);return;}
+    setProjects(ps=>ps.filter(p=>p.id!==project.id));
+    if(selectedProjectId===project.id){ setSelectedProjectId(null); setProjetsView("liste"); }
+    showNotif("Projet supprimé");
   };
 
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
@@ -6402,6 +6418,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     onNotifyClient={sendClientUpdate}
                     onToggleAccess={toggleProjectAccess}
                     onInviteClient={sendClientInvite}
+                    onDeleteProject={deleteProject}
                   />
                 )}
                 {projetsView==="detail" && selProject && (
