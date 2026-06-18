@@ -206,6 +206,7 @@ const NAV_PATHS={
   tarifs:<><path d="M4 10h12"/><path d="M4 14h9"/><path d="M19 6a7.7 7.7 0 0 0-5.2-2A7.9 7.9 0 0 0 6 12c0 4.4 3.5 8 7.8 8 2 0 3.8-.8 5.2-2"/></>,
   comptes:<><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></>,
   shortone:<path d="M12 3l7 9-7 9-7-9z"/>,
+  briefia:<><path d="m5 3 1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/><path d="M19 3v4"/><path d="M17 5h4"/><path d="M14.5 9.5 4 20l-1 1 1 1 1-1L15.5 10.5z"/></>,
   accueil:<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></>,
   estimation:<><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/><path d="M8 16h.01"/><path d="M12 16h.01"/><path d="M16 16h.01"/></>,
 };
@@ -5829,6 +5830,42 @@ function ClientProjectsList({projects,onOpen,grouped,memberNameById={},myId}){
   return grid(projects);
 }
 
+// Section "Brief IA" : coller un email → Claude pré-remplit le brief et crée le projet.
+function BriefComposer({ onCreate }){
+  const[from,setFrom]=useState("");
+  const[subject,setSubject]=useState("");
+  const[text,setText]=useState("");
+  const[busy,setBusy]=useState(false);
+  const go=async()=>{
+    if(!text.trim())return;
+    setBusy(true);
+    try{
+      const{data,error}=await supabase.functions.invoke("brief-from-email",{body:{text,subject,from_addr:from}});
+      if(error||!data?.brief){alert("Erreur extraction : "+(error?.message||data?.error||"réponse vide"));return;}
+      setText("");setFrom("");setSubject("");
+      onCreate?.(data.brief);
+    }finally{setBusy(false);}
+  };
+  return (
+    <div style={{maxWidth:760,display:"flex",flexDirection:"column",gap:14}}>
+      <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:10,padding:"14px 18px"}}>
+        <h2 style={{fontFamily:"'Urbanist'",fontSize:24,fontWeight:800,color:"#1D1D1F",letterSpacing:"-0.02em"}}>Brief IA</h2>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>Colle le contenu d'un email de demande : Claude pré-remplit le brief, crée le projet et invite le client.</p>
+      </div>
+      <div className="card" style={{padding:18,display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+          <input className="input" placeholder="Email de l'expéditeur (ex: client@société.com)" value={from} onChange={e=>setFrom(e.target.value)} style={{flex:"1 1 240px"}}/>
+          <input className="input" placeholder="Objet (optionnel)" value={subject} onChange={e=>setSubject(e.target.value)} style={{flex:"1 1 240px"}}/>
+        </div>
+        <textarea className="input" rows={12} placeholder="Colle ici le contenu de l'email reçu (demande du client)…" value={text} onChange={e=>setText(e.target.value)}/>
+        <div style={{display:"flex",justifyContent:"flex-end"}}>
+          <button className="btn btn-primary" onClick={go} disabled={busy||!text.trim()}>{busy?"✨ Analyse…":"✨ Créer le projet"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Versions mémoïsées des sections lourdes (évite les re-renders quand les props
 // passées par AppMain sont inchangées — cf. handlers/valeurs mémoïsés).
 const ClientProjectViewMemo = memo(ClientProjectView);
@@ -6269,6 +6306,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
   const prodNavAll=[
     {k:"dashboard",   l:"Dashboard",     g:"Production"},
     {k:"inbox",       l:"Inbox",         g:"Production"},
+    {k:"briefia",     l:"Brief IA",      g:"Production"},
     {k:"taches",      l:"Tâches",        g:"Production"},
     {k:"projets",     l:"Projets",       g:"Production"},
     {k:"calendrier",  l:"Calendrier",    g:"Production"},
@@ -6483,6 +6521,9 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             )}
             {appView==="prod"&&prodSection==="inbox"&&(
               <Inbox onOpenProject={(pid)=>{setSelectedProjectId(pid);setProdSection("projets");setProjetsView("detail");}} onCreateFromEmail={createProjectFromEmail}/>
+            )}
+            {appView==="prod"&&prodSection==="briefia"&&(
+              <BriefComposer onCreate={(brief)=>createProjectFromEmail(brief,null)}/>
             )}
             {appView==="prod"&&prodSection==="taches"&&(
               <TasksReminders onOpenProject={(pid)=>{setSelectedProjectId(pid);setProdSection("projets");setProjetsView("detail");}}/>
