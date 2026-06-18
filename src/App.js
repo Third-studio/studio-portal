@@ -6161,7 +6161,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
 
   const renderProjRow=(p)=>(
-    <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client"){setClientSection("projets");setClientProjectsView("detail");}setSidebarOpen(false);}}>
+    <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client"){setClientSection("projets");setClientProjectsView("detail");}else{setProdSection("projets");setProjetsView("detail");}setSidebarOpen(false);}}>
       <div style={{flex:1,minWidth:0}}>
         <p style={{fontWeight:500,color:"inherit",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{p.title}</p>
         <div style={{height:2,background:"#F2F2F7",borderRadius:1,marginTop:3,overflow:"hidden"}}>
@@ -6333,6 +6333,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                 )}
                 {projetsView==="detail" && selProject && (
                   <>
+                    <button className="btn btn-ghost" style={{alignSelf:"flex-start",fontSize:12,padding:"5px 12px"}} onClick={()=>setProjetsView("liste")}>← Liste des projets</button>
                     <ProjectAutoStatus project={selProject} onRefreshed={(d)=>updProject({...selProject,...d})}/>
                     <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions} onPreviewClient={handlePreviewClient} invoices={invoices.filter(i=>i.project_id===selProject.id)} onAddInvoice={()=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId)})} onEditInvoice={(inv)=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId),existing:inv})} onMarkPaid={(inv)=>markInvoicePaid(inv,selProject,clients.find(c=>c.id===selProject.clientId))} notifyClient={notifyClient}/>
                   </>
