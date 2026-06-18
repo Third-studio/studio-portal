@@ -40,12 +40,20 @@ serve(async (req) => {
   if (prof?.role !== "admin" && prof?.role !== "collaborateur") return json({ error: "Forbidden" }, 403);
 
   try {
-    const { email_id } = (await req.json()) as { email_id: string };
-    if (!email_id) return json({ error: "missing email_id" }, 400);
+    const body = (await req.json()) as { email_id?: string; text?: string; subject?: string; from_name?: string; from_addr?: string };
 
-    const { data: email, error: emErr } = await supabase
-      .from("emails").select("subject, from_name, from_addr, body_text, received_at").eq("id", email_id).single();
-    if (emErr || !email) return json({ error: "email not found" }, 404);
+    // Source : soit un email existant (Inbox), soit du texte collé.
+    let email: { subject: string; from_name: string; from_addr: string; body_text: string; received_at: string };
+    if (body.email_id) {
+      const { data, error: emErr } = await supabase
+        .from("emails").select("subject, from_name, from_addr, body_text, received_at").eq("id", body.email_id).single();
+      if (emErr || !data) return json({ error: "email not found" }, 404);
+      email = data as any;
+    } else if (body.text && body.text.trim()) {
+      email = { subject: body.subject || "", from_name: body.from_name || "", from_addr: body.from_addr || "", body_text: body.text, received_at: "" };
+    } else {
+      return json({ error: "missing email_id or text" }, 400);
+    }
 
     const userText = [
       `SUJET: ${email.subject || ""}`,

@@ -25,6 +25,22 @@ export default function Inbox({ onOpenProject, onCreateFromEmail }) {
   const [syncing, setSyncing] = useState(false);
   const [selected, setSelected] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteFrom, setPasteFrom] = useState("");
+  const [pasteSubject, setPasteSubject] = useState("");
+  const [pasting, setPasting] = useState(false);
+
+  async function createBriefFromText() {
+    if (!pasteText.trim()) return;
+    setPasting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("brief-from-email", { body: { text: pasteText, subject: pasteSubject, from_addr: pasteFrom } });
+      if (error || !data?.brief) { alert("Erreur extraction : " + (error?.message || data?.error || "réponse vide")); return; }
+      onCreateFromEmail?.(data.brief, null);
+      setPasteText(""); setPasteFrom(""); setPasteSubject(""); setPasteOpen(false);
+    } finally { setPasting(false); }
+  }
 
   async function createBriefFromEmail() {
     if (!selected) return;
@@ -100,6 +116,30 @@ export default function Inbox({ onOpenProject, onCreateFromEmail }) {
           {syncing ? "Synchronisation…" : "↻ Synchroniser"}
         </button>
       </div>
+
+      {/* Coller un email → brief (sans Gmail) */}
+      {onCreateFromEmail && (
+        <div className="card" style={{ padding: pasteOpen ? 16 : 0, marginBottom: 16, border: "1px solid #00B4D825" }}>
+          <button className="btn btn-ghost" style={{ width: "100%", justifyContent: "flex-start", fontSize: 13, padding: "12px 16px" }}
+            onClick={() => setPasteOpen(o => !o)}>
+            {pasteOpen ? "▾" : "▸"} ✨ Coller un email → créer un projet (brief pré-rempli par Claude)
+          </button>
+          {pasteOpen && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12 }}>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <input className="input" placeholder="Email de l'expéditeur (ex: client@société.com)" value={pasteFrom} onChange={e => setPasteFrom(e.target.value)} style={{ flex: "1 1 240px" }} />
+                <input className="input" placeholder="Objet (optionnel)" value={pasteSubject} onChange={e => setPasteSubject(e.target.value)} style={{ flex: "1 1 240px" }} />
+              </div>
+              <textarea className="input" rows={8} placeholder="Colle ici le contenu de l'email reçu…" value={pasteText} onChange={e => setPasteText(e.target.value)} />
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                <button className="btn btn-primary" onClick={createBriefFromText} disabled={pasting || !pasteText.trim()}>
+                  {pasting ? "✨ Analyse…" : "✨ Créer le projet"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filtres */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
