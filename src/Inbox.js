@@ -17,13 +17,24 @@ const URGENCE_DOT = {
   low: "#C7C7CC", normal: "#00B4D8", high: "#FF9500", urgent: "#FF3B30",
 };
 
-export default function Inbox({ onOpenProject }) {
+export default function Inbox({ onOpenProject, onCreateFromEmail }) {
   const [emails, setEmails] = useState([]);
   const [projects, setProjects] = useState([]);
   const [filter, setFilter] = useState({ kind: "all", project: "all", urgence: "all" });
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [creating, setCreating] = useState(false);
+
+  async function createBriefFromEmail() {
+    if (!selected) return;
+    setCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("brief-from-email", { body: { email_id: selected.id } });
+      if (error || !data?.brief) { alert("Erreur extraction : " + (error?.message || data?.error || "réponse vide")); return; }
+      onCreateFromEmail?.(data.brief, selected.id);
+    } finally { setCreating(false); }
+  }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadData(); }, [filter.kind, filter.project, filter.urgence]);
@@ -223,10 +234,16 @@ export default function Inbox({ onOpenProject }) {
               )}
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
               <button className="btn btn-blue" onClick={() => reclassify(selected.id)}>
                 ↻ Reclassifier
               </button>
+              {onCreateFromEmail && (
+                <button className="btn btn-primary" onClick={createBriefFromEmail} disabled={creating}
+                  title="Claude lit ce mail et crée un projet avec le brief pré-rempli">
+                  {creating ? "✨ Analyse…" : "✨ Créer un projet (brief pré-rempli)"}
+                </button>
+              )}
             </div>
 
             <FullEmailBody emailId={selected.id} />

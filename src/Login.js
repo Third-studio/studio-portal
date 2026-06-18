@@ -10,8 +10,9 @@ const S = `
 const Lbl = ({children}) => <label style={{fontSize:11,color:"#6E6E73",letterSpacing:"0.06em",display:"block",marginBottom:7,fontFamily:"'Inter',sans-serif",fontWeight:600,textTransform:"uppercase"}}>{children}</label>;
 
 export default function Login({ onLogin }) {
-  const [mode, setMode] = useState("login");
-  const [email, setEmail] = useState("");
+  const inviteEmail = (() => { try { return new URLSearchParams(window.location.search).get("invite") || ""; } catch { return ""; } })();
+  const [mode, setMode] = useState(inviteEmail ? "register" : "login");
+  const [email, setEmail] = useState(inviteEmail);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [nom, setNom] = useState("");

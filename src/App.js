@@ -855,7 +855,7 @@ function CharteGraphiquePanel({project,onUpdate,onNotif}){
   );
 }
 
-function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar,serviceTypes=[],prestataires=[],prestataireMissions=[],setPrestataireMissions,onPreviewClient,invoices=[],onAddInvoice,onEditInvoice,onMarkPaid,notifyClient}){
+function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpdateAssignments,meetingNotes,onUpdateMeetingNotes,clients,userProfile,bookings=[],setBookings,onGoToCalendar,serviceTypes=[],prestataires=[],prestataireMissions=[],setPrestataireMissions,onPreviewClient,invoices=[],onAddInvoice,onEditInvoice,onMarkPaid,notifyClient,onInviteClient}){
   const[tab,setTab]=useState("brief");
   const[showGen,setShowGen]=useState(false);
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
@@ -935,6 +935,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
             {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
             {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#4F46E5",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
             {project.clientId&&(<button className={`btn ${clientStepsUnlocked?"btn-green":"btn-ghost"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={toggleClientAccess} title="Donner au client l'accès aux étapes : moodboard, storyboards, révisions vidéo, livrables">{clientStepsUnlocked?"🔓 Accès client ouvert":"🔒 Ouvrir l'accès client"}</button>)}
+            {onInviteClient&&!project.clientId&&project.brief?.pendingClientEmail&&(<button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onInviteClient(project)} title={`Inviter ${project.brief.pendingClientEmail} à créer son accès et compléter le brief`}>📧 Inviter le client</button>)}
             {notifyClient&&project.clientId&&(<button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} disabled={notifying} onClick={notifyClientUpdate} title="Envoyer un email au client : des nouveautés sont disponibles dans son espace">{notifying?"Envoi…":"📨 Notifier le client"}</button>)}
             {notifyClient&&project.clientId&&(<button className="btn btn-orange" style={{fontSize:11,padding:"4px 10px"}} onClick={notifyRevisionDone} title="Notifier le client que les modifs sont prêtes">✦ Modifs terminées</button>)}
             {notifyClient&&project.clientId&&project.status!=="livraison"&&(<button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={markDelivered} title="Marquer le projet comme livré + notification email">📦 Marquer livré</button>)}
@@ -1338,7 +1339,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
   const[savingCharte,setSavingCharte]=useState(false);
   const hasSimulator=clientData?.simulatorEnabled;
   const briefEmpty=!project.brief?.objective&&!project.brief?.target&&!project.brief?.duration;
-  const showIntake=project.status==="brief"&&briefEmpty;
+  const showIntake=project.status==="brief"&&(briefEmpty||(project.brief?.draft&&!project.brief?.submitted));
 
   const toggleService=(id)=>setBrief(p=>({...p,services:p.services.includes(id)?p.services.filter(s=>s!==id):[...p.services,id]}));
   const toggleMusique=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:p.musique[key].includes(val)?p.musique[key].filter(x=>x!==val):[...p.musique[key],val]}}));
@@ -5575,7 +5576,7 @@ function AccessManager({onNotif}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess }){
+function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess, onInviteClient }){
   const[busyId,setBusyId]=useState(null);
   const[q,setQ]=useState("");
   const[fStatus,setFStatus]=useState("all"); // brief|storyboard|review|livraison
@@ -5713,6 +5714,9 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
                         )}
                         {c && onNotifyClient && (
                           <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Envoyer un email de mise à jour au client" disabled={busyId==="n"+p.id} onClick={async()=>{setBusyId("n"+p.id);await onNotifyClient(p);setBusyId(null);}}>{busyId==="n"+p.id?"…":"📨 Notifier"}</button>
+                        )}
+                        {!c && (p.brief?.pendingClientEmail) && onInviteClient && (
+                          <button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} title={`Inviter ${p.brief.pendingClientEmail} à créer son accès et compléter le brief`} disabled={busyId==="i"+p.id} onClick={async()=>{setBusyId("i"+p.id);await onInviteClient(p);setBusyId(null);}}>{busyId==="i"+p.id?"…":"📧 Inviter"}</button>
                         )}
                         {sent.concat(overdue).length>0
                           ? <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onMarkPaid(sent[0]||overdue[0],p,c)}>Marquer payée</button>
@@ -5894,6 +5898,8 @@ function AppMain() {
       // Récupère le rôle d'abord pour adapter les requêtes
       const { data: myProfile } = await supabase.from("profiles").select("role").eq("id",user.id).single();
       const isAdminUser = myProfile?.role === "admin" || myProfile?.role === "collaborateur";
+      // Client : rattache les projets pré-créés depuis un email (brief.pendingClientEmail) avant de charger.
+      if(!isAdminUser){ try{ await supabase.rpc("claim_pending_projects"); }catch(_){ /* SQL non déployé */ } }
 
       const queries = [
         supabase.from("projects").select("*, messages(*), files(*), storyboards(*)").order("created_at",{ascending:false}),
@@ -6184,6 +6190,43 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     updProject({...project,brief:newBrief});
     showNotif(v?"Accès client ouvert":"Accès client restreint au brief");
   };
+  // Crée un projet depuis un brief extrait d'un email (Inbox → brief-from-email)
+  const createProjectFromEmail=async(extract,emailId)=>{
+    const c=extract?.client||{};
+    const existing=c.email?clients.find(cl=>(cl.email||"").toLowerCase()===c.email.toLowerCase()):null;
+    const briefData={
+      objective:extract.objective||"",target:extract.target||"",duration:extract.duration||"",
+      tone:extract.tone||"",deliverables:extract.deliverables||"",budget:extract.budget||"",
+      deliveryWished:extract.deliveryWished||"",references:extract.references||"",notes:extract.notes||"",
+      draft:true,submitted:false,source:"email",
+    };
+    if(!existing&&c.email){briefData.pendingClientEmail=c.email;briefData.pendingClientName=c.name||"";briefData.pendingClientCompany=c.company||"";}
+    const{data,error}=await supabase.from("projects").insert({title:extract.title||"Nouveau projet",client_id:existing?existing.id:null,status:"brief",progress:0,brief:briefData,replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    if(error){showNotif("Erreur création : "+error.message);return;}
+    if(emailId) supabase.from("emails").update({project_id:data.id}).eq("id",emailId).then(()=>{});
+    const np={id:data.id,title:data.title,clientId:data.client_id,status:"brief",progress:0,createdAt:data.created_at?.split("T")[0],brief:briefData,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
+    setProjects(ps=>[np,...ps]);
+    setSelectedProjectId(np.id);
+    setAppView("prod");setProdSection("projets");setProjetsView("detail");
+    showNotif(existing?`Projet créé pour ${existing.name} — brief pré-rempli`:"Projet créé — brief pré-rempli, invitez le client");
+  };
+  // Invite le client à créer son accès et compléter le brief
+  const sendClientInvite=async(project)=>{
+    const c=clients.find(cl=>cl.id===project.clientId);
+    const email=c?.email||project.brief?.pendingClientEmail;
+    const name=c?.name||project.brief?.pendingClientName||"";
+    if(!email){showNotif("Aucun email client à inviter");return;}
+    const link=`https://thirdone.studio/?invite=${encodeURIComponent(email)}`;
+    const{error}=await supabase.functions.invoke("send-email",{body:{
+      to:email,subject:`Votre espace projet – ${project.title}`,
+      kicker:"Invitation",title:`Votre projet ${project.title}`,
+      html:`<p style="margin:0 0 14px;">Bonjour ${name||""},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${project.title}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
+      text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
+      cta:{label:"Créer mon accès",url:link},
+    }});
+    if(error){showNotif("Erreur envoi : "+error.message);return;}
+    showNotif("Invitation envoyée au client ✉️");
+  };
 
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
 
@@ -6358,13 +6401,14 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     onNotif={showNotif}
                     onNotifyClient={sendClientUpdate}
                     onToggleAccess={toggleProjectAccess}
+                    onInviteClient={sendClientInvite}
                   />
                 )}
                 {projetsView==="detail" && selProject && (
                   <>
                     <button className="btn btn-ghost" style={{alignSelf:"flex-start",fontSize:12,padding:"5px 12px"}} onClick={()=>setProjetsView("liste")}>← Liste des projets</button>
                     <ProjectAutoStatus project={selProject} onRefreshed={(d)=>updProject({...selProject,...d})}/>
-                    <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions} onPreviewClient={handlePreviewClient} invoices={invoices.filter(i=>i.project_id===selProject.id)} onAddInvoice={()=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId)})} onEditInvoice={(inv)=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId),existing:inv})} onMarkPaid={(inv)=>markInvoicePaid(inv,selProject,clients.find(c=>c.id===selProject.clientId))} notifyClient={notifyClient}/>
+                    <ProdProjectView project={selProject} onUpdate={updProject} onNotif={showNotif} teamMembers={teamMembers} assignments={assignments} onUpdateAssignments={setAssignments} meetingNotes={meetingNotes} onUpdateMeetingNotes={setMeetingNotes} clients={clients} userProfile={userProfile} bookings={bookings} setBookings={setBookings} onGoToCalendar={()=>setProdSection("calendrier")} serviceTypes={serviceTypes} prestataires={prestataires} prestataireMissions={prestataireMissions} setPrestataireMissions={setPrestataireMissions} onPreviewClient={handlePreviewClient} invoices={invoices.filter(i=>i.project_id===selProject.id)} onAddInvoice={()=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId)})} onEditInvoice={(inv)=>setInvoiceModal({project:selProject,client:clients.find(c=>c.id===selProject.clientId),existing:inv})} onMarkPaid={(inv)=>markInvoicePaid(inv,selProject,clients.find(c=>c.id===selProject.clientId))} notifyClient={notifyClient} onInviteClient={sendClientInvite}/>
                   </>
                 )}
                 {projetsView==="detail" && !selProject && (
@@ -6421,7 +6465,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
               />
             )}
             {appView==="prod"&&prodSection==="inbox"&&(
-              <Inbox onOpenProject={(pid)=>{setSelectedProjectId(pid);setProdSection("projets");setProjetsView("detail");}}/>
+              <Inbox onOpenProject={(pid)=>{setSelectedProjectId(pid);setProdSection("projets");setProjetsView("detail");}} onCreateFromEmail={createProjectFromEmail}/>
             )}
             {appView==="prod"&&prodSection==="taches"&&(
               <TasksReminders onOpenProject={(pid)=>{setSelectedProjectId(pid);setProdSection("projets");setProjetsView("detail");}}/>
