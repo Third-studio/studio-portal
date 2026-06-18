@@ -5947,8 +5947,10 @@ function AppMain() {
   const memberNameById = useMemo(()=>Object.fromEntries(companyMembers.map(m=>[m.id, prettyName(m.nom||m.email||"Client")])),[companyMembers]);
 
   const previewClient = useMemo(()=> previewClientId ? clients.find(c=>c.id===previewClientId) : null, [previewClientId,clients]);
+  const clientReady = isClient || !!previewClientId;
   const clientProjects = useMemo(()=>{
-    if(!isClient) return previewClientId ? projects.filter(p=>p.clientId===previewClientId) : projects;
+    // Admin/collab en vue client SANS aperçu sélectionné → aucun projet (on invite à choisir un client).
+    if(!isClient) return previewClientId ? projects.filter(p=>p.clientId===previewClientId) : [];
     if(isSupervisor) return projects.filter(p=>p.clientId===(user?.id||null) || supervisedClientIds.includes(p.clientId));
     return projects.filter(p=>p.clientId===(user?.id||null));
   },[isClient,isSupervisor,previewClientId,projects,user,supervisedClientIds]);
@@ -6205,7 +6207,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             ))}
 
             {/* Project list — prod: only on section "projets", client: always */}
-            {((appView==="prod"&&prodSection==="projets")||appView==="client")&&(
+            {((appView==="prod"&&prodSection==="projets")||(appView==="client"&&clientReady))&&(
               <div style={{marginTop:8,paddingTop:8,borderTop:"1px solid #F2F2F7"}}>
                 <span style={{fontFamily:"'Inter'",fontSize:9,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",padding:"0 6px",display:"block",marginBottom:5}}>Projets</span>
                 {appView==="client"&&isSupervisor
@@ -6324,11 +6326,18 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             )}
 
             {/* CLIENT SECTIONS */}
-            {appView==="client"&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection} onCreateProject={()=>createProject()} onOpenProject={(id)=>{setSelectedProjectId(id);setClientSection("projets");}}/>}
-            {appView==="client"&&clientSection==="projets"&&clientSelProject&&(
+            {appView==="client"&&!clientReady&&(
+              <div className="card fadeUp" style={{padding:28,textAlign:"center",maxWidth:480,margin:"0 auto"}}>
+                <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#162040",letterSpacing:"0.04em",marginBottom:6}}>ESPACE CLIENT</p>
+                <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",marginBottom:16}}>Choisis un client pour prévisualiser son espace (projets, contenus, validations).</p>
+                <button className="btn btn-primary" onClick={()=>{setAppView("prod");setProdSection("comptes");}}>Aller aux Comptes →</button>
+              </div>
+            )}
+            {appView==="client"&&clientReady&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection} onCreateProject={()=>createProject()} onOpenProject={(id)=>{setSelectedProjectId(id);setClientSection("projets");}}/>}
+            {appView==="client"&&clientReady&&clientSection==="projets"&&clientSelProject&&(
               <ClientProjectViewMemo key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing} serviceTypes={serviceTypes}/>
             )}
-            {appView==="client"&&clientSection==="calendrier"&&(
+            {appView==="client"&&clientReady&&clientSection==="calendrier"&&(
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
                 <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:10,padding:"14px 18px"}}>
                   <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>DISPONIBILITÉS</h2>
@@ -6337,10 +6346,10 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                 <CalendarModuleMemo bookings={bookings} setBookings={setBookings} isAdmin={false} onNotif={showNotif} projects={clientProjects}/>
               </div>
             )}
-            {appView==="client"&&clientSection==="cm"&&(
+            {appView==="client"&&clientReady&&clientSection==="cm"&&(
               <CMClientViewMemo posts={posts} setPosts={setPosts} projects={clientProjects} onNotif={showNotif}/>
             )}
-            {appView==="client"&&clientSection==="shortone"&&activeClient?.shortoneEnabled&&(
+            {appView==="client"&&clientReady&&clientSection==="shortone"&&activeClient?.shortoneEnabled&&(
               <ShortoneModule
                 projects={clientProjects}
                 clients={clients}
@@ -6351,7 +6360,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                 onCreateFromTrend={()=>showNotif("Contacte ton chargé de projet pour créer une mission.")}
               />
             )}
-            {appView==="client"&&clientSection==="estimation"&&activeClient?.simulatorEnabled&&(
+            {appView==="client"&&clientReady&&clientSection==="estimation"&&activeClient?.simulatorEnabled&&(
               <div style={{maxWidth:560}}>
                 <div style={{marginBottom:20}}>
                   <h2 style={{fontFamily:"'Urbanist'",fontSize:24,color:"#1D1D1F",letterSpacing:"0.04em"}}>ESTIMATION TARIFAIRE</h2>
