@@ -4073,8 +4073,11 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
             <button className={`btn ${form.shortone_enabled?"btn-primary":"btn-ghost"}`} style={{fontSize:12}} onClick={()=>F("shortone_enabled",!form.shortone_enabled)}>{form.shortone_enabled?"◆ Activé":"◆ Désactivé"}</button>
           </div>
           <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            <Lbl>Superviseur d'entreprise</Lbl>
-            <button className={`btn ${form.is_supervisor?"btn-green":"btn-ghost"}`} style={{fontSize:12}} onClick={()=>F("is_supervisor",!form.is_supervisor)} title="Voit et valide les projets des comptes partageant la même entreprise">{form.is_supervisor?"👁 Superviseur":"✗ Standard"}</button>
+            <Lbl>Rôle dans l'entreprise</Lbl>
+            <div style={{display:"flex",gap:4}}>
+              <button className={`btn ${form.is_supervisor?"btn-green":"btn-ghost"}`} style={{fontSize:12,flex:1}} onClick={()=>F("is_supervisor",true)} title="Voit et valide les projets des comptes de la même entreprise">👁 Superviseur</button>
+              <button className={`btn ${!form.is_supervisor?"btn-primary":"btn-ghost"}`} style={{fontSize:12,flex:1}} onClick={()=>F("is_supervisor",false)} title="Membre dont l'output est supervisé par le superviseur de l'entreprise">👥 Collaborateur</button>
+            </div>
           </div>
         </div>
         {form.is_supervisor&&!form.company&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#B45309",margin:0}}>⚠️ Renseigne le champ Entreprise : le superviseur voit les comptes ayant exactement la même entreprise.</p>}
@@ -4155,6 +4158,9 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
               <span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#E5E5EA",color:"#6E6E73"}}>{c.type}</span>
+              {c.isSupervisor
+                ? <span title={c.company?`Superviseur · ${c.company}`:"Superviseur"} style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#0F766E"}}>👁 Superviseur</span>
+                : c.company&&<span title={`Collaborateur · ${c.company}`} style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#7B9CFF20",color:"#4F46E5"}}>👥 Collaborateur</span>}
               {c.discount>0&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#00B4D820",color:"#0077B6"}}>-{c.discount}%</span>}
               {c.simulatorEnabled&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#0F766E"}}>Simulateur</span>}
               <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#E5E5EA"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#8E8E93",cursor:"pointer"}}>◆ Shortone</button>
