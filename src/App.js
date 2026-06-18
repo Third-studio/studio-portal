@@ -906,6 +906,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onNotif("Modifs terminées — email envoyé au client");
   };
   const clientStepsUnlocked=!!project.brief?.clientStepsUnlocked;
+  const[notifying,setNotifying]=useState(false);
   const toggleClientAccess=async()=>{
     const v=!clientStepsUnlocked;
     const newBrief={...project.brief,clientStepsUnlocked:v};
@@ -913,6 +914,15 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     if(error){onNotif("Erreur : "+error.message);return;}
     onUpdate({...project,brief:newBrief});
     onNotif(v?"Accès ouvert — le client voit toutes les étapes":"Accès restreint au brief");
+  };
+  const notifyClientUpdate=async()=>{
+    if(!clientForNotif?.email){onNotif("Aucun email client renseigné sur ce projet");return;}
+    setNotifying(true);
+    await notifyClient({ project, client:clientForNotif, kind:"custom",
+      subject:`Mise à jour – ${project.title}`,
+      extra:"De nouveaux éléments sont disponibles dans votre espace : connectez-vous pour les consulter et valider les étapes en cours." });
+    setNotifying(false);
+    onNotif("Notification envoyée au client ✉️");
   };
   const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"facturation",l:`💶 Facturation (${projInvoices.length})`},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}])];
   const[linkingBookingId,setLinkingBookingId]=useState("");
@@ -925,6 +935,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
             {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
             {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#4F46E5",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
             {project.clientId&&(<button className={`btn ${clientStepsUnlocked?"btn-green":"btn-ghost"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={toggleClientAccess} title="Donner au client l'accès aux étapes : moodboard, storyboards, révisions vidéo, livrables">{clientStepsUnlocked?"🔓 Accès client ouvert":"🔒 Ouvrir l'accès client"}</button>)}
+            {notifyClient&&project.clientId&&(<button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} disabled={notifying} onClick={notifyClientUpdate} title="Envoyer un email au client : des nouveautés sont disponibles dans son espace">{notifying?"Envoi…":"📨 Notifier le client"}</button>)}
             {notifyClient&&project.clientId&&(<button className="btn btn-orange" style={{fontSize:11,padding:"4px 10px"}} onClick={notifyRevisionDone} title="Notifier le client que les modifs sont prêtes">✦ Modifs terminées</button>)}
             {notifyClient&&project.clientId&&project.status!=="livraison"&&(<button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={markDelivered} title="Marquer le projet comme livré + notification email">📦 Marquer livré</button>)}
             <span className={`tag tag-${project.status}`}>{project.status}</span>
