@@ -5575,7 +5575,8 @@ function AccessManager({onNotif}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif }){
+function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess }){
+  const[busyId,setBusyId]=useState(null);
   const[q,setQ]=useState("");
   const[fStatus,setFStatus]=useState("all"); // brief|storyboard|review|livraison
   const[fInvoice,setFInvoice]=useState("all"); // none|draft|sent|paid|overdue
@@ -5705,10 +5706,18 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
                       )}
                     </td>
                     <td style={{padding:"12px 14px",verticalAlign:"top",textAlign:"right",whiteSpace:"nowrap"}}>
-                      <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px",marginRight:6}} onClick={()=>onOpenProject(p.id)}>Ouvrir</button>
-                      {sent.concat(overdue).length>0
-                        ? <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px",marginRight:6}} onClick={()=>onMarkPaid(sent[0]||overdue[0],p,c)}>Marquer payée</button>
-                        : <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",marginRight:6}} onClick={()=>onAddInvoice(p,c)}>+ Facture</button>}
+                      <div style={{display:"inline-flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
+                        <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onOpenProject(p.id)}>Ouvrir</button>
+                        {c && onToggleAccess && (
+                          <button className={`btn ${p.brief?.clientStepsUnlocked?"btn-green":"btn-ghost"}`} style={{fontSize:11,padding:"4px 10px"}} title={p.brief?.clientStepsUnlocked?"Accès client ouvert — cliquer pour restreindre au brief":"Ouvrir l'accès client aux étapes"} disabled={busyId===p.id} onClick={async()=>{setBusyId(p.id);await onToggleAccess(p);setBusyId(null);}}>{p.brief?.clientStepsUnlocked?"🔓 Accès":"🔒 Accès"}</button>
+                        )}
+                        {c && onNotifyClient && (
+                          <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Envoyer un email de mise à jour au client" disabled={busyId==="n"+p.id} onClick={async()=>{setBusyId("n"+p.id);await onNotifyClient(p);setBusyId(null);}}>{busyId==="n"+p.id?"…":"📨 Notifier"}</button>
+                        )}
+                        {sent.concat(overdue).length>0
+                          ? <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onMarkPaid(sent[0]||overdue[0],p,c)}>Marquer payée</button>
+                          : <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onAddInvoice(p,c)}>+ Facture</button>}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -6158,6 +6167,24 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     showNotif(`Facture ${data.number||"#"+data.id.slice(0,6)} marquée payée`);
   };
 
+  // Actions projet accessibles depuis la liste (ProjectsListView)
+  const sendClientUpdate=async(project)=>{
+    const client=clients.find(c=>c.id===project.clientId);
+    if(!client?.email){showNotif("Aucun email client sur ce projet");return;}
+    await notifyClient({ project, client, kind:"custom",
+      subject:`Mise à jour – ${project.title}`,
+      extra:"De nouveaux éléments sont disponibles dans votre espace : connectez-vous pour les consulter et valider les étapes en cours." });
+    showNotif("Notification envoyée au client ✉️");
+  };
+  const toggleProjectAccess=async(project)=>{
+    const v=!project.brief?.clientStepsUnlocked;
+    const newBrief={...project.brief,clientStepsUnlocked:v};
+    const{error}=await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    updProject({...project,brief:newBrief});
+    showNotif(v?"Accès client ouvert":"Accès client restreint au brief");
+  };
+
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
 
   const renderProjRow=(p)=>(
@@ -6329,6 +6356,8 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     onMarkPaid={markInvoicePaid}
                     onCreateForClient={(c)=>{setCreateForClientId(c?.id||null);setShowCreateModal(true);}}
                     onNotif={showNotif}
+                    onNotifyClient={sendClientUpdate}
+                    onToggleAccess={toggleProjectAccess}
                   />
                 )}
                 {projetsView==="detail" && selProject && (
