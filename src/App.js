@@ -905,6 +905,15 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     if(notifyClient) await notifyClient({ project, client:clientForNotif, kind:"modif_done" });
     onNotif("Modifs terminées — email envoyé au client");
   };
+  const clientStepsUnlocked=!!project.brief?.clientStepsUnlocked;
+  const toggleClientAccess=async()=>{
+    const v=!clientStepsUnlocked;
+    const newBrief={...project.brief,clientStepsUnlocked:v};
+    const{error}=await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,brief:newBrief});
+    onNotif(v?"Accès ouvert — le client voit toutes les étapes":"Accès restreint au brief");
+  };
   const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"facturation",l:`💶 Facturation (${projInvoices.length})`},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}])];
   const[linkingBookingId,setLinkingBookingId]=useState("");
   return(
@@ -915,6 +924,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
             {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#4F46E5",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
+            {project.clientId&&(<button className={`btn ${clientStepsUnlocked?"btn-green":"btn-ghost"}`} style={{fontSize:11,padding:"4px 10px"}} onClick={toggleClientAccess} title="Donner au client l'accès aux étapes : moodboard, storyboards, révisions vidéo, livrables">{clientStepsUnlocked?"🔓 Accès client ouvert":"🔒 Ouvrir l'accès client"}</button>)}
             {notifyClient&&project.clientId&&(<button className="btn btn-orange" style={{fontSize:11,padding:"4px 10px"}} onClick={notifyRevisionDone} title="Notifier le client que les modifs sont prêtes">✦ Modifs terminées</button>)}
             {notifyClient&&project.clientId&&project.status!=="livraison"&&(<button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={markDelivered} title="Marquer le projet comme livré + notification email">📦 Marquer livré</button>)}
             <span className={`tag tag-${project.status}`}>{project.status}</span>
@@ -1355,7 +1365,19 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
     await supabase.from("messages").insert({project_id:project.id,author,content:text,role:"client"});
   };
   const finaux=(project.livrables||[]).filter(l=>l.category==="finaux");
-  const tabs=[{k:"suivi",l:"Suivi"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"replay",l:"Révisions vidéo"},{k:"messages",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},...(hasSimulator?[{k:"estimation",l:"💰 Estimation"}]:[])];
+  // Le client n'accède aux étapes (moodboard, storyboards, révisions, livrables) qu'une
+  // fois que l'équipe a "ouvert l'accès" sur le projet (brief.clientStepsUnlocked).
+  const stepsUnlocked=!!project.brief?.clientStepsUnlocked;
+  const gatedTabs=["moodboard","storyboards","replay","livrables"];
+  const tabs=[
+    {k:"suivi",l:"Suivi"},
+    ...(stepsUnlocked?[{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"replay",l:"Révisions vidéo"}]:[]),
+    {k:"messages",l:`Messages (${project.comments.length})`},
+    ...(stepsUnlocked?[{k:"livrables",l:"Livrables"}]:[]),
+    ...(hasSimulator?[{k:"estimation",l:"💰 Estimation"}]:[]),
+  ];
+  // Si un onglet verrouillé était sélectionné puis re-verrouillé, on retombe sur "suivi".
+  const activeTab=(!stepsUnlocked&&gatedTabs.includes(tab))?"suivi":tab;
 
   if(showIntake) return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -1555,9 +1577,9 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
         <Timeline status={project.status}/>
       </div>
       <div className="hscroll" style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
-        {tabs.map(t=><button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
+        {tabs.map(t=><button key={t.k} className={`tab ${activeTab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
       </div>
-      {tab==="suivi"&&(
+      {activeTab==="suivi"&&(
         <div className="card fadeUp" style={{padding:18}}>
           <SH icon="📊" title="AVANCEMENT"/>
           {(project.statusNote||project.deliveryDate||project.shootDate)&&(
@@ -1585,7 +1607,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
           </div>
         </div>
       )}
-      {tab==="suivi"&&(
+      {activeTab==="suivi"&&(
         <div className="card fadeUp" style={{padding:18,marginTop:12,border:"1px solid #7B9CFF33",background:"#7B9CFF06"}}>
           <SH icon="🎨" title="ÉLÉMENTS DE MARQUE"/>
           <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:14,lineHeight:1.6}}>
@@ -1616,7 +1638,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
           </div>
         </div>
       )}
-      {tab==="storyboards"&&(
+      {activeTab==="storyboards"&&(
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           {project.storyboards.length===0&&<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"30px 0"}}>Notre équipe prépare votre storyboard — il apparaîtra ici dès qu'il sera prêt. 🎞</p>}
           {project.storyboards.map(sb=>(
@@ -1640,10 +1662,10 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
           ))}
         </div>
       )}
-      {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={clientData?.name||"Client"} isAdmin={false}/>}
-      {tab==="replay"&&<VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
-      {tab==="messages"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="client"/></div>}
-      {tab==="livrables"&&(
+      {activeTab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={clientData?.name||"Client"} isAdmin={false}/>}
+      {activeTab==="replay"&&<VideoValidationPanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
+      {activeTab==="messages"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="client"/></div>}
+      {activeTab==="livrables"&&(
         <div className="card fadeUp" style={{padding:18}}>
           <SH icon="✦" title="LIVRABLES FINAUX"/>
           {finaux.length===0?<p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"20px 0"}}>Vos fichiers finaux apparaîtront ici dès que la production sera terminée. ✨</p>:(
@@ -1658,7 +1680,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
           )}
         </div>
       )}
-      {tab==="estimation"&&hasSimulator&&<ClientEstimationWidget pricing={pricing} clientData={clientData}/>}
+      {activeTab==="estimation"&&hasSimulator&&<ClientEstimationWidget pricing={pricing} clientData={clientData}/>}
     </div>
   );
 }
@@ -5742,6 +5764,44 @@ function InvoiceModal({ project, client, existing, onClose, onSave }){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Liste des projets côté client (cartes cliquables ; regroupée par collaborateur
+// pour un superviseur). Clic → ouvre le détail du projet.
+const CLIENT_STATUS={brief:{l:"Brief",c:"#4F46E5"},storyboard:{l:"Storyboard",c:"#0077B6"},tournage:{l:"Tournage",c:"#C2410C"},montage:{l:"Montage",c:"#7C3AED"},review:{l:"Révision",c:"#B45309"},livraison:{l:"Livré",c:"#0F766E"}};
+function ClientProjectsList({projects,onOpen,grouped,memberNameById={},myId}){
+  const card=(p)=>{
+    const st=CLIENT_STATUS[p.status]||{l:p.status||"—",c:"#6E6E73"};
+    return (
+      <div key={p.id} className="card" onClick={()=>onOpen(p.id)} style={{padding:"14px 16px",cursor:"pointer",display:"flex",flexDirection:"column",gap:8,transition:"all .15s"}}
+        onMouseEnter={e=>{e.currentTarget.style.borderColor="#00B4D855";e.currentTarget.style.transform="translateY(-1px)";}}
+        onMouseLeave={e=>{e.currentTarget.style.borderColor="";e.currentTarget.style.transform="";}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+          <p style={{fontFamily:"'Urbanist'",fontSize:15,fontWeight:700,color:"#162040",lineHeight:1.2}}>{p.title}</p>
+          <span style={{fontFamily:"'Inter'",fontSize:11,padding:"2px 8px",borderRadius:4,background:st.c+"18",color:st.c,whiteSpace:"nowrap",flexShrink:0}}>{st.l}</span>
+        </div>
+        <div style={{height:4,background:"#F2F2F7",borderRadius:2,overflow:"hidden"}}><div style={{height:"100%",width:`${p.progress||0}%`,background:st.c,borderRadius:2,transition:"width .5s"}}/></div>
+        <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>
+          <span>{p.deliveryDate?`Livraison : ${p.deliveryDate}`:"Livraison à définir"}</span>
+          <span style={{color:"#0077B6",fontWeight:600}}>Ouvrir →</span>
+        </div>
+      </div>
+    );
+  };
+  if(!projects||projects.length===0) return <div className="card" style={{padding:28,textAlign:"center",color:"#6E6E73",fontFamily:"'Inter'",fontSize:13}}>Aucun projet pour le moment.</div>;
+  const grid=(items)=><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(250px,1fr))",gap:10}}>{items.map(card)}</div>;
+  if(grouped){
+    const byOwner=new Map();
+    projects.forEach(p=>{const k=p.clientId||"_";if(!byOwner.has(k))byOwner.set(k,[]);byOwner.get(k).push(p);});
+    const entries=[...byOwner.entries()].sort((a,b)=>(a[0]===myId?-1:b[0]===myId?1:0));
+    return <div style={{display:"flex",flexDirection:"column",gap:18}}>{entries.map(([ownerId,projs])=>(
+      <div key={ownerId} style={{display:"flex",flexDirection:"column",gap:10}}>
+        <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:700,color:"#0077B6",textTransform:"uppercase",letterSpacing:"0.06em"}}>{ownerId===myId?"Mes projets":(memberNameById[ownerId]||"Compte")}</p>
+        {grid(projs)}
+      </div>
+    ))}</div>;
+  }
+  return grid(projects);
+}
+
 // Versions mémoïsées des sections lourdes (évite les re-renders quand les props
 // passées par AppMain sont inchangées — cf. handlers/valeurs mémoïsés).
 const ClientProjectViewMemo = memo(ClientProjectView);
@@ -5796,6 +5856,7 @@ function AppMain() {
   const[invoices,setInvoices]=useState([]);
   const[invoiceModal,setInvoiceModal]=useState(null); // {project, client, existing?}
   const[projetsView,setProjetsView]=useState("liste"); // "liste" | "detail"
+  const[clientProjectsView,setClientProjectsView]=useState("liste"); // espace client : "liste" | "detail"
   const[createForClientId,setCreateForClientId]=useState(null);
   const[notif,setNotif]=useState(null);
   const[dataLoading,setDataLoading]=useState(true);
@@ -6089,7 +6150,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
 
   const renderProjRow=(p)=>(
-    <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client")setClientSection("projets");setSidebarOpen(false);}}>
+    <div key={p.id} className={`sidebar-proj ${selectedProjectId===p.id?"active":""}`} onClick={()=>{setSelectedProjectId(p.id);if(appView==="client"){setClientSection("projets");setClientProjectsView("detail");}setSidebarOpen(false);}}>
       <div style={{flex:1,minWidth:0}}>
         <p style={{fontWeight:500,color:"inherit",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",fontSize:11}}>{p.title}</p>
         <div style={{height:2,background:"#F2F2F7",borderRadius:1,marginTop:3,overflow:"hidden"}}>
@@ -6199,7 +6260,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                   <span style={{fontFamily:"'Inter'",fontSize:9,fontWeight:600,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.1em",padding:i===0?"0 6px 2px":"12px 6px 2px",display:"block"}}>{n.g}</span>
                 )}
                 <div className={`nav-item ${(appView==="prod"?prodSection:clientSection)===n.k?"active":""}`}
-                  onClick={()=>{appView==="prod"?setProdSection(n.k):setClientSection(n.k);setSidebarOpen(false);}}>
+                  onClick={()=>{appView==="prod"?setProdSection(n.k):setClientSection(n.k);if(appView==="client"&&n.k==="projets")setClientProjectsView("liste");setSidebarOpen(false);}}>
                   <NavIcon k={n.k}/>
                   <span>{n.l}</span>
                 </div>
@@ -6333,9 +6394,20 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                 <button className="btn btn-primary" onClick={()=>{setAppView("prod");setProdSection("comptes");}}>Aller aux Comptes →</button>
               </div>
             )}
-            {appView==="client"&&clientReady&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection} onCreateProject={()=>createProject()} onOpenProject={(id)=>{setSelectedProjectId(id);setClientSection("projets");}}/>}
-            {appView==="client"&&clientReady&&clientSection==="projets"&&clientSelProject&&(
-              <ClientProjectViewMemo key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing} serviceTypes={serviceTypes}/>
+            {appView==="client"&&clientReady&&clientSection==="accueil"&&<ClientWelcomePage client={activeClient||{}} projects={clientProjects} onGoTo={setClientSection} onCreateProject={()=>createProject()} onOpenProject={(id)=>{setSelectedProjectId(id);setClientSection("projets");setClientProjectsView("detail");}}/>}
+            {appView==="client"&&clientReady&&clientSection==="projets"&&(
+              (clientProjectsView==="liste"||!clientSelProject)
+                ? <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                    <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:10,padding:"14px 18px"}}>
+                      <h2 style={{fontFamily:"'Urbanist'",fontSize:22,color:"#1D1D1F",letterSpacing:"0.04em"}}>MES PROJETS</h2>
+                      <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:2}}>{clientProjects.length} projet{clientProjects.length!==1?"s":""} — cliquez pour ouvrir le suivi détaillé.</p>
+                    </div>
+                    <ClientProjectsList projects={clientProjects} grouped={isSupervisor} memberNameById={memberNameById} myId={user?.id} onOpen={(id)=>{setSelectedProjectId(id);setClientProjectsView("detail");}}/>
+                  </div>
+                : <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                    <button className="btn btn-ghost" style={{alignSelf:"flex-start",fontSize:12,padding:"5px 12px"}} onClick={()=>setClientProjectsView("liste")}>← Retour à mes projets</button>
+                    <ClientProjectViewMemo key={clientSelProject.id} project={clientSelProject} clientData={activeClient} onUpdate={updProject} onNotif={showNotif} pricing={pricing} serviceTypes={serviceTypes}/>
+                  </div>
             )}
             {appView==="client"&&clientReady&&clientSection==="calendrier"&&(
               <div style={{display:"flex",flexDirection:"column",gap:14}}>
