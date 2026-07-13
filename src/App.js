@@ -987,6 +987,18 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                   <textarea className="input" rows={2} placeholder={f.p} value={brief[f.k]||""} onChange={e=>setBrief(p=>({...p,[f.k]:e.target.value}))}/>
                 </div>
               ))}
+              {project.brief?.complements?.length>0&&(
+                <div style={{background:"#00B4D808",border:"1px solid #00B4D830",borderRadius:8,padding:"12px 14px"}}>
+                  <Lbl>✏️ Compléments du client (lien public)</Lbl>
+                  <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:6}}>
+                    {project.brief.complements.map((c,i)=>(
+                      <p key={i} style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>
+                        {c.text}{c.at&&<span style={{color:"#8E8E93",fontSize:10}}> — {new Date(c.at).toLocaleDateString("fr-FR")}</span>}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              )}
               <button className="btn btn-primary" style={{alignSelf:"flex-end"}} onClick={saveBrief}>Enregistrer</button>
             </div>
           </div>
@@ -1357,7 +1369,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
   const submitBrief=async()=>{
     if(brief.shootDate&&brief.deliveryWished&&brief.deliveryWished<brief.shootDate){onNotif("La date de livraison souhaitée ne peut pas être antérieure à la date de tournage.");return;}
     setSaving(true);
-    const newBrief={objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,deliveryWished:brief.deliveryWished,charteAssets:brief.charteAssets,submitted:true};
+    const newBrief={...project.brief,objective:brief.objective,target:brief.target,duration:brief.duration,tone:brief.tone,deliverables:brief.deliverables,budget:brief.budget,references:brief.references,notes:brief.notes,services:brief.services,musique:brief.musique,deliveryWished:brief.deliveryWished,charteAssets:brief.charteAssets,submitted:true};
     await supabase.from("projects").update({title:brief.title||project.title,brief:newBrief,shoot_date:brief.shootDate||null}).eq("id",project.id);
     onUpdate({...project,title:brief.title||project.title,brief:newBrief,shootDate:brief.shootDate||""});
     onNotif("Brief envoyé avec succès — notre équipe revient vers vous rapidement ✨");
@@ -5493,6 +5505,17 @@ const inviteApi={
       return error?{ok:false,error:"Erreur de connexion"}:data;
     }
   },
+  async addNote(payload){
+    try{
+      const r=await fetch("/api/nouveau-projet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const ct=r.headers.get("content-type")||"";
+      if(!ct.includes("json"))throw new Error("no-api");
+      return await r.json();
+    }catch{
+      const{data,error}=await supabase.rpc("add_invite_project_note",{invite_token:payload.token,project_id:payload.project_id,note:payload.note});
+      return error?{ok:false,error:"Erreur de connexion"}:data;
+    }
+  },
 };
 
 // Mêmes options que le brief client normal (ClientProjectView → intake)
@@ -5507,6 +5530,35 @@ const PubChip=({active,onClick,children})=>(
   </button>
 );
 
+const pubFmtDate=(d)=>new Date(d).toLocaleDateString("fr-FR");
+const PubShell=({sub,children})=>(
+  <>
+    <FontLoader/>
+    <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",padding:"32px 16px"}}>
+      <div style={{maxWidth:580,margin:"0 auto"}}>
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:28,display:"inline-block"}}/>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>{sub}</p>
+        </div>
+        {children}
+      </div>
+    </div>
+  </>
+);
+const PubStatusBlock=({p})=>(
+  <>
+    <Timeline status={p.status}/>
+    {p.statusNote&&<p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",background:"#F5F5F7",borderRadius:8,padding:"10px 14px",marginTop:12,lineHeight:1.6}}>💬 {p.statusNote}</p>}
+    {(p.shootDate||p.deliveryDate)&&(
+      <div style={{display:"flex",gap:16,marginTop:12,flexWrap:"wrap"}}>
+        {p.shootDate&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>🎬 Tournage : <strong style={{color:"#1D1D1F"}}>{pubFmtDate(p.shootDate)}</strong></p>}
+        {p.deliveryDate&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>📦 Livraison : <strong style={{color:"#1D1D1F"}}>{pubFmtDate(p.deliveryDate)}</strong></p>}
+      </div>
+    )}
+    {p.status==="livraison"&&isSafeUrl(p.replayUrl)&&<a href={p.replayUrl} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:12,fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#00B4D8",textDecoration:"none"}}>▶ Voir la vidéo livrée</a>}
+  </>
+);
+
 function NouveauProjetPage({token}){
   const[checking,setChecking]=useState(true);
   const[invite,setInvite]=useState(null);
@@ -5514,6 +5566,10 @@ function NouveauProjetPage({token}){
   const[done,setDone]=useState(false);
   const[errMsg,setErrMsg]=useState("");
   const[showForm,setShowForm]=useState(false);
+  const[detailId,setDetailId]=useState(null);
+  const[noteTxt,setNoteTxt]=useState("");
+  const[noteSending,setNoteSending]=useState(false);
+  const[noteMsg,setNoteMsg]=useState("");
   const[form,setForm]=useState({prenom:"",nom:"",societe:"",email:""});
   const[brief,setBrief]=useState({title:"",objective:"",target:"",duration:"",tone:"",deliverables:"",budget:"",shootDate:"",deliveryWished:"",references:"",notes:"",services:[],musique:{ambiances:[],genres:[],instruments:[],tempo:"",voix:"",inspiration:""},charteAssets:{logoUrl:"",charteUrl:"",autresUrls:"",noCharte:false}});
   const set=(k)=>(e)=>setForm(f=>({...f,[k]:e.target.value}));
@@ -5562,43 +5618,99 @@ function NouveauProjetPage({token}){
   );
 
   // ── SUIVI — le même lien affiche l'avancement des projets créés avec lui ──
-  if(projets.length&&!showForm)return(
-    <>
-      <FontLoader/>
-      <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",padding:"32px 16px"}}>
-        <div style={{maxWidth:580,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:32}}>
-            <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:28,display:"inline-block"}}/>
-            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Suivi de {projets.length>1?"vos projets":"votre projet"}{invite?.label?` — ${invite.label}`:""}</p>
+  if(projets.length&&!showForm){
+    const detail=projets.find(p=>p.id===detailId);
+    const fmtDate=pubFmtDate;
+
+    // ── DÉTAIL D'UN PROJET : brief consultable + complément de brief ──
+    if(detail){
+      const b=detail.brief||{};
+      const complements=b.complements||[];
+      const briefRows=[["Message principal",b.objective],["Public cible",b.target],["Durée souhaitée",b.duration],["Ton & ambiance",b.tone],["Livrables",b.deliverables],["Budget",b.budget],["Livraison souhaitée",b.deliveryWished],["Références",b.references],["Informations complémentaires",b.notes]].filter(r=>r[1]);
+      const ca=b.charteAssets||{};
+      const sendNote=async()=>{
+        const t=noteTxt.trim();if(!t||noteSending)return;
+        setNoteSending(true);setNoteMsg("");
+        const res=await inviteApi.addNote({token,project_id:detail.id,note:t});
+        setNoteSending(false);
+        if(res?.ok){
+          setNoteTxt("");
+          setInvite(v=>({...v,projets:(v.projets||[]).map(p=>p.id===detail.id?{...p,brief:{...(p.brief||{}),complements:[...((p.brief||{}).complements||[]),{text:t,at:new Date().toISOString()}]}}:p)}));
+        }else setNoteMsg(res?.error||"Une erreur est survenue. Réessayez.");
+      };
+      return(
+        <PubShell sub={`Détail du projet${invite?.label?` — ${invite.label}`:""}`}>
+          <button onClick={()=>{setDetailId(null);setNoteMsg("");}} style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#0090B3",padding:0,marginBottom:16}}>← Retour au suivi</button>
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:10,marginBottom:14}}>
+              <p style={{fontFamily:"'Urbanist'",fontSize:17,fontWeight:800}}>{detail.title}</p>
+              <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#00B4D8",background:"#00B4D810",border:"1px solid #00B4D830",borderRadius:10,padding:"2px 8px",whiteSpace:"nowrap"}}>{STATUS_STEPS[STATUS_INDEX[detail.status]??0]}</span>
+            </div>
+            <PubStatusBlock p={detail}/>
           </div>
-          {projets.map((p,i)=>{
-            const cur=STATUS_INDEX[p.status]??0;
-            return(
-              <div key={i} style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:10,marginBottom:14}}>
-                  <p style={{fontFamily:"'Urbanist'",fontSize:16,fontWeight:800}}>{p.title}</p>
-                  <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#00B4D8",background:"#00B4D810",border:"1px solid #00B4D830",borderRadius:10,padding:"2px 8px",whiteSpace:"nowrap"}}>{STATUS_STEPS[cur]}</span>
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#7C3AED",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:14}}>📋 Votre brief</p>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              {briefRows.map(([l,v])=>(
+                <div key={l}>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>{l}</p>
+                  <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{v}</p>
                 </div>
-                <Timeline status={p.status}/>
-                {p.statusNote&&<p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",background:"#F5F5F7",borderRadius:8,padding:"10px 14px",marginTop:12,lineHeight:1.6}}>💬 {p.statusNote}</p>}
-                {(p.shootDate||p.deliveryDate)&&(
-                  <div style={{display:"flex",gap:16,marginTop:12,flexWrap:"wrap"}}>
-                    {p.shootDate&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>🎬 Tournage : <strong style={{color:"#1D1D1F"}}>{new Date(p.shootDate).toLocaleDateString("fr-FR")}</strong></p>}
-                    {p.deliveryDate&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>📦 Livraison : <strong style={{color:"#1D1D1F"}}>{new Date(p.deliveryDate).toLocaleDateString("fr-FR")}</strong></p>}
+              ))}
+              {(ca.logoUrl||ca.charteUrl)&&(
+                <div>
+                  <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:3}}>Éléments de marque</p>
+                  {ca.logoUrl&&<a href={safePortfolioUrl(ca.logoUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#0077B6",display:"block",wordBreak:"break-all"}}>Logo : {ca.logoUrl}</a>}
+                  {ca.charteUrl&&<a href={safePortfolioUrl(ca.charteUrl)||"#"} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#0077B6",display:"block",wordBreak:"break-all"}}>Charte : {ca.charteUrl}</a>}
+                </div>
+              )}
+              {!briefRows.length&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Brief non renseigné.</p>}
+            </div>
+          </div>
+          <div style={{background:"linear-gradient(135deg,rgba(0,180,216,0.05),rgba(175,82,222,0.04))",border:"1px solid rgba(0,180,216,0.25)",borderRadius:10,padding:24}}>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#0090B3",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:6}}>✏️ Complément de brief</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6,marginBottom:12}}>Un détail à ajouter, une précision, un changement ? Écrivez-le ici — l'équipe le verra directement sur votre projet.</p>
+            {complements.length>0&&(
+              <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+                {complements.map((c,i)=>(
+                  <div key={i} style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"10px 14px"}}>
+                    <p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{c.text}</p>
+                    {c.at&&<p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",marginTop:4}}>{fmtDate(c.at)}</p>}
                   </div>
-                )}
-                {p.status==="livraison"&&isSafeUrl(p.replayUrl)&&<a href={p.replayUrl} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:12,fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#00B4D8",textDecoration:"none"}}>▶ Voir la vidéo livrée</a>}
+                ))}
               </div>
-            );
-          })}
-          {invite?.valid&&(
-            <button onClick={()=>setShowForm(true)} style={{width:"100%",padding:13,borderRadius:10,border:"1.5px dashed #C7C7CC",background:"#FAFAFA",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#6E6E73"}}>＋ Envoyer un nouveau brief</button>
-          )}
-          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",textAlign:"center",marginTop:20,lineHeight:1.6}}>Cette page se met à jour à chaque étape validée par l'équipe Third-One Studio.</p>
-        </div>
-      </div>
-    </>
-  );
+            )}
+            <textarea style={{...inputStyle,resize:"none",minHeight:70,background:"#FFFFFF"}} placeholder="Ex : finalement nous préférons une version 45 secondes…" value={noteTxt} onChange={e=>setNoteTxt(e.target.value)}/>
+            {noteMsg&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015",marginTop:8}}>{noteMsg}</p>}
+            <button onClick={sendNote} disabled={!noteTxt.trim()||noteSending} style={{marginTop:10,padding:"10px 20px",borderRadius:8,border:"none",background:noteTxt.trim()&&!noteSending?"#00B4D8":"#C7C7CC",cursor:noteTxt.trim()&&!noteSending?"pointer":"default",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#FFFFFF"}}>{noteSending?"Envoi…":"Envoyer le complément"}</button>
+          </div>
+        </PubShell>
+      );
+    }
+
+    // ── LISTE DES PROJETS DU LIEN ──
+    return(
+      <PubShell sub={`Suivi de ${projets.length>1?"vos projets":"votre projet"}${invite?.label?` — ${invite.label}`:""}`}>
+        {projets.map((p)=>{
+          const cur=STATUS_INDEX[p.status]??0;
+          return(
+            <div key={p.id} onClick={()=>setDetailId(p.id)} style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16,cursor:"pointer"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:10,marginBottom:14}}>
+                <p style={{fontFamily:"'Urbanist'",fontSize:16,fontWeight:800}}>{p.title}</p>
+                <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#00B4D8",background:"#00B4D810",border:"1px solid #00B4D830",borderRadius:10,padding:"2px 8px",whiteSpace:"nowrap"}}>{STATUS_STEPS[cur]}</span>
+              </div>
+              <PubStatusBlock p={p}/>
+              <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#0090B3",marginTop:14}}>Voir le détail et compléter le brief →</p>
+            </div>
+          );
+        })}
+        {invite?.valid&&(
+          <button onClick={()=>setShowForm(true)} style={{width:"100%",padding:13,borderRadius:10,border:"1.5px dashed #C7C7CC",background:"#FAFAFA",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#6E6E73"}}>＋ Envoyer un nouveau brief</button>
+        )}
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",textAlign:"center",marginTop:20,lineHeight:1.6}}>Cette page se met à jour à chaque étape validée par l'équipe Third-One Studio.</p>
+      </PubShell>
+    );
+  }
 
   return(
     <>
