@@ -5466,6 +5466,196 @@ function PrestaireResponsePage({token}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PAGE CRÉATION DE PROJET (lien public ?nouveau=TOKEN — sans compte)
+// Passe par /api/nouveau-projet (même domaine → traverse les pare-feux d'entreprise
+// qui bloquent supabase.co) ; repli sur l'appel Supabase direct si l'API est absente (dev local).
+// ─────────────────────────────────────────────────────────────────────────────
+const inviteApi={
+  async check(token){
+    try{
+      const r=await fetch(`/api/nouveau-projet?token=${encodeURIComponent(token)}`);
+      const ct=r.headers.get("content-type")||"";
+      if(!ct.includes("json"))throw new Error("no-api");
+      return await r.json();
+    }catch{
+      const{data,error}=await supabase.rpc("get_project_invite",{invite_token:token});
+      return error?{valid:false,reason:"Erreur de connexion"}:data;
+    }
+  },
+  async submit(payload){
+    try{
+      const r=await fetch("/api/nouveau-projet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const ct=r.headers.get("content-type")||"";
+      if(!ct.includes("json"))throw new Error("no-api");
+      return await r.json();
+    }catch{
+      const{data,error}=await supabase.rpc("create_project_from_invite",{invite_token:payload.token,contact_prenom:payload.prenom,contact_nom:payload.nom,contact_societe:payload.societe,contact_email:payload.email||null,project_title:payload.titre||null,project_description:payload.description||null});
+      return error?{ok:false,error:"Erreur de connexion"}:data;
+    }
+  },
+};
+
+function NouveauProjetPage({token}){
+  const[checking,setChecking]=useState(true);
+  const[invite,setInvite]=useState(null);
+  const[submitting,setSubmitting]=useState(false);
+  const[done,setDone]=useState(false);
+  const[errMsg,setErrMsg]=useState("");
+  const[form,setForm]=useState({prenom:"",nom:"",societe:"",email:"",titre:"",description:""});
+  const set=(k)=>(e)=>setForm(f=>({...f,[k]:e.target.value}));
+  const canSubmit=form.prenom.trim()&&form.nom.trim()&&form.societe.trim();
+
+  useEffect(()=>{
+    inviteApi.check(token).then(d=>{
+      if(!d?.valid)setErrMsg(d?.reason||"Lien invalide.");
+      else setInvite(d);
+      setChecking(false);
+    });
+  },[token]);
+
+  const submit=async()=>{
+    if(!canSubmit||submitting)return;
+    setSubmitting(true);
+    const res=await inviteApi.submit({token,...form});
+    setSubmitting(false);
+    if(res?.ok)setDone(true);
+    else setErrMsg(res?.error||"Une erreur est survenue. Réessayez.");
+  };
+
+  const inputStyle={width:"100%",background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:6,padding:"10px 14px",color:"#1D1D1F",fontFamily:"'Inter',sans-serif",fontSize:13,outline:"none",boxSizing:"border-box"};
+  const labelStyle={fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",display:"block",marginBottom:5};
+
+  if(checking)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><FontLoader/><p style={{color:"#0090B3",fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
+  if(errMsg&&!invite)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:12}}><FontLoader/><p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20}}>LIEN INVALIDE</p><p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13}}>{errMsg}</p><p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:12}}>Contactez Third-One Studio pour recevoir un nouveau lien.</p></div>;
+  if(done)return(
+    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16,padding:16}}>
+      <FontLoader/>
+      <span style={{fontSize:48}}>✅</span>
+      <p style={{color:"#0F766E",fontFamily:"'Urbanist'",fontSize:22,letterSpacing:"0.1em",textAlign:"center"}}>PROJET ENVOYÉ</p>
+      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:340,lineHeight:1.6}}>Merci {form.prenom.trim()} ! Votre demande de projet a bien été transmise à l'équipe Third-One Studio, qui vous recontactera rapidement.</p>
+    </div>
+  );
+
+  return(
+    <>
+      <FontLoader/>
+      <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",padding:"32px 16px"}}>
+        <div style={{maxWidth:580,margin:"0 auto"}}>
+          <div style={{textAlign:"center",marginBottom:32}}>
+            <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:28,display:"inline-block"}}/>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Nouveau projet{invite?.label?` — ${invite.label}`:""}</p>
+          </div>
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,display:"flex",flexDirection:"column",gap:14}}>
+            <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>Parlez-nous de votre projet</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:-8,lineHeight:1.6}}>Aucun compte nécessaire — quelques informations suffisent pour démarrer.</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} value={form.prenom} onChange={set("prenom")} placeholder="Marie"/></div>
+              <div><label style={labelStyle}>Nom *</label><input style={inputStyle} value={form.nom} onChange={set("nom")} placeholder="Dupont"/></div>
+            </div>
+            <div><label style={labelStyle}>Société *</label><input style={inputStyle} value={form.societe} onChange={set("societe")} placeholder="Nom de votre entreprise"/></div>
+            <div><label style={labelStyle}>Email (optionnel — pour retrouver votre projet plus tard)</label><input style={inputStyle} type="email" value={form.email} onChange={set("email")} placeholder="vous@societe.com"/></div>
+            <div><label style={labelStyle}>Titre du projet (optionnel)</label><input style={inputStyle} value={form.titre} onChange={set("titre")} placeholder="Ex: Film corporate 2026"/></div>
+            <div><label style={labelStyle}>Décrivez votre besoin (optionnel)</label><textarea style={{...inputStyle,resize:"none",minHeight:110}} value={form.description} onChange={set("description")} placeholder="Objectif, format souhaité, délais, budget indicatif..."/></div>
+            {errMsg&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015"}}>{errMsg}</p>}
+            <button style={{width:"100%",background:canSubmit?"#00B4D8":"#E5E5EA",color:canSubmit?"#FFFFFF":"#8E8E93",border:"none",borderRadius:6,padding:"12px",fontFamily:"'Inter',sans-serif",fontSize:14,fontWeight:600,cursor:canSubmit?"pointer":"not-allowed",transition:"all .2s"}}
+              disabled={!canSubmit||submitting} onClick={submit}>
+              {submitting?"Envoi en cours...":"✓ Envoyer mon projet"}
+            </button>
+          </div>
+          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",textAlign:"center",marginTop:16}}>Vos informations sont transmises uniquement à Third-One Studio.</p>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PANNEAU ADMIN — Liens de création de projet (sans compte)
+// ─────────────────────────────────────────────────────────────────────────────
+function ProjectInviteLinksPanel({onNotif}){
+  const[open,setOpen]=useState(false);
+  const[links,setLinks]=useState([]);
+  const[label,setLabel]=useState("");
+  const[days,setDays]=useState("30");
+  const[singleUse,setSingleUse]=useState(false);
+  const[copied,setCopied]=useState(null);
+
+  useEffect(()=>{
+    if(!open)return;
+    supabase.from("project_invites").select("*").is("revoked_at",null).order("created_at",{ascending:false})
+      .then(({data})=>setLinks(data||[]));
+  },[open]);
+
+  const linkUrl=(t)=>`${window.location.origin}?nouveau=${t}`;
+
+  const generate=async()=>{
+    const token=genToken();
+    const expires_at=days&&Number(days)>0?new Date(Date.now()+Number(days)*24*3600000).toISOString():null;
+    const{data,error}=await supabase.from("project_invites").insert({token,label:label.trim()||null,single_use:singleUse,expires_at}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setLinks(ls=>[data,...ls]);setLabel("");
+    navigator.clipboard?.writeText(linkUrl(token));
+    setCopied(token);
+    onNotif("Lien créé et copié !");
+  };
+
+  const revoke=async(l)=>{
+    const{error}=await supabase.from("project_invites").update({revoked_at:new Date().toISOString()}).eq("id",l.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setLinks(ls=>ls.filter(x=>x.id!==l.id));
+    onNotif("Lien révoqué");
+  };
+
+  return(
+    <div className="card" style={{padding:14}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>🔗 Liens de création de projet <span style={{color:"#8E8E93"}}>— sans compte client (pare-feu OK)</span></p>
+        <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setOpen(v=>!v)}>{open?"✕ Fermer":"Gérer les liens"}</button>
+      </div>
+      {open&&(
+        <div style={{marginTop:10,background:"#F5F5F7",borderRadius:8,padding:14,border:"1px solid #E5E5EA",display:"flex",flexDirection:"column",gap:10}}>
+          <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6}}>Envoyez ce lien à un client bloqué par son pare-feu : il crée son projet avec juste prénom, nom et société — sans compte. S'il renseigne son email, le projet sera rattaché automatiquement à son compte plus tard.</p>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+            <input className="input" placeholder="Libellé (ex: Client SARA, Salon Pro...)" value={label} onChange={e=>setLabel(e.target.value)} style={{flex:1,minWidth:160}}/>
+            <select className="input" value={days} onChange={e=>setDays(e.target.value)} style={{width:130}}>
+              <option value="7">7 jours</option>
+              <option value="30">30 jours</option>
+              <option value="90">90 jours</option>
+              <option value="">Sans expiration</option>
+            </select>
+            <label style={{display:"flex",alignItems:"center",gap:6,fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",cursor:"pointer",userSelect:"none"}}>
+              <input type="checkbox" checked={singleUse} onChange={e=>setSingleUse(e.target.checked)} style={{accentColor:"#00B4D8"}}/>Usage unique
+            </label>
+            <button className="btn btn-primary" style={{whiteSpace:"nowrap",fontSize:12}} onClick={generate}>Générer le lien</button>
+          </div>
+          {links.map(l=>{
+            const url=linkUrl(l.token);
+            const expired=l.expires_at&&new Date(l.expires_at)<Date.now();
+            const used=l.single_use&&l.uses>0;
+            return(
+              <div key={l.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:"1px solid #E5E5EA",flexWrap:"wrap",opacity:expired||used?0.55:1}}>
+                <div style={{flex:1,minWidth:0}}>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:500}}>
+                    {l.label||"Lien"}{" "}
+                    <span style={{color:"#8E8E93",fontWeight:400}}>· {l.uses||0} projet{(l.uses||0)>1?"s":""}{l.single_use?" · usage unique":""}{l.expires_at?` · expire le ${new Date(l.expires_at).toLocaleDateString("fr-FR")}`:""}{expired?" · EXPIRÉ":""}{used?" · UTILISÉ":""}</span>
+                  </p>
+                  <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#6E6E73",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{url}</p>
+                </div>
+                <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopied(l.token);onNotif("Lien copié !");}}>
+                  {copied===l.token?"✓ Copié":"Copier"}
+                </button>
+                <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:"#D70015",borderColor:"#FF3B3030"}} onClick={()=>revoke(l)}>Révoquer</button>
+              </div>
+            );
+          })}
+          {links.length===0&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Aucun lien actif.</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function ComptesSection({clients,setClients,onNotif,onPreviewClient,onCreateProject,isAdmin=false}){
   const[tab,setTab]=useState("clients");
   const tabs=[{k:"clients",l:"👥 Clients"},...(isAdmin?[{k:"acces",l:"🔐 Accès équipe"}]:[])];
@@ -6443,6 +6633,9 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                   <button className={`tab ${projetsView==="liste"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("liste")}>📋 Liste</button>
                   <button className={`tab ${projetsView==="detail"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("detail")} disabled={!selProject}>📁 Détail{selProject?` — ${selProject.title}`:""}</button>
                 </div>
+                {projetsView==="liste" && (isAdmin||isCollab) && (
+                  <ProjectInviteLinksPanel onNotif={showNotif}/>
+                )}
                 {projetsView==="liste" && (
                   <ProjectsListViewMemo
                     projects={projects}
@@ -6601,5 +6794,6 @@ export default function App(){
   const params=new URLSearchParams(window.location.search);
   if(params.has("guest"))return <GuestView/>;
   if(params.has("prestataire"))return <PrestaireResponsePage token={params.get("prestataire")}/>;
+  if(params.has("nouveau"))return <NouveauProjetPage token={params.get("nouveau")}/>;
   return <AppMain/>;
 }
