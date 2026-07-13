@@ -32,14 +32,19 @@ module.exports = async (req, res) => {
     const b = req.body || {};
     const token = str(b.token, 128);
     if (!token) return res.status(400).json({ ok: false, error: "Token manquant" });
+    if (JSON.stringify(b).length > 60000) {
+      return res.status(413).json({ ok: false, error: "Contenu trop volumineux" });
+    }
+    const contact = b.contact || {};
     const { data, error } = await supabase.rpc("create_project_from_invite", {
       invite_token: token,
-      contact_prenom: str(b.prenom, 80),
-      contact_nom: str(b.nom, 80),
-      contact_societe: str(b.societe, 120),
-      contact_email: str(b.email, 160) || null,
-      project_title: str(b.titre, 200) || null,
-      project_description: str(b.description, 4000) || null,
+      contact: {
+        prenom: str(contact.prenom, 80),
+        nom: str(contact.nom, 80),
+        societe: str(contact.societe, 120),
+        email: str(contact.email, 160),
+      },
+      brief: b.brief && typeof b.brief === "object" ? b.brief : {},
     });
     if (error) return res.status(500).json({ ok: false, error: "Erreur serveur" });
     return res.status(200).json(data);

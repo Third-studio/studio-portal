@@ -5489,11 +5489,23 @@ const inviteApi={
       if(!ct.includes("json"))throw new Error("no-api");
       return await r.json();
     }catch{
-      const{data,error}=await supabase.rpc("create_project_from_invite",{invite_token:payload.token,contact_prenom:payload.prenom,contact_nom:payload.nom,contact_societe:payload.societe,contact_email:payload.email||null,project_title:payload.titre||null,project_description:payload.description||null});
+      const{data,error}=await supabase.rpc("create_project_from_invite",{invite_token:payload.token,contact:payload.contact,brief:payload.brief});
       return error?{ok:false,error:"Erreur de connexion"}:data;
     }
   },
 };
+
+// Mêmes options que le brief client normal (ClientProjectView → intake)
+const PUB_MUS_AMBIANCES=[{v:"cinematique",l:"Cinématique / Épique",e:"🎬"},{v:"emotionnel",l:"Émotionnel / Touchant",e:"💫"},{v:"energique",l:"Énergique / Dynamique",e:"⚡"},{v:"calme",l:"Calme / Méditatif",e:"🌊"},{v:"luxueux",l:"Luxueux / Premium",e:"💎"},{v:"festif",l:"Festif / Célébration",e:"🎉"},{v:"mysterieux",l:"Mystérieux / Dramatique",e:"🌙"},{v:"inspirant",l:"Inspirant / Motivant",e:"🚀"},{v:"romantique",l:"Romantique / Tendre",e:"💕"},{v:"funky",l:"Funky / Groovy",e:"🎶"}];
+const PUB_MUS_GENRES=[{v:"orchestral",l:"Orchestral / Symphonique"},{v:"jazz",l:"Jazz / Soul / Blues"},{v:"electro",l:"Électronique / Synthwave"},{v:"hiphop",l:"Hip-Hop / Trap"},{v:"reggae",l:"Reggae / Dancehall"},{v:"zouk",l:"Zouk / Afrobeat"},{v:"pop",l:"Pop / Indie"},{v:"acoustique",l:"Acoustique / Folk"},{v:"rnb",l:"R&B / Neo-Soul"},{v:"ambient",l:"Ambient / Lo-fi"},{v:"classique",l:"Musique Classique"}];
+const PUB_MUS_INSTRU=[{v:"piano",l:"Piano / Claviers",e:"🎹"},{v:"guitare_ac",l:"Guitare acoustique",e:"🎸"},{v:"guitare_el",l:"Guitare électrique",e:"⚡🎸"},{v:"cordes",l:"Cordes / Violons",e:"🎻"},{v:"cuivres",l:"Cuivres / Trompette",e:"🎺"},{v:"percus",l:"Percussions / Batterie",e:"🥁"},{v:"basse",l:"Basse / Contrebasse",e:"🎵"},{v:"synth",l:"Synthétiseurs / Pad",e:"🎛"},{v:"voix",l:"Voix / Chœurs",e:"🎤"}];
+const PUB_MUS_TEMPO=[{v:"tres_lent",l:"Très lent — contemplatif",s:"< 70 BPM"},{v:"lent",l:"Lent et posé",s:"70–90 BPM"},{v:"modere",l:"Modéré — équilibré",s:"90–110 BPM"},{v:"entrainant",l:"Entraînant — dynamique",s:"110–130 BPM"},{v:"rapide",l:"Rapide — intense",s:"> 130 BPM"}];
+const PUB_MUS_VOIX=[{v:"instrumental",l:"Instrumental uniquement"},{v:"atmospherique",l:"Voix atmosphérique / rare"},{v:"principale",l:"Voix principale avec paroles"}];
+const PubChip=({active,onClick,children})=>(
+  <button type="button" onClick={onClick} style={{padding:"5px 11px",borderRadius:20,border:`1.5px solid ${active?"#00B4D8":"#E5E5EA"}`,background:active?"#00B4D810":"#FAFAFA",cursor:"pointer",fontFamily:"'Inter'",fontSize:12,color:active?"#00B4D8":"#6E6E73",transition:"all .15s",whiteSpace:"nowrap"}}>
+    {children}
+  </button>
+);
 
 function NouveauProjetPage({token}){
   const[checking,setChecking]=useState(true);
@@ -5501,9 +5513,16 @@ function NouveauProjetPage({token}){
   const[submitting,setSubmitting]=useState(false);
   const[done,setDone]=useState(false);
   const[errMsg,setErrMsg]=useState("");
-  const[form,setForm]=useState({prenom:"",nom:"",societe:"",email:"",titre:"",description:""});
+  const[form,setForm]=useState({prenom:"",nom:"",societe:"",email:""});
+  const[brief,setBrief]=useState({title:"",objective:"",target:"",duration:"",tone:"",deliverables:"",budget:"",shootDate:"",deliveryWished:"",references:"",notes:"",services:[],musique:{ambiances:[],genres:[],instruments:[],tempo:"",voix:"",inspiration:""},charteAssets:{logoUrl:"",charteUrl:"",autresUrls:"",noCharte:false}});
   const set=(k)=>(e)=>setForm(f=>({...f,[k]:e.target.value}));
-  const canSubmit=form.prenom.trim()&&form.nom.trim()&&form.societe.trim();
+  const setB=(k)=>(e)=>setBrief(p=>({...p,[k]:e.target.value}));
+  const setCA=(key,val)=>setBrief(p=>({...p,charteAssets:{...p.charteAssets,[key]:val}}));
+  const toggleService=(id)=>setBrief(p=>({...p,services:p.services.includes(id)?p.services.filter(s=>s!==id):[...p.services,id]}));
+  const toggleMusique=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:p.musique[key].includes(val)?p.musique[key].filter(x=>x!==val):[...p.musique[key],val]}}));
+  const setMusiqueField=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:val}}));
+  const canSubmit=form.prenom.trim()&&form.nom.trim()&&form.societe.trim()&&brief.objective.trim()&&brief.target.trim();
+  const serviceTypes=invite?.services||[];
 
   useEffect(()=>{
     inviteApi.check(token).then(d=>{
@@ -5515,8 +5534,10 @@ function NouveauProjetPage({token}){
 
   const submit=async()=>{
     if(!canSubmit||submitting)return;
+    if(brief.shootDate&&brief.deliveryWished&&brief.deliveryWished<brief.shootDate){setErrMsg("La date de livraison souhaitée ne peut pas être antérieure à la date de tournage.");return;}
+    setErrMsg("");
     setSubmitting(true);
-    const res=await inviteApi.submit({token,...form});
+    const res=await inviteApi.submit({token,contact:form,brief});
     setSubmitting(false);
     if(res?.ok)setDone(true);
     else setErrMsg(res?.error||"Une erreur est survenue. Réessayez.");
@@ -5545,8 +5566,9 @@ function NouveauProjetPage({token}){
             <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:28,display:"inline-block"}}/>
             <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Nouveau projet{invite?.label?` — ${invite.label}`:""}</p>
           </div>
-          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,display:"flex",flexDirection:"column",gap:14}}>
-            <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>Parlez-nous de votre projet</p>
+          {/* ── VOS COORDONNÉES ── */}
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,display:"flex",flexDirection:"column",gap:14,marginBottom:16}}>
+            <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>Vos coordonnées</p>
             <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:-8,lineHeight:1.6}}>Aucun compte nécessaire — quelques informations suffisent pour démarrer.</p>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
               <div><label style={labelStyle}>Prénom *</label><input style={inputStyle} value={form.prenom} onChange={set("prenom")} placeholder="Marie"/></div>
@@ -5554,13 +5576,161 @@ function NouveauProjetPage({token}){
             </div>
             <div><label style={labelStyle}>Société *</label><input style={inputStyle} value={form.societe} onChange={set("societe")} placeholder="Nom de votre entreprise"/></div>
             <div><label style={labelStyle}>Email (optionnel — pour retrouver votre projet plus tard)</label><input style={inputStyle} type="email" value={form.email} onChange={set("email")} placeholder="vous@societe.com"/></div>
-            <div><label style={labelStyle}>Titre du projet (optionnel)</label><input style={inputStyle} value={form.titre} onChange={set("titre")} placeholder="Ex: Film corporate 2026"/></div>
-            <div><label style={labelStyle}>Décrivez votre besoin (optionnel)</label><textarea style={{...inputStyle,resize:"none",minHeight:110}} value={form.description} onChange={set("description")} placeholder="Objectif, format souhaité, délais, budget indicatif..."/></div>
+          </div>
+
+          {/* ── BRIEF DE PRODUCTION (mêmes éléments que le brief client normal) ── */}
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,display:"flex",flexDirection:"column",gap:14}}>
+            <div>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#7C3AED",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:6}}>Votre brief de production</p>
+              <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",lineHeight:1.6}}>Décrivez votre vision — plus vous partagez de détails, plus notre équipe pourra vous proposer une production qui vous ressemble.</p>
+            </div>
+            <div><label style={labelStyle}>Nom du projet</label><input style={inputStyle} placeholder="Ex : Spot publicitaire pour ma boutique" value={brief.title} onChange={setB("title")}/></div>
+            <div><label style={labelStyle}>Votre message principal *</label><textarea style={{...inputStyle,resize:"none",minHeight:80}} placeholder="Quelle émotion ou idée souhaitez-vous transmettre ? Quel est le contexte ?" value={brief.objective} onChange={setB("objective")}/></div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div><label style={labelStyle}>Public cible *</label><input style={inputStyle} placeholder="Ex : femmes 25-45 ans, familles…" value={brief.target} onChange={setB("target")}/></div>
+              <div><label style={labelStyle}>Durée souhaitée</label><input style={inputStyle} placeholder="Ex : 30 s, 2 minutes…" value={brief.duration} onChange={setB("duration")}/></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+              <div><label style={labelStyle}>Ton & ambiance</label><input style={inputStyle} placeholder="Ex : chaleureux, élégant, dynamique…" value={brief.tone} onChange={setB("tone")}/></div>
+              <div><label style={labelStyle}>Budget approximatif</label><input style={inputStyle} placeholder="Ex : 2 000 €, 5 000 €…" value={brief.budget} onChange={setB("budget")}/></div>
+            </div>
+            <div><label style={labelStyle}>Livrables souhaités</label><input style={inputStyle} placeholder="Ex : 1 vidéo 16:9 + version story Instagram, sous-titres…" value={brief.deliverables} onChange={setB("deliverables")}/></div>
+
+            {/* ── ÉLÉMENTS DE MARQUE ── */}
+            {(()=>{
+              const ca=brief.charteAssets;
+              const charteReady=ca.logoUrl.trim()||ca.charteUrl.trim()||ca.autresUrls.trim()||ca.noCharte;
+              return(
+                <div style={{display:"flex",flexDirection:"column",gap:14,borderTop:"1px solid #E5E5EA",paddingTop:16}}>
+                  <div style={{background:"linear-gradient(135deg,rgba(175,82,222,0.06),rgba(0,180,216,0.04))",border:"1px solid rgba(175,82,222,0.18)",borderRadius:12,padding:"14px 16px"}}>
+                    <p style={{fontFamily:"'Urbanist'",fontSize:15,fontWeight:800,color:"#1D1D1F",marginBottom:4}}>🎨 Vos éléments de marque</p>
+                    <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6}}>
+                      Pour estimer un délai de livraison réaliste, nous avons besoin de vos fichiers de marque <strong style={{color:"#1D1D1F"}}>avant le début de la production</strong> — logo, charte graphique, couleurs, typographies. Partagez un lien (Google Drive, WeTransfer, Dropbox…) ou indiquez que vous ne les avez pas encore.
+                    </p>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                    <div><label style={labelStyle}>Lien vers votre logo</label><input style={inputStyle} placeholder="https://drive.google.com/…" value={ca.logoUrl} onChange={e=>setCA("logoUrl",e.target.value)}/></div>
+                    <div><label style={labelStyle}>Lien vers votre charte graphique</label><input style={inputStyle} placeholder="https://wetransfer.com/…" value={ca.charteUrl} onChange={e=>setCA("charteUrl",e.target.value)}/></div>
+                  </div>
+                  <div><label style={labelStyle}>Autres ressources (polices, visuels, photos de marque…)</label><input style={inputStyle} placeholder="Autres liens ou descriptions…" value={ca.autresUrls} onChange={e=>setCA("autresUrls",e.target.value)}/></div>
+                  <label style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>setCA("noCharte",!ca.noCharte)}>
+                    <div style={{width:18,height:18,borderRadius:5,border:`2px solid ${ca.noCharte?"#00B4D8":"#C7C7CC"}`,background:ca.noCharte?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                      {ca.noCharte&&<span style={{color:"#FFFFFF",fontSize:11,fontWeight:700,lineHeight:1}}>✓</span>}
+                    </div>
+                    <span style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F"}}>Je n'ai pas encore de logo / charte graphique</span>
+                  </label>
+                  <div style={{borderTop:"1px solid #F2F2F7",paddingTop:14}}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                      <div><label style={labelStyle}>Date de tournage envisagée</label><input type="date" style={inputStyle} value={brief.shootDate} onChange={setB("shootDate")}/></div>
+                      <div>
+                        <label style={labelStyle}>Date de livraison souhaitée</label>
+                        <input type="date" style={{...inputStyle,opacity:charteReady?1:0.45,cursor:charteReady?"auto":"not-allowed"}} value={brief.deliveryWished}
+                          disabled={!charteReady} min={brief.shootDate||undefined} onChange={setB("deliveryWished")}/>
+                        {!charteReady&&(
+                          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#7C3AED",marginTop:4}}>↑ Partagez vos éléments de marque (ou cochez la case ci-dessus) pour débloquer ce champ.</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <div><label style={labelStyle}>Références & inspirations</label><textarea style={{...inputStyle,resize:"none",minHeight:60}} placeholder="Liens YouTube, publicités que vous aimez, univers visuels…" value={brief.references} onChange={setB("references")}/></div>
+            <div><label style={labelStyle}>Informations complémentaires</label><textarea style={{...inputStyle,resize:"none",minHeight:80}} placeholder="Lieu de tournage, personnes à filmer, contraintes particulières…" value={brief.notes} onChange={setB("notes")}/></div>
+
+            {/* ── SERVICES ADDITIONNELS ── */}
+            {serviceTypes.length>0&&(
+              <div style={{borderTop:"1px solid #E5E5EA",paddingTop:16}}>
+                <label style={labelStyle}>Services additionnels dont vous avez besoin</label>
+                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginBottom:8}}>Sélectionnez les services complémentaires pour ce projet (lieu, traiteur, transport…)</p>
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {serviceTypes.map(t=>{
+                    const sel=brief.services.includes(t.id);
+                    return(
+                      <div key={t.id} onClick={()=>toggleService(t.id)} style={{padding:"8px 14px",display:"flex",alignItems:"center",gap:8,borderRadius:8,border:`1.5px solid ${sel?"#00B4D8":"#E5E5EA"}`,background:sel?"#00B4D810":"#FAFAFA",cursor:"pointer",transition:"all .15s"}}>
+                        <div style={{width:16,height:16,borderRadius:5,border:`2px solid ${sel?"#00B4D8":"#C7C7CC"}`,background:sel?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                          {sel&&<span style={{color:"#FFFFFF",fontSize:10,fontWeight:700}}>✓</span>}
+                        </div>
+                        <span style={{fontSize:16}}>{t.icone}</span>
+                        <span style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F"}}>{t.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── AMBIANCE MUSICALE ── */}
+            <div style={{borderTop:"1px solid #E5E5EA",paddingTop:16}}>
+              <label style={labelStyle}>🎵 Ambiance musicale souhaitée</label>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginBottom:10}}>Guidez notre choix musical — plus vous êtes précis, plus la musique sera adaptée à votre vision.</p>
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                <div>
+                  <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Ambiance principale <span style={{color:"#6E6E73",fontWeight:400,textTransform:"none"}}>(plusieurs choix)</span></p>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {PUB_MUS_AMBIANCES.map(a=>(
+                      <PubChip key={a.v} active={brief.musique.ambiances.includes(a.v)} onClick={()=>toggleMusique("ambiances",a.v)}>{a.e} {a.l}</PubChip>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Genre musical</p>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {PUB_MUS_GENRES.map(g=>(
+                      <PubChip key={g.v} active={brief.musique.genres.includes(g.v)} onClick={()=>toggleMusique("genres",g.v)}>{g.l}</PubChip>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Instruments préférés</p>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                    {PUB_MUS_INSTRU.map(i=>(
+                      <PubChip key={i.v} active={brief.musique.instruments.includes(i.v)} onClick={()=>toggleMusique("instruments",i.v)}>{i.e} {i.l}</PubChip>
+                    ))}
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                  <div>
+                    <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Tempo / Rythme</p>
+                    <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                      {PUB_MUS_TEMPO.map(t=>(
+                        <label key={t.v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setMusiqueField("tempo",t.v)}>
+                          <div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${brief.musique.tempo===t.v?"#00B4D8":"#C7C7CC"}`,background:brief.musique.tempo===t.v?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                            {brief.musique.tempo===t.v&&<div style={{width:6,height:6,borderRadius:"50%",background:"#FFFFFF"}}/>}
+                          </div>
+                          <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{t.l} <span style={{color:"#6E6E73",fontSize:10}}>{t.s}</span></span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#1D1D1F",marginBottom:7,textTransform:"uppercase",letterSpacing:"0.06em"}}>Présence vocale</p>
+                    <div style={{display:"flex",flexDirection:"column",gap:5}}>
+                      {PUB_MUS_VOIX.map(v=>(
+                        <label key={v.v} style={{display:"flex",alignItems:"center",gap:8,cursor:"pointer"}} onClick={()=>setMusiqueField("voix",v.v)}>
+                          <div style={{width:16,height:16,borderRadius:"50%",border:`2px solid ${brief.musique.voix===v.v?"#00B4D8":"#C7C7CC"}`,background:brief.musique.voix===v.v?"#00B4D8":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>
+                            {brief.musique.voix===v.v&&<div style={{width:6,height:6,borderRadius:"50%",background:"#FFFFFF"}}/>}
+                          </div>
+                          <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}>{v.l}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Références / Inspiration libre</label>
+                  <textarea style={{...inputStyle,resize:"none",minHeight:60}} placeholder={"Ex : \"l'intro d'Interstellar\", \"Dior\", \"Aya Nakamura meets Hans Zimmer\"…"} value={brief.musique.inspiration} onChange={e=>setMusiqueField("inspiration",e.target.value)}/>
+                </div>
+              </div>
+            </div>
+
             {errMsg&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015"}}>{errMsg}</p>}
             <button style={{width:"100%",background:canSubmit?"#00B4D8":"#E5E5EA",color:canSubmit?"#FFFFFF":"#8E8E93",border:"none",borderRadius:6,padding:"12px",fontFamily:"'Inter',sans-serif",fontSize:14,fontWeight:600,cursor:canSubmit?"pointer":"not-allowed",transition:"all .2s"}}
               disabled={!canSubmit||submitting} onClick={submit}>
-              {submitting?"Envoi en cours...":"✓ Envoyer mon projet"}
+              {submitting?"Envoi en cours...":"✨ Envoyer mon brief"}
             </button>
+            {!canSubmit&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",textAlign:"center",marginTop:-6}}>Prénom, nom, société, message principal et public cible sont requis.</p>}
           </div>
           <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",textAlign:"center",marginTop:16}}>Vos informations sont transmises uniquement à Third-One Studio.</p>
         </div>
