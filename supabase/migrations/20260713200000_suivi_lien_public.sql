@@ -1,0 +1,157 @@
+-- 2026-07-13 (quater) — Suivi de projet sur le lien public ?nouveau=TOKEN
+-- Le même lien affiche désormais l'avancement (étapes validées) des projets
+-- créés avec lui. Lien expiré / déjà utilisé → plus de nouveau brief mais le
+-- suivi reste visible. Lien révoqué → plus rien (kill switch équipe).
+
+-- 1. Rattacher chaque projet au lien qui l'a créé
+alter table public.projects
+  add column if not exists invite_id uuid references public.project_invites(id) on delete set null;
+create index if not exists projects_invite_id_idx on public.projects(invite_id);
+
+-- 2. get_project_invite renvoie aussi les projets du lien (champs sûrs uniquement)
+create or replace function public.get_project_invite(invite_token text)
+returns json language plpgsql security definer set search_path = public as $$
+declare
+  inv     public.project_invites;
+  bad     text;
+  projets json;
+begin
+  select * into inv from public.project_invites where token = invite_token;
+  if inv.id is null then
+    return json_build_object('valid', false, 'reason', 'Lien introuvable');
+  end if;
+  if inv.revoked_at is not null then
+    return json_build_object('valid', false, 'reason', 'Lien révoqué');
+  end if;
+  if inv.expires_at is not null and inv.expires_at < now() then
+    bad := 'Lien expiré';
+  elsif inv.single_use and inv.uses > 0 then
+    bad := 'Lien déjà utilisé';
+  end if;
+
+  select coalesce(json_agg(json_build_object(
+      'title',        p.title,
+      'status',       p.status,
+      'progress',     p.progress,
+      'statusNote',   p.status_note,
+      'shootDate',    p.shoot_date,
+      'deliveryDate', p.delivery_date,
+      'replayUrl',    p.replay_url,
+      'createdAt',    p.created_at
+    ) order by p.created_at desc), '[]'::json)
+    into projets
+    from public.projects p
+   where p.invite_id = inv.id;
+
+  if bad is not null then
+    return json_build_object('valid', false, 'reason', bad, 'label', inv.label, 'projets', projets);
+  end if;
+  return json_build_object(
+    'valid', true,
+    'label', inv.label,
+    'projets', projets,
+    'services', coalesce((
+      select json_agg(json_build_object('id', id, 'label', label, 'icone', icone) order by label)
+      from public.service_types where actif is not false
+    ), '[]'::json)
+  );
+end $$;
+
+grant execute on function public.get_project_invite(text) to anon, authenticated;
+
+-- 3. create_project_from_invite mémorise le lien d'origine (invite_id)
+
+create or replace function public.create_project_from_invite(
+  invite_token text,
+  contact      jsonb,
+  brief        jsonb default '{}'::jsonb
+) returns json language plpgsql security definer set search_path = public as $$
+declare
+  inv             public.project_invites;
+  existing_client uuid;
+  prenom          text;
+  nom             text;
+  societe         text;
+  clean_email     text;
+  full_name       text;
+  new_brief       jsonb;
+  shoot           date;
+  new_id          bigint;
+begin
+  select * into inv from public.project_invites where token = invite_token for update;
+  if inv.id is null or inv.revoked_at is not null
+     or (inv.expires_at is not null and inv.expires_at < now())
+     or (inv.single_use and inv.uses > 0) then
+    return json_build_object('ok', false, 'error', 'Lien invalide, expiré ou déjà utilisé');
+  end if;
+
+  if pg_column_size(brief) > 60000 or pg_column_size(contact) > 4000 then
+    return json_build_object('ok', false, 'error', 'Contenu trop volumineux');
+  end if;
+
+  prenom      := left(trim(coalesce(contact->>'prenom', '')), 80);
+  nom         := left(trim(coalesce(contact->>'nom', '')), 80);
+  societe     := left(trim(coalesce(contact->>'societe', '')), 120);
+  clean_email := nullif(lower(trim(coalesce(contact->>'email', ''))), '');
+
+  if prenom = '' or nom = '' or societe = '' then
+    return json_build_object('ok', false, 'error', 'Prénom, nom et société sont requis');
+  end if;
+  if coalesce(trim(brief->>'objective'), '') = '' or coalesce(trim(brief->>'target'), '') = '' then
+    return json_build_object('ok', false, 'error', 'Le message principal et le public cible sont requis');
+  end if;
+
+  full_name := prenom || ' ' || nom;
+
+  -- Client déjà connu par email → rattachement direct
+  if clean_email is not null then
+    select id into existing_client from public.profiles
+     where lower(email) = clean_email limit 1;
+  end if;
+
+  -- Mêmes clés que le brief client normal (submitted:true = brief complet envoyé)
+  new_brief := jsonb_build_object(
+    'objective',      left(coalesce(brief->>'objective', ''), 4000),
+    'target',         left(coalesce(brief->>'target', ''), 1000),
+    'duration',       left(coalesce(brief->>'duration', ''), 200),
+    'tone',           left(coalesce(brief->>'tone', ''), 500),
+    'deliverables',   left(coalesce(brief->>'deliverables', ''), 1000),
+    'budget',         left(coalesce(brief->>'budget', ''), 200),
+    'deliveryWished', left(coalesce(brief->>'deliveryWished', ''), 40),
+    'references',     left(coalesce(brief->>'references', ''), 4000),
+    'notes',          left(coalesce(brief->>'notes', ''), 4000),
+    'services',       coalesce(brief->'services', '[]'::jsonb),
+    'musique',        coalesce(brief->'musique', '{}'::jsonb),
+    'charteAssets',   coalesce(brief->'charteAssets', '{}'::jsonb),
+    'draft', false, 'submitted', true, 'source', 'lien',
+    'contactName', full_name,
+    'contactCompany', societe,
+    'inviteLabel', coalesce(inv.label, '')
+  );
+  -- Pas de compte → rattachement différé via claim_pending_projects()
+  if existing_client is null and clean_email is not null then
+    new_brief := new_brief || jsonb_build_object(
+      'pendingClientEmail', clean_email,
+      'pendingClientName', full_name,
+      'pendingClientCompany', societe
+    );
+  end if;
+
+  shoot := case when brief->>'shootDate' ~ '^\d{4}-\d{2}-\d{2}$'
+                then (brief->>'shootDate')::date else null end;
+
+  insert into public.projects (title, client_id, status, progress, brief, replay_url, delivery_date, shoot_date, status_note, invite_id)
+  values (
+    left(coalesce(nullif(trim(brief->>'title'), ''), 'Projet — ' || societe), 200),
+    existing_client, 'brief', 0, new_brief, '', null, shoot, null, inv.id
+  ) returning id into new_id;
+
+  update public.project_invites
+     set uses = uses + 1, last_used_at = now()
+   where id = inv.id;
+
+  return json_build_object('ok', true, 'project_id', new_id);
+end $$;
+
+revoke all on function public.create_project_from_invite(text, jsonb, jsonb) from public;
+grant execute on function public.create_project_from_invite(text, jsonb, jsonb) to anon, authenticated;

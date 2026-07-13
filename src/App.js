@@ -5513,6 +5513,7 @@ function NouveauProjetPage({token}){
   const[submitting,setSubmitting]=useState(false);
   const[done,setDone]=useState(false);
   const[errMsg,setErrMsg]=useState("");
+  const[showForm,setShowForm]=useState(false);
   const[form,setForm]=useState({prenom:"",nom:"",societe:"",email:""});
   const[brief,setBrief]=useState({title:"",objective:"",target:"",duration:"",tone:"",deliverables:"",budget:"",shootDate:"",deliveryWished:"",references:"",notes:"",services:[],musique:{ambiances:[],genres:[],instruments:[],tempo:"",voix:"",inspiration:""},charteAssets:{logoUrl:"",charteUrl:"",autresUrls:"",noCharte:false}});
   const set=(k)=>(e)=>setForm(f=>({...f,[k]:e.target.value}));
@@ -5523,10 +5524,11 @@ function NouveauProjetPage({token}){
   const setMusiqueField=(key,val)=>setBrief(p=>({...p,musique:{...p.musique,[key]:val}}));
   const canSubmit=form.prenom.trim()&&form.nom.trim()&&form.societe.trim()&&brief.objective.trim()&&brief.target.trim();
   const serviceTypes=invite?.services||[];
+  const projets=invite?.projets||[];
 
   useEffect(()=>{
     inviteApi.check(token).then(d=>{
-      if(!d?.valid)setErrMsg(d?.reason||"Lien invalide.");
+      if(!d?.valid&&!(d?.projets?.length))setErrMsg(d?.reason||"Lien invalide.");
       else setInvite(d);
       setChecking(false);
     });
@@ -5554,7 +5556,48 @@ function NouveauProjetPage({token}){
       <span style={{fontSize:48}}>✅</span>
       <p style={{color:"#0F766E",fontFamily:"'Urbanist'",fontSize:22,letterSpacing:"0.1em",textAlign:"center"}}>PROJET ENVOYÉ</p>
       <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:340,lineHeight:1.6}}>Merci {form.prenom.trim()} ! Votre demande de projet a bien été transmise à l'équipe Third-One Studio, qui vous recontactera rapidement.</p>
+      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:12,textAlign:"center",maxWidth:340,lineHeight:1.6}}>💡 Gardez ce lien : il vous permet de suivre l'avancement de votre projet à chaque étape validée.</p>
+      <button onClick={()=>window.location.reload()} style={{padding:"11px 24px",borderRadius:10,border:"1px solid #00B4D8",background:"#00B4D810",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#0090B3"}}>Voir le suivi de mon projet</button>
     </div>
+  );
+
+  // ── SUIVI — le même lien affiche l'avancement des projets créés avec lui ──
+  if(projets.length&&!showForm)return(
+    <>
+      <FontLoader/>
+      <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",padding:"32px 16px"}}>
+        <div style={{maxWidth:580,margin:"0 auto"}}>
+          <div style={{textAlign:"center",marginBottom:32}}>
+            <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:28,display:"inline-block"}}/>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>Suivi de {projets.length>1?"vos projets":"votre projet"}{invite?.label?` — ${invite.label}`:""}</p>
+          </div>
+          {projets.map((p,i)=>{
+            const cur=STATUS_INDEX[p.status]??0;
+            return(
+              <div key={i} style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",gap:10,marginBottom:14}}>
+                  <p style={{fontFamily:"'Urbanist'",fontSize:16,fontWeight:800}}>{p.title}</p>
+                  <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#00B4D8",background:"#00B4D810",border:"1px solid #00B4D830",borderRadius:10,padding:"2px 8px",whiteSpace:"nowrap"}}>{STATUS_STEPS[cur]}</span>
+                </div>
+                <Timeline status={p.status}/>
+                {p.statusNote&&<p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",background:"#F5F5F7",borderRadius:8,padding:"10px 14px",marginTop:12,lineHeight:1.6}}>💬 {p.statusNote}</p>}
+                {(p.shootDate||p.deliveryDate)&&(
+                  <div style={{display:"flex",gap:16,marginTop:12,flexWrap:"wrap"}}>
+                    {p.shootDate&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>🎬 Tournage : <strong style={{color:"#1D1D1F"}}>{new Date(p.shootDate).toLocaleDateString("fr-FR")}</strong></p>}
+                    {p.deliveryDate&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>📦 Livraison : <strong style={{color:"#1D1D1F"}}>{new Date(p.deliveryDate).toLocaleDateString("fr-FR")}</strong></p>}
+                  </div>
+                )}
+                {p.status==="livraison"&&isSafeUrl(p.replayUrl)&&<a href={p.replayUrl} target="_blank" rel="noreferrer" style={{display:"inline-block",marginTop:12,fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#00B4D8",textDecoration:"none"}}>▶ Voir la vidéo livrée</a>}
+              </div>
+            );
+          })}
+          {invite?.valid&&(
+            <button onClick={()=>setShowForm(true)} style={{width:"100%",padding:13,borderRadius:10,border:"1.5px dashed #C7C7CC",background:"#FAFAFA",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#6E6E73"}}>＋ Envoyer un nouveau brief</button>
+          )}
+          <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",textAlign:"center",marginTop:20,lineHeight:1.6}}>Cette page se met à jour à chaque étape validée par l'équipe Third-One Studio.</p>
+        </div>
+      </div>
+    </>
   );
 
   return(
