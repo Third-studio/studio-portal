@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback, memo, Fragment } from "react";
+import QRCode from "qrcode";
 import { supabase } from "./supabase";
 import Login from "./Login";
 import Inbox from "./Inbox";
@@ -417,16 +418,22 @@ function calcEstimate(pricing,form,discount=0){
 // ─────────────────────────────────────────────────────────────────────────────
 // SHARED: TIMELINE
 // ─────────────────────────────────────────────────────────────────────────────
-function Timeline({status}){
+const STATUS_KEYS=["brief","storyboard","tournage","montage","livraison"];
+function Timeline({status,onStepClick,dates}){
   const cur=STATUS_INDEX[status]??0;
+  const fmtShort=(d)=>{try{return new Date(d).toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});}catch{return"";}};
   return(
     <div style={{display:"flex",alignItems:"flex-start",padding:"4px 0"}}>
-      {STATUS_STEPS.map((s,i)=>(
-        <div key={s} className="timeline-step">
-          <div className={`timeline-dot ${i<cur?"dot-done":i===cur?"dot-active":"dot-todo"}`}>{i<cur?"✓":i+1}</div>
-          <span style={{fontFamily:"'Inter'",fontSize:9,color:i<=cur?"#1D1D1F":"#8E8E93",textAlign:"center"}}>{s}</span>
-        </div>
-      ))}
+      {STATUS_STEPS.map((s,i)=>{
+        const k=STATUS_KEYS[i];
+        return(
+          <div key={s} className="timeline-step" onClick={onStepClick?()=>onStepClick(k):undefined} style={onStepClick?{cursor:"pointer"}:undefined} title={onStepClick?`Passer le projet à l'étape « ${s} »`:undefined}>
+            <div className={`timeline-dot ${i<cur?"dot-done":i===cur?"dot-active":"dot-todo"}`}>{i<cur?"✓":i+1}</div>
+            <span style={{fontFamily:"'Inter'",fontSize:9,color:i<=cur?"#1D1D1F":"#8E8E93",textAlign:"center"}}>{s}</span>
+            {dates?.[k]&&<span style={{fontFamily:"'Inter'",fontSize:8.5,color:i<=cur?"#0090B3":"#8E8E93",textAlign:"center"}}>{fmtShort(dates[k])}</span>}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -862,7 +869,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
   const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."},{k:"deliveryWished",l:"Livraison souhaitée",p:"Date ou délai souhaité"}];
   const[brief,setBrief]=useState({...project.brief});
-  const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||"",replayUrl:project.replayUrl||""});
+  const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||"",replayUrl:project.replayUrl||"",sbDate:project.brief?.stepDates?.storyboard||"",montageDate:project.brief?.stepDates?.montage||""});
   const addSB=async sb=>{
     const{data,error}=await supabase.from("storyboards").insert({project_id:project.id,title:sb.title||"Storyboard",frames:sb.frames||[],validation_status:sb.validationStatus||"pending"}).select().single();
     if(error){onNotif("Erreur storyboard : "+error.message);return;}
@@ -883,10 +890,23 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onUpdate({...project,comments:[...project.comments,c]});
     await supabase.from("messages").insert({project_id:project.id,author,content:text,role});
   };
+  const[replyTxt,setReplyTxt]=useState("");
+  // Réponse au client sur le fil de la page de suivi publique
+  const sendComplementReply=async()=>{
+    const t=replyTxt.trim();if(!t)return;
+    const entry={text:t.slice(0,2000),at:new Date().toISOString(),from:"team"};
+    const comps=[...(project.brief?.complements||[]),entry];
+    const nb={...project.brief,complements:comps};
+    const{error}=await supabase.from("projects").update({brief:nb}).eq("id",project.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,brief:nb});
+    setReplyTxt("");
+    onNotif("Réponse publiée sur la page de suivi du client ✓");
+  };
   const saveBrief=async()=>{
     if(statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)){onNotif("URL invalide — domaine non autorisé");return;}
     if(statusMeta.shootDate&&statusMeta.deliveryDate&&statusMeta.deliveryDate<statusMeta.shootDate){onNotif("La date de livraison ne peut pas être antérieure à la date de tournage.");return;}
-    const newBrief={...brief,videoStatus:project.videoStatus,videoComment:project.videoComment};
+    const newBrief={...brief,videoStatus:project.videoStatus,videoComment:project.videoComment,stepDates:{storyboard:statusMeta.sbDate||"",montage:statusMeta.montageDate||""},complements:project.brief?.complements||brief.complements||[]};
     const safeUrl=statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)?statusMeta.replayUrl:null;
     await supabase.from("projects").update({brief:newBrief,delivery_date:statusMeta.deliveryDate||null,shoot_date:statusMeta.shootDate||null,status_note:statusMeta.statusNote||null,replay_url:safeUrl}).eq("id",project.id);
     onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:safeUrl||"",status:project.status==="brief"?"storyboard":project.status});
@@ -900,6 +920,37 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     onUpdate({...project,status:"livraison"});
     if(notifyClient) await notifyClient({ project, client:clientForNotif, kind:"delivered" });
     onNotif("Projet livré — email envoyé au client");
+  };
+  const setProjectStep=async(key)=>{
+    if(key===project.status)return;
+    const{error}=await supabase.from("projects").update({status:key}).eq("id",project.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,status:key});
+    onNotif(`Étape mise à jour : ${STATUS_STEPS[STATUS_INDEX[key]]} — visible par le client`);
+    notifyStepToClient(key);
+  };
+  // Email d'avancement au client (compte OU lien public) — best effort, ne bloque pas
+  const notifyStepToClient=async(key)=>{
+    try{
+      const email=clientForNotif?.email||project.brief?.pendingClientEmail||"";
+      if(!email)return;
+      const stepLabel=STATUS_STEPS[STATUS_INDEX[key]];
+      const stepDatesMap={storyboard:statusMeta.sbDate,tournage:statusMeta.shootDate,montage:statusMeta.montageDate,livraison:statusMeta.deliveryDate};
+      const est=stepDatesMap[key]?` — estimé le ${new Date(stepDatesMap[key]).toLocaleDateString("fr-FR")}`:"";
+      let url="https://www.thirdone.studio";
+      if(project.inviteId){
+        const{data}=await supabase.from("project_invites").select("token").eq("id",project.inviteId).single();
+        if(data?.token)url=`https://www.thirdone.studio/?nouveau=${data.token}`;
+      }
+      const name=(clientForNotif?.name||project.brief?.contactName||"").split(" ")[0];
+      const{error:mailErr}=await supabase.functions.invoke("send-email",{body:{
+        to:email,subject:`Votre projet avance — ${project.title}`,
+        kicker:"Avancement",title:`Nouvelle étape : ${stepLabel}`,
+        text:`Bonjour ${name},\n\nVotre projet « ${project.title} » vient de passer à l'étape ${stepLabel}${est}.\n\nSuivez l'avancement en temps réel : ${url}\n\n— Third-One Studio`,
+        cta:{label:"Voir l'avancement",url},
+      }});
+      if(!mailErr)onNotif("Email d'avancement envoyé au client ✉️");
+    }catch{}
   };
   const notifyRevisionDone=async()=>{
     if(!clientForNotif?.email){onNotif("Aucun email client renseigné");return;}
@@ -943,7 +994,10 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
             <span className={`tag tag-${project.status}`}>{project.status}</span>
           </div>
         </div>
-        <div style={{marginTop:12}}><Timeline status={project.status}/></div>
+        <div style={{marginTop:12}}>
+          <Timeline status={project.status} onStepClick={setProjectStep} dates={{storyboard:statusMeta.sbDate,tournage:statusMeta.shootDate,montage:statusMeta.montageDate,livraison:statusMeta.deliveryDate}}/>
+          <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",marginTop:2}}>Cliquez sur une étape pour la définir comme étape en cours (visible par le client).</p>
+        </div>
       </div>
       <div className="hscroll" style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto"}}>
         {tabs.map(t=><button key={t.k} className={`tab ${tab===t.k?"active":""}`} style={{whiteSpace:"nowrap"}} onClick={()=>setTab(t.k)}>{t.l}</button>)}
@@ -953,6 +1007,10 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
           <div className="card" style={{padding:18}}>
             <SH icon="📅" title="DATES & STATUT"/>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <div><Lbl>Storyboard estimé</Lbl><input type="date" className="input" value={statusMeta.sbDate} onChange={e=>setStatusMeta(p=>({...p,sbDate:e.target.value}))}/></div>
+                <div><Lbl>Montage estimé</Lbl><input type="date" className="input" min={statusMeta.shootDate||undefined} value={statusMeta.montageDate} onChange={e=>setStatusMeta(p=>({...p,montageDate:e.target.value}))}/></div>
+              </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
                 <div><Lbl>Date de tournage prévue</Lbl><input type="date" className="input" value={statusMeta.shootDate} onChange={e=>setStatusMeta(p=>({...p,shootDate:e.target.value}))}/></div>
                 <div><Lbl>Date de livraison prévue</Lbl><input type="date" className="input" min={statusMeta.shootDate||undefined} value={statusMeta.deliveryDate} onChange={e=>setStatusMeta(p=>({...p,deliveryDate:e.target.value}))}/></div>
@@ -987,15 +1045,21 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                   <textarea className="input" rows={2} placeholder={f.p} value={brief[f.k]||""} onChange={e=>setBrief(p=>({...p,[f.k]:e.target.value}))}/>
                 </div>
               ))}
-              {project.brief?.complements?.length>0&&(
+              {(project.brief?.complements?.length>0||project.inviteId)&&(
                 <div style={{background:"#00B4D808",border:"1px solid #00B4D830",borderRadius:8,padding:"12px 14px"}}>
-                  <Lbl>✏️ Compléments du client (lien public)</Lbl>
+                  <Lbl>✏️ Fil avec le client (page de suivi publique)</Lbl>
                   <div style={{display:"flex",flexDirection:"column",gap:8,marginTop:6}}>
-                    {project.brief.complements.map((c,i)=>(
+                    {(project.brief?.complements||[]).map((c,i)=>(
                       <p key={i} style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>
-                        {c.text}{c.at&&<span style={{color:"#8E8E93",fontSize:10}}> — {new Date(c.at).toLocaleDateString("fr-FR")}</span>}
+                        <strong style={{color:c.from==="team"?"#0090B3":"#6E6E73",fontSize:11}}>{c.from==="team"?"Vous":"Client"} :</strong> {c.text}{c.at&&<span style={{color:"#8E8E93",fontSize:10}}> — {new Date(c.at).toLocaleDateString("fr-FR")}</span>}
                       </p>
                     ))}
+                    {project.inviteId&&(
+                      <div style={{display:"flex",gap:8,marginTop:4}}>
+                        <input className="input" placeholder="Répondre au client (visible sur sa page de suivi)…" value={replyTxt} onChange={e=>setReplyTxt(e.target.value)} style={{flex:1}}/>
+                        <button className="btn btn-primary" style={{fontSize:12,whiteSpace:"nowrap"}} disabled={!replyTxt.trim()} onClick={sendComplementReply}>Répondre</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -5516,6 +5580,17 @@ const inviteApi={
       return error?{ok:false,error:"Erreur de connexion"}:data;
     }
   },
+  async setVideo(payload){
+    try{
+      const r=await fetch("/api/nouveau-projet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const ct=r.headers.get("content-type")||"";
+      if(!ct.includes("json"))throw new Error("no-api");
+      return await r.json();
+    }catch{
+      const{data,error}=await supabase.rpc("set_invite_video_status",{invite_token:payload.token,project_id:payload.project_id,action:payload.video_action,comment:payload.comment||""});
+      return error?{ok:false,error:"Erreur de connexion"}:data;
+    }
+  },
 };
 
 // Mêmes options que le brief client normal (ClientProjectView → intake)
@@ -5547,7 +5622,7 @@ const PubShell=({sub,children})=>(
 );
 const PubStatusBlock=({p})=>(
   <>
-    <Timeline status={p.status}/>
+    <Timeline status={p.status} dates={{storyboard:p.brief?.stepDates?.storyboard,tournage:p.shootDate,montage:p.brief?.stepDates?.montage,livraison:p.deliveryDate}}/>
     {p.statusNote&&<p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",background:"#F5F5F7",borderRadius:8,padding:"10px 14px",marginTop:12,lineHeight:1.6}}>💬 {p.statusNote}</p>}
     {(p.shootDate||p.deliveryDate)&&(
       <div style={{display:"flex",gap:16,marginTop:12,flexWrap:"wrap"}}>
@@ -5570,6 +5645,10 @@ function NouveauProjetPage({token}){
   const[noteTxt,setNoteTxt]=useState("");
   const[noteSending,setNoteSending]=useState(false);
   const[noteMsg,setNoteMsg]=useState("");
+  const[videoMode,setVideoMode]=useState(null);
+  const[videoTxt,setVideoTxt]=useState("");
+  const[videoSending,setVideoSending]=useState(false);
+  const[videoMsg,setVideoMsg]=useState("");
   const[form,setForm]=useState({prenom:"",nom:"",societe:"",email:""});
   const[brief,setBrief]=useState({title:"",objective:"",target:"",duration:"",tone:"",deliverables:"",budget:"",shootDate:"",deliveryWished:"",references:"",notes:"",services:[],musique:{ambiances:[],genres:[],instruments:[],tempo:"",voix:"",inspiration:""},charteAssets:{logoUrl:"",charteUrl:"",autresUrls:"",noCharte:false}});
   const set=(k)=>(e)=>setForm(f=>({...f,[k]:e.target.value}));
@@ -5635,9 +5714,22 @@ function NouveauProjetPage({token}){
         setNoteSending(false);
         if(res?.ok){
           setNoteTxt("");
-          setInvite(v=>({...v,projets:(v.projets||[]).map(p=>p.id===detail.id?{...p,brief:{...(p.brief||{}),complements:[...((p.brief||{}).complements||[]),{text:t,at:new Date().toISOString()}]}}:p)}));
+          setInvite(v=>({...v,projets:(v.projets||[]).map(p=>p.id===detail.id?{...p,brief:{...(p.brief||{}),complements:[...((p.brief||{}).complements||[]),{text:t,at:new Date().toISOString(),from:"client"}]}}:p)}));
         }else setNoteMsg(res?.error||"Une erreur est survenue. Réessayez.");
       };
+      const sendVideo=async(action)=>{
+        if(videoSending)return;
+        const comment=videoTxt.trim();
+        if(action==="revision"&&!comment){setVideoMsg("Précisez les modifications souhaitées.");return;}
+        setVideoSending(true);setVideoMsg("");
+        const res=await inviteApi.setVideo({token,project_id:detail.id,video_action:action,comment});
+        setVideoSending(false);
+        if(res?.ok){
+          setVideoMode(null);setVideoTxt("");
+          setInvite(v=>({...v,projets:(v.projets||[]).map(p=>p.id===detail.id?{...p,videoStatus:action,videoComment:comment}:p)}));
+        }else setVideoMsg(res?.error||"Une erreur est survenue. Réessayez.");
+      };
+      const hasVideo=isSafeUrl(detail.replayUrl);
       return(
         <PubShell sub={`Détail du projet${invite?.label?` — ${invite.label}`:""}`}>
           <button onClick={()=>{setDetailId(null);setNoteMsg("");}} style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#0090B3",padding:0,marginBottom:16}}>← Retour au suivi</button>
@@ -5648,6 +5740,39 @@ function NouveauProjetPage({token}){
             </div>
             <PubStatusBlock p={detail}/>
           </div>
+          {hasVideo&&(
+            <div style={{background:"#FFFFFF",border:`1px solid ${detail.videoStatus==="approved"?"#34C75940":detail.videoStatus==="revision"?"#FF9F4340":"#00B4D840"}`,borderRadius:10,padding:24,marginBottom:16}}>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#0090B3",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:12}}>🎬 Votre vidéo</p>
+              <a href={detail.replayUrl} target="_blank" rel="noreferrer" style={{display:"inline-block",fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#00B4D8",textDecoration:"none",marginBottom:12}}>▶ Regarder la vidéo</a>
+              {detail.videoStatus==="approved"?(
+                <p style={{fontFamily:"'Inter'",fontSize:13,color:"#0F766E",background:"#34C75912",border:"1px solid #34C75930",borderRadius:8,padding:"10px 14px"}}>✓ Vous avez validé cette vidéo — merci !</p>
+              ):detail.videoStatus==="revision"?(
+                <div style={{fontFamily:"'Inter'",fontSize:13,color:"#B45309",background:"#FF9F4310",border:"1px solid #FF9F4330",borderRadius:8,padding:"10px 14px"}}>
+                  ↩ Modifications demandées — l'équipe s'en occupe.
+                  {detail.videoComment&&<p style={{fontSize:12,color:"#6E6E73",marginTop:6,whiteSpace:"pre-line"}}>« {detail.videoComment} »</p>}
+                </div>
+              ):(
+                <div>
+                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6,marginBottom:12}}>Regardez la vidéo puis dites-nous : on valide, ou on ajuste ?</p>
+                  {videoMode!=="revision"?(
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+                      <button onClick={()=>sendVideo("approved")} disabled={videoSending} style={{padding:"11px 20px",borderRadius:8,border:"none",background:"#34C759",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#FFFFFF"}}>{videoSending?"Envoi…":"✓ Je valide la vidéo"}</button>
+                      <button onClick={()=>{setVideoMode("revision");setVideoMsg("");}} style={{padding:"11px 20px",borderRadius:8,border:"1.5px solid #FF9F43",background:"#FF9F4310",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#B45309"}}>↩ Demander des modifs</button>
+                    </div>
+                  ):(
+                    <div>
+                      <textarea style={{...inputStyle,resize:"none",minHeight:70}} placeholder="Décrivez les modifications souhaitées (timecode, texte, musique…)" value={videoTxt} onChange={e=>setVideoTxt(e.target.value)}/>
+                      <div style={{display:"flex",gap:10,marginTop:10}}>
+                        <button onClick={()=>sendVideo("revision")} disabled={!videoTxt.trim()||videoSending} style={{padding:"10px 18px",borderRadius:8,border:"none",background:videoTxt.trim()&&!videoSending?"#FF9F43":"#C7C7CC",cursor:videoTxt.trim()&&!videoSending?"pointer":"default",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#FFFFFF"}}>{videoSending?"Envoi…":"Envoyer la demande"}</button>
+                        <button onClick={()=>{setVideoMode(null);setVideoMsg("");}} style={{padding:"10px 14px",borderRadius:8,border:"1px solid #E5E5EA",background:"#FAFAFA",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Annuler</button>
+                      </div>
+                    </div>
+                  )}
+                  {videoMsg&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015",marginTop:8}}>{videoMsg}</p>}
+                </div>
+              )}
+            </div>
+          )}
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
             <p style={{fontFamily:"'Inter'",fontSize:11,color:"#7C3AED",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:14}}>📋 Votre brief</p>
             <div style={{display:"flex",flexDirection:"column",gap:12}}>
@@ -5672,12 +5797,15 @@ function NouveauProjetPage({token}){
             <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6,marginBottom:12}}>Un détail à ajouter, une précision, un changement ? Écrivez-le ici — l'équipe le verra directement sur votre projet.</p>
             {complements.length>0&&(
               <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
-                {complements.map((c,i)=>(
-                  <div key={i} style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"10px 14px"}}>
-                    <p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{c.text}</p>
-                    {c.at&&<p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",marginTop:4}}>{fmtDate(c.at)}</p>}
-                  </div>
-                ))}
+                {complements.map((c,i)=>{
+                  const team=c.from==="team";
+                  return(
+                    <div key={i} style={{background:team?"#00B4D80D":"#FFFFFF",border:`1px solid ${team?"#00B4D830":"#E5E5EA"}`,borderRadius:8,padding:"10px 14px",marginLeft:team?18:0,marginRight:team?0:18}}>
+                      <p style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:team?"#0090B3":"#8E8E93",marginBottom:3}}>{team?"Third-One Studio":"Vous"}{c.at?` · ${fmtDate(c.at)}`:""}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{c.text}</p>
+                    </div>
+                  );
+                })}
               </div>
             )}
             <textarea style={{...inputStyle,resize:"none",minHeight:70,background:"#FFFFFF"}} placeholder="Ex : finalement nous préférons une version 45 secondes…" value={noteTxt} onChange={e=>setNoteTxt(e.target.value)}/>
@@ -5897,18 +6025,34 @@ function NouveauProjetPage({token}){
 // ─────────────────────────────────────────────────────────────────────────────
 // PANNEAU ADMIN — Liens de création de projet (sans compte)
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectInviteLinksPanel({onNotif}){
+function ProjectInviteLinksPanel({onNotif,onOpenProject}){
   const[open,setOpen]=useState(false);
   const[links,setLinks]=useState([]);
   const[label,setLabel]=useState("");
   const[days,setDays]=useState("30");
   const[singleUse,setSingleUse]=useState(false);
   const[copied,setCopied]=useState(null);
+  const[linkProjects,setLinkProjects]=useState([]);
+  const[expandedId,setExpandedId]=useState(null);
+  const[qrModal,setQrModal]=useState(null);
+
+  const waShare=(l)=>{
+    const msg=`Bonjour ! Créez votre projet vidéo avec Third-One Studio et suivez son avancement en direct ici : ${linkUrl(l.token)}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`,"_blank","noopener");
+  };
+  const showQr=async(l)=>{
+    try{
+      const dataUrl=await QRCode.toDataURL(linkUrl(l.token),{width:260,margin:1,color:{dark:"#1D1D1F",light:"#FFFFFF"}});
+      setQrModal({label:l.label||"Lien",dataUrl});
+    }catch{onNotif("Erreur de génération du QR code");}
+  };
 
   useEffect(()=>{
     if(!open)return;
     supabase.from("project_invites").select("*").is("revoked_at",null).order("created_at",{ascending:false})
       .then(({data})=>setLinks(data||[]));
+    supabase.from("projects").select("id,title,status,created_at,invite_id").not("invite_id","is",null).order("created_at",{ascending:false})
+      .then(({data})=>setLinkProjects(data||[]));
   },[open]);
 
   const linkUrl=(t)=>`${window.location.origin}?nouveau=${t}`;
@@ -5957,23 +6101,57 @@ function ProjectInviteLinksPanel({onNotif}){
             const url=linkUrl(l.token);
             const expired=l.expires_at&&new Date(l.expires_at)<Date.now();
             const used=l.single_use&&l.uses>0;
+            const lps=linkProjects.filter(p=>p.invite_id===l.id);
+            const isExpanded=expandedId===l.id;
             return(
-              <div key={l.id} style={{display:"flex",alignItems:"center",gap:8,padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:"1px solid #E5E5EA",flexWrap:"wrap",opacity:expired||used?0.55:1}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:500}}>
-                    {l.label||"Lien"}{" "}
-                    <span style={{color:"#8E8E93",fontWeight:400}}>· {l.uses||0} projet{(l.uses||0)>1?"s":""}{l.single_use?" · usage unique":""}{l.expires_at?` · expire le ${new Date(l.expires_at).toLocaleDateString("fr-FR")}`:""}{expired?" · EXPIRÉ":""}{used?" · UTILISÉ":""}</span>
-                  </p>
-                  <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#6E6E73",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{url}</p>
+              <div key={l.id} style={{padding:"8px 10px",background:"#FFFFFF",borderRadius:6,border:"1px solid #E5E5EA",opacity:expired||used?0.55:1}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",fontWeight:500}}>
+                      {l.label||"Lien"}{" "}
+                      <span style={{color:"#8E8E93",fontWeight:400}}>{l.single_use?"· usage unique ":""}{l.expires_at?`· expire le ${new Date(l.expires_at).toLocaleDateString("fr-FR")}`:""}{expired?" · EXPIRÉ":""}{used?" · UTILISÉ":""}</span>
+                    </p>
+                    <p style={{fontFamily:"'JetBrains Mono'",fontSize:10,color:"#6E6E73",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{url}</p>
+                  </div>
+                  <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:lps.length?"#0090B3":"#8E8E93"}} disabled={!lps.length} onClick={()=>setExpandedId(isExpanded?null:l.id)}>
+                    {isExpanded?"▾":"▸"} {lps.length} projet{lps.length>1?"s":""}
+                  </button>
+                  <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopied(l.token);onNotif("Lien copié !");}}>
+                    {copied===l.token?"✓ Copié":"Copier"}
+                  </button>
+                  <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:"#25D366",borderColor:"#25D36640"}} onClick={()=>waShare(l)} title="Envoyer le lien par WhatsApp">WhatsApp</button>
+                  <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>showQr(l)} title="Afficher le QR code du lien">QR</button>
+                  <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:"#D70015",borderColor:"#FF3B3030"}} onClick={()=>revoke(l)}>Révoquer</button>
                 </div>
-                <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>{navigator.clipboard?.writeText(url);setCopied(l.token);onNotif("Lien copié !");}}>
-                  {copied===l.token?"✓ Copié":"Copier"}
-                </button>
-                <button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px",color:"#D70015",borderColor:"#FF3B3030"}} onClick={()=>revoke(l)}>Révoquer</button>
+                {isExpanded&&lps.length>0&&(
+                  <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:6,borderTop:"1px solid #F2F2F7",paddingTop:8}}>
+                    {lps.map(p=>(
+                      <div key={p.id} style={{display:"flex",alignItems:"center",gap:8}}>
+                        <span className={`tag tag-${p.status}`} style={{fontSize:10}}>{STATUS_STEPS[STATUS_INDEX[p.status]??0]}</span>
+                        <p style={{flex:1,fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.title}</p>
+                        <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{new Date(p.created_at).toLocaleDateString("fr-FR")}</span>
+                        {onOpenProject&&<button className="btn btn-ghost" style={{fontSize:10,padding:"2px 7px"}} onClick={()=>onOpenProject(p.id)}>Ouvrir</button>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
           {links.length===0&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Aucun lien actif.</p>}
+        </div>
+      )}
+      {qrModal&&(
+        <div onClick={()=>setQrModal(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#FFFFFF",borderRadius:14,padding:28,textAlign:"center",maxWidth:340}}>
+            <p style={{fontFamily:"'Urbanist'",fontSize:16,fontWeight:800,color:"#1D1D1F",marginBottom:4}}>{qrModal.label}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginBottom:14}}>Scannez pour créer / suivre le projet</p>
+            <img src={qrModal.dataUrl} alt="QR code" style={{width:260,height:260,borderRadius:8}}/>
+            <div style={{display:"flex",gap:8,justifyContent:"center",marginTop:14}}>
+              <a href={qrModal.dataUrl} download={`qr-${qrModal.label.replace(/\s+/g,"-").toLowerCase()}.png`} className="btn btn-primary" style={{fontSize:12,textDecoration:"none"}}>Télécharger</a>
+              <button className="btn btn-ghost" style={{fontSize:12}} onClick={()=>setQrModal(null)}>Fermer</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -6502,6 +6680,7 @@ function AppMain() {
           deliveryDate: p.delivery_date || "",
           shootDate: p.shoot_date || "",
           statusNote: p.status_note || "",
+          inviteId: p.invite_id || null,
           videoStatus: p.brief?.videoStatus || null,
           videoComment: p.brief?.videoComment || "",
           moodboard: p.brief?.moodboard || [],
@@ -6675,7 +6854,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     const newClientId = userRole==="client" ? user.id : (clientId||null);
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:newClientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
     if(error){showNotif("Erreur : "+error.message);return null;}
-    supabase.functions.invoke("notify-new-project",{body:{project_id:data.id}}).catch(()=>{});
+    /* notif interne désormais via trigger DB (trg_projects_notify_new) */
     const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
     setProjects(ps=>[np,...ps]);
     setSelectedProjectId(np.id);
@@ -6959,7 +7138,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                   <button className={`tab ${projetsView==="detail"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("detail")} disabled={!selProject}>📁 Détail{selProject?` — ${selProject.title}`:""}</button>
                 </div>
                 {projetsView==="liste" && (isAdmin||isCollab) && (
-                  <ProjectInviteLinksPanel onNotif={showNotif}/>
+                  <ProjectInviteLinksPanel onNotif={showNotif} onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}/>
                 )}
                 {projetsView==="liste" && (
                   <ProjectsListViewMemo
@@ -7028,7 +7207,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     replay_url:"",delivery_date:null,shoot_date:null,status_note:null
                   }).select().single();
                   if(error){showNotif("Erreur : "+error.message);return;}
-                  supabase.functions.invoke("notify-new-project",{body:{project_id:data.id}}).catch(()=>{});
+                  /* notif interne désormais via trigger DB (trg_projects_notify_new) */
                   const np={id:data.id,title:data.title,clientId:null,status:"brief",progress:0,createdAt:data.created_at?.split("T")[0],brief:data.brief,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
                   setProjects(ps=>[np,...ps]);
                   setSelectedProjectId(np.id);

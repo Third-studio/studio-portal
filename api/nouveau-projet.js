@@ -35,6 +35,21 @@ module.exports = async (req, res) => {
     if (JSON.stringify(b).length > 60000) {
       return res.status(413).json({ ok: false, error: "Contenu trop volumineux" });
     }
+    // Validation vidéo depuis la page de suivi (approved / revision)
+    if (b.video_action !== undefined) {
+      const projectId = Number.parseInt(b.project_id, 10);
+      if (!Number.isFinite(projectId)) {
+        return res.status(400).json({ ok: false, error: "Projet manquant" });
+      }
+      const { data, error } = await supabase.rpc("set_invite_video_status", {
+        invite_token: token,
+        project_id: projectId,
+        action: str(b.video_action, 20),
+        comment: str(b.comment, 2000),
+      });
+      if (error) return res.status(500).json({ ok: false, error: "Erreur serveur" });
+      return res.status(200).json(data);
+    }
     // Complément de brief sur un projet existant (page de suivi)
     if (b.note !== undefined) {
       const projectId = Number.parseInt(b.project_id, 10);
