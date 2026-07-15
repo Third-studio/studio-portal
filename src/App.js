@@ -6029,7 +6029,7 @@ function ProjectInviteLinksPanel({onNotif,onOpenProject}){
   const[open,setOpen]=useState(false);
   const[links,setLinks]=useState([]);
   const[label,setLabel]=useState("");
-  const[days,setDays]=useState("30");
+  const[days,setDays]=useState("");
   const[singleUse,setSingleUse]=useState(false);
   const[copied,setCopied]=useState(null);
   const[linkProjects,setLinkProjects]=useState([]);
@@ -6086,11 +6086,11 @@ function ProjectInviteLinksPanel({onNotif,onOpenProject}){
           <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.6}}>Envoyez ce lien à un client bloqué par son pare-feu : il crée son projet avec juste prénom, nom et société — sans compte. S'il renseigne son email, le projet sera rattaché automatiquement à son compte plus tard.</p>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
             <input className="input" placeholder="Libellé (ex: Client SARA, Salon Pro...)" value={label} onChange={e=>setLabel(e.target.value)} style={{flex:1,minWidth:160}}/>
-            <select className="input" value={days} onChange={e=>setDays(e.target.value)} style={{width:130}}>
+            <select className="input" value={days} onChange={e=>setDays(e.target.value)} style={{width:150}}>
+              <option value="">Sans expiration</option>
               <option value="7">7 jours</option>
               <option value="30">30 jours</option>
               <option value="90">90 jours</option>
-              <option value="">Sans expiration</option>
             </select>
             <label style={{display:"flex",alignItems:"center",gap:6,fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",cursor:"pointer",userSelect:"none"}}>
               <input type="checkbox" checked={singleUse} onChange={e=>setSingleUse(e.target.checked)} style={{accentColor:"#00B4D8"}}/>Usage unique
