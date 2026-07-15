@@ -19,6 +19,16 @@ const b64lines = (s: string) => utf8b64(s).replace(/(.{76})/g, "$1\r\n");
 export const encodeHeader = (s: string) =>
   /^[\x20-\x7E]*$/.test(s) ? s : `=?UTF-8?B?${utf8b64(s)}?=`;
 
+// Sujet : ASCII lisible garanti. denomailer corrompt les en-têtes RFC 2047
+// (le "=" final devient "3d" → sujet illisible sur Gmail). On translittère :
+// accents → lettres simples, tirets/guillemets typographiques → ASCII,
+// emojis retirés. Les accents restent intacts dans le corps (base64 fiable).
+const asciiSubject = (s: string) =>
+  s.normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[—–]/g, "-").replace(/[«»“”]/g, '"').replace(/[’‘]/g, "'")
+    .replace(/[^\x20-\x7E]/g, "")
+    .replace(/\s+/g, " ").trim();
+
 const stripHtml = (html: string) =>
   html.replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ").trim();
@@ -51,7 +61,7 @@ export async function sendMail({ to, subject, html, text, replyTo }: {
       from: `${fromName} <${fromUser}>`,
       to: Array.isArray(to) ? to : [to],
       replyTo: replyTo || fromUser,
-      subject: encodeHeader(subject),
+      subject: asciiSubject(subject),
       // Parties MIME construites nous-mêmes en base64 → zéro corruption
       mimeContent: [
         {
