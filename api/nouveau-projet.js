@@ -35,6 +35,45 @@ module.exports = async (req, res) => {
     if (JSON.stringify(b).length > 60000) {
       return res.status(413).json({ ok: false, error: "Contenu trop volumineux" });
     }
+    // URL signée pour déposer un fichier (proxy vers l'Edge Function invite-upload)
+    if (b.upload_request !== undefined) {
+      try {
+        const r = await fetch(`${SUPABASE_URL}/functions/v1/invite-upload`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${SUPABASE_KEY}`,
+            apikey: SUPABASE_KEY,
+          },
+          body: JSON.stringify({
+            token,
+            project_id: Number.parseInt(b.project_id, 10),
+            filename: str(b.filename, 200),
+            size: Number(b.size) || 0,
+          }),
+        });
+        const data = await r.json();
+        return res.status(r.ok ? 200 : r.status).json(data);
+      } catch {
+        return res.status(500).json({ ok: false, error: "Erreur serveur" });
+      }
+    }
+    // Réponse à une demande d'informations (texte + fichiers déposés)
+    if (b.info_answer !== undefined) {
+      const projectId = Number.parseInt(b.project_id, 10);
+      if (!Number.isFinite(projectId)) {
+        return res.status(400).json({ ok: false, error: "Projet manquant" });
+      }
+      const { data, error } = await supabase.rpc("answer_invite_info_request", {
+        invite_token: token,
+        project_id: projectId,
+        request_id: str(b.request_id, 64),
+        answer: str(b.info_answer, 4000),
+        files: Array.isArray(b.files) ? b.files.slice(0, 20) : [],
+      });
+      if (error) return res.status(500).json({ ok: false, error: "Erreur serveur" });
+      return res.status(200).json(data);
+    }
     // Validation vidéo depuis la page de suivi (approved / revision)
     if (b.video_action !== undefined) {
       const projectId = Number.parseInt(b.project_id, 10);

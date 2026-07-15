@@ -891,6 +891,46 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     await supabase.from("messages").insert({project_id:project.id,author,content:text,role});
   };
   const[replyTxt,setReplyTxt]=useState("");
+  const[infoReqTxt,setInfoReqTxt]=useState("");
+  const[journal,setJournal]=useState(null);
+  // Demande d'informations au client (page de suivi publique) + email
+  const sendInfoRequest=async()=>{
+    const q=infoReqTxt.trim();if(!q)return;
+    const req={id:(typeof crypto!=="undefined"&&crypto.randomUUID)?crypto.randomUUID():String(Date.now()),question:q.slice(0,500),at:new Date().toISOString(),status:"open",answer:"",files:[]};
+    const nb={...project.brief,infoRequests:[...(project.brief?.infoRequests||[]),req]};
+    const{error}=await supabase.from("projects").update({brief:nb}).eq("id",project.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,brief:nb});setInfoReqTxt("");
+    supabase.from("project_events").insert({project_id:project.id,kind:"info_request",label:"Demande d'informations envoyée au client",meta:{question:q.slice(0,300)}}).then(()=>{});
+    onNotif("Demande publiée sur la page de suivi du client ✓");
+    try{
+      const email=clientForNotif?.email||project.brief?.pendingClientEmail||"";
+      if(!email)return;
+      let url="https://www.thirdone.studio";
+      if(project.inviteId){
+        const{data}=await supabase.from("project_invites").select("token").eq("id",project.inviteId).single();
+        if(data?.token)url=`https://www.thirdone.studio/?nouveau=${data.token}`;
+      }
+      const{error:mailErr}=await supabase.functions.invoke("send-email",{body:{
+        to:email,subject:`Informations demandées — ${project.title}`,
+        kicker:"Demande d'informations",title:project.title,
+        text:`Bonjour,\n\nPour avancer sur votre projet « ${project.title} », notre équipe a besoin de :\n\n${q}\n\nRépondez directement (texte ou fichiers) sur votre page de suivi : ${url}\n\n— Third-One Studio`,
+        cta:{label:"Répondre à la demande",url},
+      }});
+      if(!mailErr)onNotif("Email de demande envoyé au client ✉️");
+    }catch{}
+  };
+  // Ouvre un fichier déposé par le client (URL signée 1 h)
+  const openClientFile=async(f)=>{
+    const{data,error}=await supabase.storage.from("client-uploads").createSignedUrl(f.path,3600);
+    if(error||!data?.signedUrl){onNotif("Fichier inaccessible : "+(error?.message||""));return;}
+    window.open(data.signedUrl,"_blank","noopener");
+  };
+  useEffect(()=>{
+    if(tab!=="journal")return;
+    supabase.from("project_events").select("*").eq("project_id",project.id).order("at",{ascending:false}).limit(100)
+      .then(({data})=>setJournal(data||[]));
+  },[tab,project.id]);
   // Réponse au client sur le fil de la page de suivi publique
   const sendComplementReply=async()=>{
     const t=replyTxt.trim();if(!t)return;
@@ -901,6 +941,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     if(error){onNotif("Erreur : "+error.message);return;}
     onUpdate({...project,brief:nb});
     setReplyTxt("");
+    supabase.from("project_events").insert({project_id:project.id,kind:"reponse",label:"Réponse de l'équipe sur le fil client",meta:{text:t.slice(0,300)}}).then(()=>{});
     onNotif("Réponse publiée sur la page de suivi du client ✓");
   };
   const saveBrief=async()=>{
@@ -927,6 +968,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     if(error){onNotif("Erreur : "+error.message);return;}
     onUpdate({...project,status:key});
     onNotif(`Étape mise à jour : ${STATUS_STEPS[STATUS_INDEX[key]]} — visible par le client`);
+    supabase.from("project_events").insert({project_id:project.id,kind:"step",label:`Étape passée à « ${STATUS_STEPS[STATUS_INDEX[key]]} »`}).then(()=>{});
     notifyStepToClient(key);
   };
   // Email d'avancement au client (compte OU lien public) — best effort, ne bloque pas
@@ -976,7 +1018,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     setNotifying(false);
     onNotif("Notification envoyée au client ✉️");
   };
-  const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"facturation",l:`💶 Facturation (${projInvoices.length})`},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}])];
+  const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"facturation",l:`💶 Facturation (${projInvoices.length})`},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}]),{k:"journal",l:"📜 Journal"}];
   const[linkingBookingId,setLinkingBookingId]=useState("");
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
@@ -1060,6 +1102,29 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                         <button className="btn btn-primary" style={{fontSize:12,whiteSpace:"nowrap"}} disabled={!replyTxt.trim()} onClick={sendComplementReply}>Répondre</button>
                       </div>
                     )}
+                    {project.inviteId&&(
+                      <div style={{borderTop:"1px solid #E5E5EA",paddingTop:10,marginTop:6}}>
+                        <Lbl>📩 Demander des informations — ouvre une zone de réponse + dépôt de fichiers chez le client</Lbl>
+                        <div style={{display:"flex",gap:8,marginTop:6}}>
+                          <input className="input" placeholder="Ex : envoyez-nous votre logo vectoriel et vos codes couleurs…" value={infoReqTxt} onChange={e=>setInfoReqTxt(e.target.value)} style={{flex:1}}/>
+                          <button className="btn btn-primary" style={{fontSize:12,whiteSpace:"nowrap"}} disabled={!infoReqTxt.trim()} onClick={sendInfoRequest}>Demander</button>
+                        </div>
+                        {(project.brief?.infoRequests||[]).map(r=>(
+                          <div key={r.id} style={{marginTop:8,background:"#FFFFFF",border:`1px solid ${r.status==="done"?"#34C75930":"#FF9F4330"}`,borderRadius:8,padding:"8px 12px"}}>
+                            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}><strong>{r.status==="done"?"✓":"⏳"} {r.question}</strong> <span style={{color:"#8E8E93",fontSize:10}}>— {new Date(r.at).toLocaleDateString("fr-FR")}</span></p>
+                            {r.status==="done"&&(
+                              <div style={{marginTop:4}}>
+                                {r.answer&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",whiteSpace:"pre-line"}}>{r.answer}</p>}
+                                {(r.files||[]).map((f,i)=>(
+                                  <button key={i} className="btn btn-ghost" style={{fontSize:11,padding:"2px 8px",marginTop:4,marginRight:6}} onClick={()=>openClientFile(f)}>📎 {f.name}</button>
+                                ))}
+                                {r.answeredAt&&<p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",marginTop:2}}>Répondu le {new Date(r.answeredAt).toLocaleDateString("fr-FR")}</p>}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1133,6 +1198,33 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
         </div>
       )}
       {tab==="comments"&&<div className="card fadeUp" style={{padding:16}}><SH icon="💬" title="MESSAGES"/><CommentThread comments={project.comments} onAdd={addMsg} role="prod"/></div>}
+      {tab==="journal"&&(
+        <div className="fadeUp card" style={{padding:18}}>
+          <SH icon="📜" title="JOURNAL DES ACTIONS"/>
+          {journal===null?(
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Chargement…</p>
+          ):journal.length===0?(
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Aucun événement pour l'instant — les actions du client (brief, compléments, validation vidéo, réponses aux demandes) et de l'équipe s'afficheront ici avec leur date.</p>
+          ):(
+            <div>
+              {journal.map(ev=>{
+                const icons={brief:"📋",complement:"✏️",video:"🎬",info_request:"📩",info_answer:"📎",reponse:"💬",step:"✅"};
+                const quote=ev.meta?.question||ev.meta?.text||ev.meta?.comment||ev.meta?.answer||"";
+                return(
+                  <div key={ev.id} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:"1px solid #F2F2F7",alignItems:"flex-start"}}>
+                    <span style={{fontSize:14}}>{icons[ev.kind]||"•"}</span>
+                    <div style={{flex:1,minWidth:0}}>
+                      <p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F"}}>{ev.label}{ev.kind==="info_answer"&&ev.meta?.files>0?` (${ev.meta.files} fichier${ev.meta.files>1?"s":""})`:""}</p>
+                      {quote&&<p style={{fontFamily:"'Inter'",fontSize:11.5,color:"#6E6E73",fontStyle:"italic",overflow:"hidden",textOverflow:"ellipsis"}}>« {quote} »</p>}
+                    </div>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",whiteSpace:"nowrap"}}>{new Date(ev.at).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"})}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
       {tab==="charte"&&<CharteGraphiquePanel project={project} onUpdate={onUpdate} onNotif={onNotif}/>}
       {tab==="moodboard"&&<MoodboardPanel project={project} onUpdate={onUpdate} onNotif={onNotif} authorName={fmtProdAuthor(userProfile)} isAdmin={true}/>}
       {tab==="livrables"&&<ProdLivrables project={project} onUpdate={onUpdate} onNotif={onNotif} notifyClient={notifyClient} client={clientForNotif}/>}
@@ -5591,6 +5683,28 @@ const inviteApi={
       return error?{ok:false,error:"Erreur de connexion"}:data;
     }
   },
+  async uploadUrl(payload){
+    try{
+      const r=await fetch("/api/nouveau-projet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...payload,upload_request:1})});
+      const ct=r.headers.get("content-type")||"";
+      if(!ct.includes("json"))throw new Error("no-api");
+      return await r.json();
+    }catch{
+      const{data,error}=await supabase.functions.invoke("invite-upload",{body:{token:payload.token,project_id:payload.project_id,filename:payload.filename,size:payload.size}});
+      return error?{ok:false,error:"Erreur de connexion"}:data;
+    }
+  },
+  async answerInfo(payload){
+    try{
+      const r=await fetch("/api/nouveau-projet",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      const ct=r.headers.get("content-type")||"";
+      if(!ct.includes("json"))throw new Error("no-api");
+      return await r.json();
+    }catch{
+      const{data,error}=await supabase.rpc("answer_invite_info_request",{invite_token:payload.token,project_id:payload.project_id,request_id:payload.request_id,answer:payload.info_answer||"",files:payload.files||[]});
+      return error?{ok:false,error:"Erreur de connexion"}:data;
+    }
+  },
 };
 
 // Mêmes options que le brief client normal (ClientProjectView → intake)
@@ -5649,6 +5763,10 @@ function NouveauProjetPage({token}){
   const[videoTxt,setVideoTxt]=useState("");
   const[videoSending,setVideoSending]=useState(false);
   const[videoMsg,setVideoMsg]=useState("");
+  const[reqTxt,setReqTxt]=useState({});
+  const[reqFiles,setReqFiles]=useState({});
+  const[reqSending,setReqSending]=useState(null);
+  const[reqMsg,setReqMsg]=useState({});
   const[form,setForm]=useState({prenom:"",nom:"",societe:"",email:""});
   const[brief,setBrief]=useState({title:"",objective:"",target:"",duration:"",tone:"",deliverables:"",budget:"",shootDate:"",deliveryWished:"",references:"",notes:"",services:[],musique:{ambiances:[],genres:[],instruments:[],tempo:"",voix:"",inspiration:""},charteAssets:{logoUrl:"",charteUrl:"",autresUrls:"",noCharte:false}});
   const set=(k)=>(e)=>setForm(f=>({...f,[k]:e.target.value}));
@@ -5730,6 +5848,28 @@ function NouveauProjetPage({token}){
         }else setVideoMsg(res?.error||"Une erreur est survenue. Réessayez.");
       };
       const hasVideo=isSafeUrl(detail.replayUrl);
+      const infoRequests=b.infoRequests||[];
+      const sendInfoAnswer=async(req)=>{
+        if(reqSending)return;
+        const t=(reqTxt[req.id]||"").trim();
+        const files=reqFiles[req.id]||[];
+        if(!t&&!files.length){setReqMsg(m=>({...m,[req.id]:"Écrivez une réponse ou ajoutez un fichier."}));return;}
+        setReqSending(req.id);setReqMsg(m=>({...m,[req.id]:""}));
+        const uploaded=[];
+        for(const f of files){
+          const u=await inviteApi.uploadUrl({token,project_id:detail.id,filename:f.name,size:f.size});
+          if(!u?.ok){setReqMsg(m=>({...m,[req.id]:u?.error||`Échec de l'envoi de ${f.name}.`}));setReqSending(null);return;}
+          const{error:upErr}=await supabase.storage.from("client-uploads").uploadToSignedUrl(u.path,u.uploadToken,f);
+          if(upErr){setReqMsg(m=>({...m,[req.id]:`Échec de l'envoi de ${f.name}. Réessayez ou partagez un lien dans la réponse.`}));setReqSending(null);return;}
+          uploaded.push({name:f.name,path:u.path,size:f.size});
+        }
+        const res=await inviteApi.answerInfo({token,project_id:detail.id,request_id:req.id,info_answer:t,files:uploaded});
+        setReqSending(null);
+        if(res?.ok){
+          setInvite(v=>({...v,projets:(v.projets||[]).map(p=>p.id===detail.id?{...p,brief:{...(p.brief||{}),infoRequests:((p.brief||{}).infoRequests||[]).map(r=>r.id===req.id?{...r,status:"done",answer:t,files:uploaded,answeredAt:new Date().toISOString()}:r)}}:p)}));
+          setReqTxt(m=>({...m,[req.id]:""}));setReqFiles(m=>({...m,[req.id]:[]}));
+        }else setReqMsg(m=>({...m,[req.id]:res?.error||"Une erreur est survenue. Réessayez."}));
+      };
       return(
         <PubShell sub={`Détail du projet${invite?.label?` — ${invite.label}`:""}`}>
           <button onClick={()=>{setDetailId(null);setNoteMsg("");}} style={{background:"none",border:"none",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#0090B3",padding:0,marginBottom:16}}>← Retour au suivi</button>
@@ -5771,6 +5911,52 @@ function NouveauProjetPage({token}){
                   {videoMsg&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015",marginTop:8}}>{videoMsg}</p>}
                 </div>
               )}
+            </div>
+          )}
+          {infoRequests.length>0&&(
+            <div style={{background:"linear-gradient(135deg,rgba(255,159,67,0.06),rgba(0,180,216,0.04))",border:"1px solid rgba(255,159,67,0.35)",borderRadius:10,padding:24,marginBottom:16}}>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#B45309",letterSpacing:"0.1em",textTransform:"uppercase",fontWeight:700,marginBottom:12}}>📩 L'équipe a besoin d'informations</p>
+              <div style={{display:"flex",flexDirection:"column",gap:14}}>
+                {infoRequests.map(req=>{
+                  const done=req.status==="done";
+                  const selFiles=reqFiles[req.id]||[];
+                  return(
+                    <div key={req.id} style={{background:"#FFFFFF",border:`1px solid ${done?"#34C75930":"#FF9F4330"}`,borderRadius:8,padding:"14px 16px"}}>
+                      <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F",lineHeight:1.6}}>{req.question}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",marginTop:2}}>Demandé le {fmtDate(req.at)}</p>
+                      {done?(
+                        <div style={{marginTop:10,background:"#34C75910",border:"1px solid #34C75925",borderRadius:8,padding:"10px 12px"}}>
+                          <p style={{fontFamily:"'Inter'",fontSize:11,fontWeight:700,color:"#0F766E",marginBottom:4}}>✓ Répondu le {fmtDate(req.answeredAt)}</p>
+                          {req.answer&&<p style={{fontFamily:"'Inter'",fontSize:12.5,color:"#1D1D1F",lineHeight:1.6,whiteSpace:"pre-line"}}>{req.answer}</p>}
+                          {(req.files||[]).length>0&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:6}}>📎 {(req.files||[]).map(f=>f.name).join(" · ")}</p>}
+                        </div>
+                      ):(
+                        <div style={{marginTop:10}}>
+                          <textarea style={{...inputStyle,resize:"none",minHeight:60,background:"#FAFAFA"}} placeholder="Votre réponse…" value={reqTxt[req.id]||""} onChange={e=>setReqTxt(m=>({...m,[req.id]:e.target.value}))}/>
+                          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:8,flexWrap:"wrap"}}>
+                            <label style={{display:"inline-flex",alignItems:"center",gap:6,padding:"9px 14px",borderRadius:8,border:"1.5px dashed #C7C7CC",background:"#FAFAFA",cursor:"pointer",fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#6E6E73"}}>
+                              📎 Ajouter des fichiers
+                              <input type="file" multiple style={{display:"none"}} onChange={e=>{const list=[...(reqFiles[req.id]||[]),...Array.from(e.target.files||[])].slice(0,20);setReqFiles(m=>({...m,[req.id]:list}));e.target.value="";}}/>
+                            </label>
+                            <button onClick={()=>sendInfoAnswer(req)} disabled={reqSending===req.id} style={{padding:"10px 18px",borderRadius:8,border:"none",background:reqSending===req.id?"#C7C7CC":"#00B4D8",cursor:reqSending===req.id?"default":"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#FFFFFF"}}>{reqSending===req.id?"Envoi en cours…":"Envoyer ma réponse"}</button>
+                          </div>
+                          {selFiles.length>0&&(
+                            <div style={{display:"flex",flexDirection:"column",gap:4,marginTop:8}}>
+                              {selFiles.map((f,i)=>(
+                                <p key={i} style={{fontFamily:"'Inter'",fontSize:11.5,color:"#1D1D1F"}}>
+                                  📄 {f.name} <span style={{color:"#8E8E93"}}>({(f.size/1048576).toFixed(1)} Mo)</span>
+                                  <button onClick={()=>setReqFiles(m=>({...m,[req.id]:(m[req.id]||[]).filter((_,j)=>j!==i)}))} style={{marginLeft:8,background:"none",border:"none",color:"#D70015",cursor:"pointer",fontSize:11}}>retirer</button>
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          {reqMsg[req.id]&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015",marginTop:8}}>{reqMsg[req.id]}</p>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
           <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:24,marginBottom:16}}>
@@ -5828,6 +6014,9 @@ function NouveauProjetPage({token}){
                 <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:600,color:"#00B4D8",background:"#00B4D810",border:"1px solid #00B4D830",borderRadius:10,padding:"2px 8px",whiteSpace:"nowrap"}}>{STATUS_STEPS[cur]}</span>
               </div>
               <PubStatusBlock p={p}/>
+              {(p.brief?.infoRequests||[]).some(r=>r.status!=="done")&&(
+                <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#B45309",background:"#FF9F4312",border:"1px solid #FF9F4330",borderRadius:8,padding:"8px 12px",marginTop:12}}>📩 L'équipe vous a demandé des informations — ouvrez le détail pour répondre.</p>
+              )}
               <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#0090B3",marginTop:14}}>Voir le détail et compléter le brief →</p>
             </div>
           );
