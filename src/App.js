@@ -4393,7 +4393,7 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
   return(
     <>
       <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:998,background:"#00000055"}}/>
-      <div style={{position:"fixed",top:0,right:0,height:"100vh",width:320,background:"#F5F5F7",borderLeft:"1px solid #E5E5EA",zIndex:999,display:"flex",flexDirection:"column",boxShadow:"-8px 0 40px #00000066"}}>
+      <div style={{position:"fixed",top:0,right:0,height:"100dvh",maxHeight:"100vh",width:320,maxWidth:"92vw",background:"#F5F5F7",borderLeft:"1px solid #E5E5EA",zIndex:999,display:"flex",flexDirection:"column",boxShadow:"-8px 0 40px #00000066"}}>
         {/* Header */}
         <div style={{padding:"18px 20px",borderBottom:"1px solid #E5E5EA",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
           <span style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.06em"}}>PARAMÈTRES</span>
@@ -4464,9 +4464,9 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
 
         </div>
 
-        {/* Footer — déconnexion */}
-        <div style={{padding:"16px 20px",borderTop:"1px solid #E5E5EA"}}>
-          <button onClick={onLogout} style={{width:"100%",padding:"10px",background:"#FF3B3018",border:"1px solid #FF3B3030",borderRadius:8,color:"#D70015",fontFamily:"'Inter'",fontWeight:700,fontSize:13,cursor:"pointer",transition:"all .15s"}}
+        {/* Footer — déconnexion (100dvh + safe-area : reste cliquable au-dessus de la barre Safari iOS) */}
+        <div style={{padding:"14px 20px",paddingBottom:"calc(14px + env(safe-area-inset-bottom))",borderTop:"1px solid #E5E5EA",flexShrink:0}}>
+          <button onClick={onLogout} style={{width:"100%",minHeight:48,padding:"13px",background:"#FF3B3018",border:"1px solid #FF3B3030",borderRadius:10,color:"#D70015",fontFamily:"'Inter'",fontWeight:700,fontSize:14,cursor:"pointer",transition:"all .15s",WebkitTapHighlightColor:"transparent"}}
             onMouseEnter={e=>e.currentTarget.style.background="#FF3B3028"} onMouseLeave={e=>e.currentTarget.style.background="#FF3B3018"}>
             ↩ Se déconnecter
           </button>
