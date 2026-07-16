@@ -7230,9 +7230,17 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
         :root { --accent:${accentColor}; --fs:${fontSizePx[settings.fontSize]}; }
         .app-main { padding:${densityPad[settings.density]||densityPad.normale} !important; }
         body { font-size:${fontSizePx[settings.fontSize]}; }
-        ${settings.contrast?"*{--text:#FFFFFF}p,span,div{color:inherit}.nav-item{border-bottom:1px solid #C7C7CC}":""}
+        ${settings.contrast?`
+          /* Contraste élevé : assombrit les gris secondaires (React sérialise les couleurs inline en rgb()) */
+          [style*="rgb(110, 110, 115)"]{color:#3F3F46 !important}
+          [style*="rgb(142, 142, 147)"]{color:#4A4A52 !important}
+          [style*="rgb(199, 199, 204)"]{color:#5A5A62 !important}
+          [style*="rgb(229, 229, 234)"]{border-color:#9A9AA2 !important}
+          .input::placeholder,input::placeholder,textarea::placeholder{color:#55555C !important}
+          .card,.input{border-color:#9A9AA2 !important}
+        `:""}
       `}</style>
-      <div style={{minHeight:"100vh",background:settings.contrast?"#F0F0F5":"#FFFFFF",color:settings.contrast?"#FFFFFF":"#1D1D1F",display:"flex",flexDirection:"column"}}>
+      <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",display:"flex",flexDirection:"column"}}>
 
         {/* ── TOP BAR ── */}
         <div style={{background:"#F5F5F7",borderBottom:"1px solid #E5E5EA",padding:"0 16px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
