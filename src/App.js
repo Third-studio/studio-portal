@@ -4402,15 +4402,20 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
 
         <div style={{flex:1,overflowY:"auto",padding:"18px 20px",display:"flex",flexDirection:"column",gap:22}}>
 
-          {/* Profil */}
-          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
-            <div style={{width:40,height:40,borderRadius:"50%",background:ACCENT_COLORS[settings.accent]+"22",border:`1px solid ${ACCENT_COLORS[settings.accent]}40`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:18,color:ACCENT_COLORS[settings.accent],flexShrink:0}}>
-              {(user?.email||"?")[0].toUpperCase()}
+          {/* Profil + déconnexion (en haut : toujours accessible, même avec la barre Safari mobile) */}
+          <div style={{background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:10,padding:"14px 16px",display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:"50%",background:ACCENT_COLORS[settings.accent]+"22",border:`1px solid ${ACCENT_COLORS[settings.accent]}40`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:18,color:ACCENT_COLORS[settings.accent],flexShrink:0}}>
+                {(user?.email||"?")[0].toUpperCase()}
+              </div>
+              <div style={{minWidth:0}}>
+                <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.email||"—"}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:1}}>Connecté</p>
+              </div>
             </div>
-            <div style={{minWidth:0}}>
-              <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{user?.email||"—"}</p>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:1}}>Connecté</p>
-            </div>
+            <button onClick={onLogout} style={{width:"100%",minHeight:46,padding:"12px",background:"#FF3B3018",border:"1px solid #FF3B3030",borderRadius:10,color:"#D70015",fontFamily:"'Inter'",fontWeight:700,fontSize:14,cursor:"pointer",WebkitTapHighlightColor:"transparent"}}>
+              ↩ Se déconnecter
+            </button>
           </div>
 
           {/* Taille de police */}
@@ -7358,7 +7363,14 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
               </div>
             )}
             {appView==="prod"&&prodSection==="calendrier"&&(
-              <CalendarModuleMemo bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif} projects={projects} onGoToProject={openProjectFromCalendar}/>
+              <div style={{display:"flex",flexDirection:"column",gap:12}}>
+                {selProject&&(
+                  <button onClick={()=>{setProdSection("projets");setProjetsView("detail");}} style={{alignSelf:"flex-start",display:"inline-flex",alignItems:"center",gap:8,padding:"11px 16px",minHeight:44,borderRadius:10,border:"1px solid #00B4D840",background:"#00B4D810",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#0090B3",WebkitTapHighlightColor:"transparent"}}>
+                    ← Retour au projet — {selProject.title}
+                  </button>
+                )}
+                <CalendarModuleMemo bookings={bookings} setBookings={setBookings} isAdmin={true} onNotif={showNotif} projects={projects} onGoToProject={openProjectFromCalendar}/>
+              </div>
             )}
             {appView==="prod"&&prodSection==="organisation"&&(
               <OrgModule sheets={sheets} setSheets={setSheets} onNotif={showNotif}/>
