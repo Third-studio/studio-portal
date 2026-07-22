@@ -6626,6 +6626,146 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Vue Tableau (kanban type ClickUp) : colonnes par statut, drag & drop,
+// création rapide dans chaque colonne, édition rapide des cartes.
+const KANBAN_COLS = [
+  { key:"brief",      label:"Brief",      color:"#7B9CFF" },
+  { key:"storyboard", label:"Storyboard", color:"#00B4D8" },
+  { key:"tournage",   label:"Tournage",   color:"#FF9F43" },
+  { key:"montage",    label:"Montage",    color:"#7C3AED" },
+  { key:"livraison",  label:"Livraison",  color:"#4ECDC4" },
+];
+function KanbanCard({ p, client, invoices, color, onOpen, onEdit, onDragStart }){
+  const fmt = n => new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR",maximumFractionDigits:0}).format(n||0);
+  const paid = invoices.filter(i=>i.status==="paid").reduce((s,i)=>s+Number(i.amount_ttc||0),0);
+  const due  = invoices.filter(i=>i.status==="sent"||i.status==="overdue").reduce((s,i)=>s+Number(i.amount_ttc||0),0);
+  const hasOverdue = invoices.some(i=>i.status==="overdue");
+  return(
+    <div draggable onDragStart={onDragStart}
+      className="card" style={{padding:"10px 12px",cursor:"grab",display:"flex",flexDirection:"column",gap:7,borderLeft:`3px solid ${color}`}}
+      onMouseEnter={e=>{e.currentTarget.style.borderColor="#00B4D855";}}
+      onMouseLeave={e=>{e.currentTarget.style.borderColor="";e.currentTarget.style.borderLeft=`3px solid ${color}`;}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:6}}>
+        <p onClick={onOpen} style={{fontFamily:"'Urbanist'",fontSize:13.5,fontWeight:700,color:"#162040",lineHeight:1.25,cursor:"pointer"}}>{p.title}</p>
+        <button className="btn btn-ghost" title="Édition rapide" style={{fontSize:11,padding:"1px 6px",flexShrink:0}} onClick={onEdit}>✏️</button>
+      </div>
+      {client && <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{client.name}</p>}
+      {p.statusNote && <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",fontStyle:"italic",lineHeight:1.35}}>{p.statusNote}</p>}
+      <div style={{height:3,background:"#F2F2F7",borderRadius:2}}><div style={{height:"100%",width:`${p.progress||0}%`,background:color,borderRadius:2,transition:"width .3s"}}/></div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:6,flexWrap:"wrap"}}>
+        <span style={{fontFamily:"'Inter'",fontSize:10.5,color:"#8E8E93"}}>{p.deliveryDate?`📅 ${p.deliveryDate}`:"📅 —"}</span>
+        <span style={{display:"inline-flex",gap:4}}>
+          {paid>0 && <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:600,background:"#34C75922",color:"#15803D",borderRadius:5,padding:"1px 6px"}}>✓ {fmt(paid)}</span>}
+          {due>0 && <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:600,background:hasOverdue?"#FF3B3022":"#FF9F4322",color:hasOverdue?"#D70015":"#B45309",borderRadius:5,padding:"1px 6px"}}>{hasOverdue?"⚠":"⏳"} {fmt(due)}</span>}
+          {invoices.length===0 && <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93",background:"#F5F5F7",borderRadius:5,padding:"1px 6px"}}>Ø fact.</span>}
+        </span>
+      </div>
+    </div>
+  );
+}
+function KanbanQuickEditModal({ project, clients, onClose, onSave }){
+  const[f,setF]=useState({title:project.title||"",status:project.status||"brief",progress:project.progress||0,deliveryDate:project.deliveryDate||"",statusNote:project.statusNote||"",clientId:project.clientId||""});
+  const[saving,setSaving]=useState(false);
+  const submit=async()=>{setSaving(true);await onSave(project,f);setSaving(false);onClose();};
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.4)",zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div onClick={e=>e.stopPropagation()} className="card" style={{padding:22,maxWidth:460,width:"100%",display:"flex",flexDirection:"column",gap:12}}>
+        <p style={{fontFamily:"'Urbanist'",fontSize:18,color:"#162040",letterSpacing:"0.04em"}}>ÉDITION RAPIDE</p>
+        <div><Lbl>Titre</Lbl><input className="input" value={f.title} onChange={e=>setF({...f,title:e.target.value})}/></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><Lbl>Statut</Lbl>
+            <select className="input" value={f.status} onChange={e=>setF({...f,status:e.target.value})}>
+              {KANBAN_COLS.map(c=><option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+          </div>
+          <div><Lbl>Avancement {f.progress}%</Lbl><input type="range" min="0" max="100" step="5" value={f.progress} onChange={e=>setF({...f,progress:Number(e.target.value)})} style={{width:"100%",accentColor:"#00B4D8",marginTop:8}}/></div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><Lbl>Livraison</Lbl><input className="input" type="date" value={f.deliveryDate} onChange={e=>setF({...f,deliveryDate:e.target.value})}/></div>
+          <div><Lbl>Client</Lbl>
+            <select className="input" value={f.clientId} onChange={e=>setF({...f,clientId:e.target.value})}>
+              <option value="">Sans client</option>
+              {clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+        </div>
+        <div><Lbl>Note de statut (visible client)</Lbl><textarea className="input" rows={2} value={f.statusNote} onChange={e=>setF({...f,statusNote:e.target.value})}/></div>
+        <div style={{display:"flex",justifyContent:"flex-end",gap:8}}>
+          <button className="btn btn-ghost" onClick={onClose}>Annuler</button>
+          <button className="btn btn-primary" disabled={saving} onClick={submit}>{saving?"Enregistrement…":"Enregistrer"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function ProjectsKanban({ projects, clients, invoices, onOpenProject, onQuickUpdate, onQuickCreate, onNotif }){
+  const[dragId,setDragId]=useState(null);
+  const[overCol,setOverCol]=useState(null);
+  const[addingCol,setAddingCol]=useState(null);
+  const[newTitle,setNewTitle]=useState("");
+  const[editProject,setEditProject]=useState(null);
+  const clientById=id=>clients.find(c=>c.id===id);
+  const inv4=pid=>invoices.filter(i=>i.project_id===pid);
+  const drop=async(colKey)=>{
+    setOverCol(null);
+    const p=projects.find(x=>x.id===dragId);
+    setDragId(null);
+    if(!p||p.status===colKey)return;
+    await onQuickUpdate(p,{status:colKey});
+  };
+  const createIn=async(colKey)=>{
+    const t=newTitle.trim();
+    if(!t)return;
+    setNewTitle("");setAddingCol(null);
+    await onQuickCreate(t,colKey);
+  };
+  return(
+    <div style={{display:"flex",gap:12,overflowX:"auto",alignItems:"flex-start",paddingBottom:8}}>
+      {KANBAN_COLS.map(col=>{
+        const items=projects.filter(p=>(p.status||"brief")===col.key);
+        return(
+          <div key={col.key}
+            onDragOver={e=>{e.preventDefault();setOverCol(col.key);}}
+            onDragLeave={()=>setOverCol(o=>o===col.key?null:o)}
+            onDrop={()=>drop(col.key)}
+            style={{flex:"0 0 250px",minWidth:250,background:overCol===col.key?"#00B4D80D":"#F5F5F7",border:`1px solid ${overCol===col.key?"#00B4D855":"#E5E5EA"}`,borderRadius:10,padding:10,display:"flex",flexDirection:"column",gap:8,transition:"all .15s"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"2px 4px"}}>
+              <span style={{fontFamily:"'Inter'",fontSize:11.5,fontWeight:700,color:col.color,textTransform:"uppercase",letterSpacing:"0.07em"}}>
+                <span style={{display:"inline-block",width:8,height:8,borderRadius:4,background:col.color,marginRight:6}}/>{col.label}
+              </span>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",fontWeight:600}}>{items.length}</span>
+            </div>
+            {items.map(p=>(
+              <KanbanCard key={p.id} p={p} client={clientById(p.clientId)} invoices={inv4(p.id)} color={col.color}
+                onOpen={()=>onOpenProject(p.id)}
+                onEdit={()=>setEditProject(p)}
+                onDragStart={()=>setDragId(p.id)}/>
+            ))}
+            {addingCol===col.key ? (
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                <input autoFocus className="input" placeholder="Titre du projet…" value={newTitle}
+                  onChange={e=>setNewTitle(e.target.value)}
+                  onKeyDown={e=>{if(e.key==="Enter")createIn(col.key);if(e.key==="Escape"){setAddingCol(null);setNewTitle("");}}}/>
+                <div style={{display:"flex",gap:6}}>
+                  <button className="btn btn-primary" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>createIn(col.key)}>Créer</button>
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>{setAddingCol(null);setNewTitle("");}}>✕</button>
+                </div>
+              </div>
+            ) : (
+              <button className="btn btn-ghost" style={{fontSize:11.5,padding:"6px 10px",color:"#6E6E73",textAlign:"left"}} onClick={()=>{setAddingCol(col.key);setNewTitle("");}}>+ Nouveau projet</button>
+            )}
+          </div>
+        );
+      })}
+      {editProject && (
+        <KanbanQuickEditModal project={editProject} clients={clients} onClose={()=>setEditProject(null)}
+          onSave={async(p,f)=>{await onQuickUpdate(p,f);}}/>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 function InvoiceModal({ project, client, existing, onClose, onSave }){
   const init = existing || { number:"", label:project?.title||"", amount_ht:0, vat_rate:8.5, amount_ttc:0, status:"draft", issued_at:new Date().toISOString().slice(0,10), due_date:"", notes:"" };
   const [f,setF]=useState(init);
@@ -6761,6 +6901,7 @@ const CalendarModuleMemo    = memo(CalendarModule);
 const AdminDashboardMemo    = memo(AdminDashboard);
 const CMModuleMemo          = memo(CMModule);
 const ProjectsListViewMemo  = memo(ProjectsListView);
+const ProjectsKanbanMemo    = memo(ProjectsKanban);
 
 function AppMain() {
   const [user, setUser] = useState(null);
@@ -7066,6 +7207,37 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     return np;
   };
 
+  // Édition rapide depuis le kanban : patch partiel camelCase → colonnes snake_case
+  const quickUpdateProject=async(project,f)=>{
+    const payload={};
+    if(f.title!==undefined) payload.title=f.title||project.title;
+    if(f.status!==undefined) payload.status=f.status;
+    if(f.progress!==undefined) payload.progress=Number(f.progress)||0;
+    if(f.deliveryDate!==undefined) payload.delivery_date=f.deliveryDate||null;
+    if(f.statusNote!==undefined) payload.status_note=f.statusNote||null;
+    if(f.clientId!==undefined) payload.client_id=f.clientId||null;
+    const{error}=await supabase.from("projects").update(payload).eq("id",project.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    updProject({...project,
+      ...(f.title!==undefined?{title:payload.title}:{}),
+      ...(f.status!==undefined?{status:f.status}:{}),
+      ...(f.progress!==undefined?{progress:payload.progress}:{}),
+      ...(f.deliveryDate!==undefined?{deliveryDate:f.deliveryDate||""}:{}),
+      ...(f.statusNote!==undefined?{statusNote:f.statusNote||""}:{}),
+      ...(f.clientId!==undefined?{clientId:f.clientId||null}:{}),
+    });
+    if(f.status!==undefined && f.status!==project.status){
+      supabase.from("project_events").insert({project_id:project.id,kind:"step",label:`Étape passée à « ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status} »`}).then(()=>{});
+      showNotif(`« ${project.title} » → ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status}`);
+    } else showNotif("Projet mis à jour");
+  };
+  const quickCreateProject=async(title,status)=>{
+    const{data,error}=await supabase.from("projects").insert({title,client_id:null,status:status||"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setProjects(ps=>[{id:data.id,title:data.title,clientId:null,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]},...ps]);
+    showNotif(`Projet « ${title} » créé`);
+  };
+
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
 
   const saveInvoice=async(row)=>{
@@ -7337,8 +7509,20 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
               <div style={{display:"flex",flexDirection:"column",gap:12}}>
                 <div style={{display:"flex",gap:3,background:"#F5F5F7",padding:4,borderRadius:8,width:"fit-content",border:"1px solid #E5E5EA"}}>
                   <button className={`tab ${projetsView==="liste"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("liste")}>📋 Liste</button>
+                  <button className={`tab ${projetsView==="tableau"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("tableau")}>🗂 Tableau</button>
                   <button className={`tab ${projetsView==="detail"?"active":""}`} style={{fontSize:12,padding:"6px 14px"}} onClick={()=>setProjetsView("detail")} disabled={!selProject}>📁 Détail{selProject?` — ${selProject.title}`:""}</button>
                 </div>
+                {projetsView==="tableau" && (
+                  <ProjectsKanbanMemo
+                    projects={projects}
+                    clients={clients}
+                    invoices={invoices}
+                    onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}
+                    onQuickUpdate={quickUpdateProject}
+                    onQuickCreate={quickCreateProject}
+                    onNotif={showNotif}
+                  />
+                )}
                 {projetsView==="liste" && (isAdmin||isCollab) && (
                   <ProjectInviteLinksPanel onNotif={showNotif} onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}/>
                 )}
