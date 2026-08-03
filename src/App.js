@@ -18,6 +18,9 @@ const FontLoader = () => (
     ::selection { background:rgba(0,180,216,0.18); color:#1D1D1F; }
     :focus-visible { outline:2px solid rgba(0,180,216,0.55); outline-offset:2px; border-radius:4px; }
     button:focus:not(:focus-visible), input:focus:not(:focus-visible) { outline:none; }
+    input[type="range"].prog { -webkit-appearance:none; appearance:none; height:6px; border-radius:3px; outline:none; }
+    input[type="range"].prog::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:14px; height:14px; border-radius:50%; background:currentColor; border:2px solid #FFFFFF; box-shadow:0 0 0 1px rgba(0,0,0,0.12); cursor:pointer; }
+    input[type="range"].prog::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:currentColor; border:2px solid #FFFFFF; box-shadow:0 0 0 1px rgba(0,0,0,0.12); cursor:pointer; }
     ::-webkit-scrollbar { width:5px; height:5px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:#D1D1D6; border-radius:3px; }
@@ -3894,7 +3897,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
   const addMember=async()=>{
     if(!memberForm.nom.trim())return;
     const{data}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
-    if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8"}]);
+    if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8",accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null}]);
     onNotif("Membre ajouté !");
     setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#0077B6"});
     setShowAddMember(false);
@@ -3903,6 +3906,20 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
     await supabase.from("team_members").delete().eq("id",id);
     setTeamMembers(prev=>prev.filter(m=>m.id!==id));
     onNotif("Membre supprimé");
+  };
+  // Lien de l'espace monteur : un lien permanent par membre. Si le lien a été
+  // révoqué (ou n'existe pas), on en régénère un avant de le copier.
+  const copyMemberLink=async(m)=>{
+    let token=m.accessToken;
+    if(!token||m.accessRevokedAt){
+      token=(crypto.randomUUID?crypto.randomUUID():String(Date.now())).replace(/-/g,"");
+      const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
+      if(error){onNotif("Erreur : "+error.message);return;}
+      setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
+    }
+    const url=`${window.location.origin}/?monteur=${token}`;
+    try{ await navigator.clipboard.writeText(url); onNotif(`Lien de ${m.nom} copié`); }
+    catch{ window.prompt("Lien de l'espace monteur :",url); }
   };
 
   const weekLabel=`${new Date(weekDays[0]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} – ${new Date(weekDays[6]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}`;
@@ -4055,6 +4072,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                       <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{m.role}{m.email?` · ${m.email}`:""}</p>
                     </div>
                     <span style={{fontFamily:"'Inter'",fontSize:10,color:m.team==="A"?"#00B4D8":"#4ECDC4",background:m.team==="A"?"#00B4D818":"#4ECDC418",border:`1px solid ${m.team==="A"?"#00B4D830":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{m.team}</span>
+                    <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",whiteSpace:"nowrap"}} title={m.accessRevokedAt?"Lien révoqué — cliquer pour en générer un nouveau":"Copier le lien de l'espace monteur (tous ses projets attribués)"} onClick={()=>copyMemberLink(m)}>{m.accessRevokedAt?"↻ Nouveau lien":"🔗 Lien espace"}</button>
                     <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>deleteMember(m.id)}>✕</button>
                   </div>
                 );
@@ -5520,6 +5538,177 @@ function PartenaireView({user,userProfile,onLogout}){
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE RÉPONSE PRESTATAIRE (token public)
 // ─────────────────────────────────────────────────────────────────────────────
+// Curseur d'avancement : suit le doigt, ne remonte la valeur qu'au relâchement.
+function ProgressSlider({ value, color, onCommit, width=96, label }){
+  const[v,setV]=useState(value||0);
+  useEffect(()=>{setV(value||0);},[value]);
+  const commit=()=>{ if(v!==(value||0)) onCommit(v); };
+  return(
+    <span style={{display:"inline-flex",alignItems:"center",gap:6}}>
+      <input type="range" className="prog" min="0" max="100" step="5" value={v}
+        onChange={e=>setV(Number(e.target.value))} onPointerUp={commit} onBlur={commit}
+        onKeyUp={e=>{if(e.key==="Enter")commit();}}
+        title="Avancement" aria-label={label||"Avancement"}
+        style={{width,cursor:"pointer",color,background:`linear-gradient(to right, ${color} ${v}%, #E5E5EA ${v}%)`}}/>
+      <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",fontVariantNumeric:"tabular-nums",minWidth:34}}>{v} %</span>
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ESPACE MONTEUR — page publique ?monteur=TOKEN
+// Un lien = un membre = tous ses projets attribués. Lecture + dépôt d'un lien
+// de montage. Tout passe par les RPC get_member_workspace / member_add_delivery.
+// ─────────────────────────────────────────────────────────────────────────────
+function MonteurEspacePage({token}){
+  const[data,setData]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[errMsg,setErrMsg]=useState("");
+  const[openId,setOpenId]=useState(null);
+  const[form,setForm]=useState({url:"",note:""});
+  const[saving,setSaving]=useState(false);
+  const[notif,setNotif]=useState("");
+
+  const load=useCallback(async()=>{
+    const{data:res,error}=await supabase.rpc("get_member_workspace",{p_token:token});
+    if(error||!res||!res.valid){setErrMsg(res?.reason||"Lien introuvable ou révoqué.");setData(null);}
+    else setData(res);
+    setLoading(false);
+  },[token]);
+  useEffect(()=>{load();},[load]);
+
+  // Le monteur pilote lui-même l'étape et l'avancement de ses projets.
+  const updateProgress=async(projectId,fields)=>{
+    setData(d=>d?{...d,projects:(d.projects||[]).map(x=>x.id===projectId?{...x,...(fields.status!==undefined?{status:fields.status}:{}),...(fields.progress!==undefined?{progress:fields.progress}:{})}:x)}:d);
+    const{data:res,error}=await supabase.rpc("member_update_progress",{
+      p_token:token,p_project:projectId,
+      p_status:fields.status??null,p_progress:fields.progress??null,
+    });
+    if(error||!res?.ok){setNotif(res?.error||"Mise à jour impossible — réessaie.");load();return;}
+    setNotif(fields.status?`Étape mise à jour : ${listStatusMeta(fields.status).label}`:`Avancement : ${fields.progress} %`);
+  };
+
+  const submit=async(projectId)=>{
+    const url=form.url.trim();
+    if(!url){setNotif("Colle d'abord le lien de ta version.");return;}
+    if(!isSafeUrl(url)){setNotif("Lien non autorisé — Vimeo, YouTube, Drive, Dropbox, WeTransfer ou Frame.io.");return;}
+    setSaving(true);
+    const{data:res,error}=await supabase.rpc("member_add_delivery",{p_token:token,p_project:projectId,p_url:url,p_note:form.note.trim()||null});
+    setSaving(false);
+    if(error||!res?.ok){setNotif(res?.error||"Envoi impossible — réessaie.");return;}
+    setForm({url:"",note:""});setOpenId(null);setNotif("Version envoyée à Third-One Studio ✓");
+    load();
+  };
+
+  if(loading)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><FontLoader/><p style={{color:"#0090B3",fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
+  if(errMsg)return(
+    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:10,padding:24,textAlign:"center"}}>
+      <FontLoader/>
+      <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20,fontWeight:800}}>LIEN INVALIDE</p>
+      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13}}>{errMsg}</p>
+      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:12}}>Contactez Third-One Studio pour recevoir un nouveau lien.</p>
+    </div>
+  );
+
+  const projects=data.projects||[];
+  const byStatus=LIST_STATUSES.map(s=>({...s,items:projects.filter(p=>(p.status||"brief")===s.key)})).filter(g=>g.items.length>0);
+  const orphans=projects.filter(p=>!LIST_STATUSES.some(s=>s.key===(p.status||"brief")));
+  if(orphans.length>0) byStatus.push({key:"autres",label:"Autres",color:"#8E8E93",items:orphans});
+
+  return(
+    <div style={{minHeight:"100vh",background:"#FFFFFF",padding:"24px 16px 60px"}}>
+      <FontLoader/>
+      <div style={{maxWidth:820,margin:"0 auto",display:"flex",flexDirection:"column",gap:16}}>
+        <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:12,padding:"18px 20px"}}>
+          <p style={{fontFamily:"'Urbanist'",fontSize:12,fontWeight:800,letterSpacing:"0.12em",color:"#00B4D8"}}>THIRD<span style={{color:"#162040"}}>ONE</span> · ESPACE MONTEUR</p>
+          <h1 style={{fontFamily:"'Urbanist'",fontSize:26,fontWeight:800,color:"#162040",marginTop:6,letterSpacing:"-0.02em"}}>Bonjour {data.member?.nom}</h1>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",marginTop:4}}>
+            {projects.length===0?"Aucun projet ne t'est attribué pour le moment.":`${projects.length} projet${projects.length>1?"s":""} attribué${projects.length>1?"s":""}. Dépose ici le lien de ta version, on le reçoit directement.`}
+          </p>
+        </div>
+
+        {notif && <div style={{background:"#00B4D812",border:"1px solid #00B4D840",borderRadius:8,padding:"10px 14px",fontFamily:"'Inter'",fontSize:13,color:"#0090B3"}}>{notif}</div>}
+
+        {byStatus.map(g=>(
+          <div key={g.key} style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{width:8,height:8,borderRadius:4,background:g.color}}/>
+              <h2 style={{fontFamily:"'Urbanist'",fontSize:14,fontWeight:700,color:"#162040",letterSpacing:"0.06em",textTransform:"uppercase"}}>{g.label}</h2>
+              <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{g.items.length}</span>
+            </div>
+            {g.items.map(p=>{
+              const deliveries=p.deliveries||[];
+              const open=openId===p.id;
+              return(
+                <div key={p.id} className="card" style={{padding:16,borderColor:open?"#00B4D840":"#E5E5EA"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap",alignItems:"flex-start"}}>
+                    <div style={{flex:"1 1 240px"}}>
+                      <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{p.title}</p>
+                      <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:3}}>
+                        {p.roleOnProject?`${p.roleOnProject} · `:""}{p.delivery_date?`Livraison ${p.delivery_date}`:"Pas de date de livraison"}
+                      </p>
+                    </div>
+                    <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                      {isSafeUrl(p.replayUrl)&&<a href={p.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none"}}>▶ Version en ligne</a>}
+                      <button className={open?"btn btn-ghost":"btn btn-primary"} style={{fontSize:11}} onClick={()=>{setOpenId(open?null:p.id);setForm({url:"",note:""});}}>{open?"Annuler":"＋ Déposer ma version"}</button>
+                    </div>
+                  </div>
+
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginTop:10,flexWrap:"wrap"}}>
+                    <select value={p.status||"brief"} onChange={e=>updateProgress(p.id,{status:e.target.value})}
+                      title="Où en est ce projet ?"
+                      style={{background:listStatusMeta(p.status).color+"18",color:listStatusMeta(p.status).color,border:`1px solid ${listStatusMeta(p.status).color}55`,borderRadius:6,padding:"4px 9px",fontFamily:"'Inter'",fontSize:12,fontWeight:600,cursor:"pointer"}}>
+                      {LIST_STATUSES.map(s=><option key={s.key} value={s.key} style={{color:"#1D1D1F"}}>{s.label}</option>)}
+                    </select>
+                    <ProgressSlider value={p.progress||0} color={listStatusMeta(p.status).color} label={`Avancement de ${p.title}`}
+                      width={120} onCommit={v=>updateProgress(p.id,{progress:v})}/>
+                  </div>
+                  {p.statusNote && <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:10,background:"#F5F5F7",borderRadius:7,padding:"8px 10px"}}>📝 {p.statusNote}</p>}
+                  {(p.brief?.objective||p.brief?.duration||p.brief?.tone) && (
+                    <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:3}}>
+                      {p.brief.objective && <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}><span style={{color:"#8E8E93"}}>Objectif — </span>{p.brief.objective}</p>}
+                      {p.brief.duration  && <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}><span style={{color:"#8E8E93"}}>Durée — </span>{p.brief.duration}</p>}
+                      {p.brief.tone      && <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F"}}><span style={{color:"#8E8E93"}}>Ton — </span>{p.brief.tone}</p>}
+                    </div>
+                  )}
+
+                  {open && (
+                    <div style={{marginTop:12,background:"#F5F5F7",border:"1px solid #00B4D830",borderRadius:8,padding:12,display:"flex",flexDirection:"column",gap:8}}>
+                      <input className="input" autoFocus placeholder="Lien de ta version (Vimeo, Drive, WeTransfer, Frame.io…)" value={form.url}
+                        onChange={e=>setForm(f=>({...f,url:e.target.value}))}
+                        style={{borderColor:form.url&&!isSafeUrl(form.url)?"#FF3B30":undefined}}/>
+                      <textarea className="input" rows={2} placeholder="Un mot sur cette version (optionnel)" value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/>
+                      <div style={{display:"flex",justifyContent:"flex-end",gap:7}}>
+                        <button className="btn btn-ghost" style={{fontSize:11}} onClick={()=>setOpenId(null)}>Annuler</button>
+                        <button className="btn btn-primary" style={{fontSize:11}} disabled={saving} onClick={()=>submit(p.id)}>{saving?"Envoi…":"Envoyer"}</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {deliveries.length>0 && (
+                    <div style={{marginTop:12,borderTop:"1px solid #F2F2F7",paddingTop:10,display:"flex",flexDirection:"column",gap:6}}>
+                      <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.06em"}}>Mes versions envoyées</p>
+                      {deliveries.map(d=>(
+                        <div key={d.id} style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                          <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",fontVariantNumeric:"tabular-nums"}}>{(d.at||"").split("T")[0]}</span>
+                          {isSafeUrl(d.url)
+                            ? <a href={d.url} target="_blank" rel="noreferrer" style={{fontFamily:"'Inter'",fontSize:12,color:"#0090B3"}}>{d.url}</a>
+                            : <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>{d.url}</span>}
+                          {d.note && <span style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>— {d.note}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PrestaireResponsePage({token}){
   const[mission,setMission]=useState(null);
   const[loading,setLoading]=useState(true);
@@ -6464,15 +6653,223 @@ function AccessManager({onNotif}){
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject }){
-  const[busyId,setBusyId]=useState(null);
+// Liste des projets : statut + avancement modifiables en ligne, lien de
+// visionnage déposable en ligne, actions secondaires repliées derrière « ⋯ ».
+const LIST_STATUSES = [
+  { key:"brief",      label:"Brief",      color:"#7B9CFF" },
+  { key:"storyboard", label:"Storyboard", color:"#00B4D8" },
+  { key:"tournage",   label:"Tournage",   color:"#FF9F43" },
+  { key:"montage",    label:"Montage",    color:"#7C3AED" },
+  { key:"livraison",  label:"Livraison",  color:"#4ECDC4" },
+];
+const listStatusMeta = s => LIST_STATUSES.find(x=>x.key===(s||"brief")) || { key:s, label:s||"—", color:"#8E8E93" };
+
+function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onAddInvoice, onMarkPaid, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onNotif, teamMembers, rowAssignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
+  const meta = listStatusMeta(p.status);
+  const[panel,setPanel]=useState(null); // null | "more" | "team"
+  const[urlEdit,setUrlEdit]=useState(null);
+  const[busy,setBusy]=useState(null);
+  const[newMember,setNewMember]=useState(null);
+  const more = panel==="more";
+  const setMore = v => setPanel(prev=>(typeof v==="function"?v(prev==="more"):v)?"more":null);
+  const members = teamMembers||[];
+  const assigned = rowAssignments||[];
+  const assignedIds = assigned.map(a=>a.memberId);
+  const memberById = id => members.find(m=>m.id===id);
+  const toggleMember = async(m) => {
+    const existing = assigned.find(a=>a.memberId===m.id);
+    setBusy("t"+m.id);
+    if(existing) await onUnassign(existing); else await onAssign(p,m.id);
+    setBusy(null);
+  };
+  const sum = arr => arr.reduce((s,i)=>s+Number(i.amount_ttc||0),0);
+  const paid=ivs.filter(i=>i.status==="paid"), sent=ivs.filter(i=>i.status==="sent"), overdue=ivs.filter(i=>i.status==="overdue");
+  const hasVideo = isSafeUrl(p.replayUrl);
+  const badge = { borderRadius:6, padding:"2px 8px", fontSize:11, fontWeight:600, whiteSpace:"nowrap", alignSelf:"flex-start" };
+  const cell  = { padding:"12px 14px", verticalAlign:"middle" };
+  const run = async(key,fn)=>{ setBusy(key); await fn(); setBusy(null); };
+  const saveUrl = async() => {
+    const v=(urlEdit||"").trim();
+    if(v && !isSafeUrl(v)){ onNotif("Lien non autorisé — YouTube, Vimeo, Drive, Dropbox, WeTransfer ou Frame.io"); return; }
+    await run("url", ()=>onQuickUpdate(p,{replayUrl:v}));
+    setUrlEdit(null);
+  };
+  return(
+    <>
+      <tr style={{borderTop:"1px solid #F2F2F7"}}>
+        <td style={{...cell,minWidth:220}}>
+          <button onClick={()=>onOpenProject(p.id)} style={{background:"none",border:"none",padding:0,textAlign:"left",cursor:"pointer",fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{p.title}</button>
+          <p style={{fontSize:11,color:"#6E6E73",marginTop:2}}>Créé {p.createdAt||"—"}</p>
+        </td>
+        <td style={cell}>
+          {client ? (
+            <>
+              <p style={{color:"#1D1D1F",whiteSpace:"nowrap"}}>{client.name}</p>
+              <p style={{fontSize:11,color:"#6E6E73",whiteSpace:"nowrap"}}>{client.email}</p>
+            </>
+          ) : <span style={{color:"#8E8E93",fontStyle:"italic"}}>Sans client</span>}
+        </td>
+        <td style={{...cell,minWidth:132}}>
+          <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
+            {assigned.map(a=>{
+              const m=memberById(a.memberId);
+              if(!m) return null;
+              const col=m.color||"#00B4D8";
+              return(
+                <span key={a.id} title={`${m.nom}${a.roleOnProject?` — ${a.roleOnProject}`:""}${m.role?` (${m.role})`:""}`}
+                  style={{width:26,height:26,borderRadius:"50%",background:col+"22",border:`1px solid ${col}55`,color:col,display:"inline-flex",alignItems:"center",justifyContent:"center",fontFamily:"'Urbanist'",fontSize:12,fontWeight:700}}>{(m.nom||"?")[0].toUpperCase()}</span>
+              );
+            })}
+            <button className="btn btn-ghost" style={{fontSize:11,padding:"3px 8px",background:panel==="team"?"#F2F2F7":undefined}}
+              title="Attribuer un monteur ou un membre de l'équipe" aria-expanded={panel==="team"}
+              onClick={()=>setPanel(prev=>prev==="team"?null:"team")}>{assigned.length?"＋":"＋ Attribuer"}</button>
+          </div>
+        </td>
+        <td style={{...cell,minWidth:170}}>
+          <select value={p.status||"brief"} onChange={e=>onQuickUpdate(p,{status:e.target.value})}
+            title="Changer l'étape du projet"
+            style={{background:meta.color+"18",color:meta.color,border:`1px solid ${meta.color}55`,borderRadius:6,padding:"3px 8px",fontFamily:"'Inter'",fontSize:11,fontWeight:600,cursor:"pointer",width:"100%",maxWidth:150}}>
+            {LIST_STATUSES.map(s=><option key={s.key} value={s.key} style={{color:"#1D1D1F"}}>{s.label}</option>)}
+            {!LIST_STATUSES.some(s=>s.key===(p.status||"brief")) && <option value={p.status}>{p.status}</option>}
+          </select>
+          <div style={{marginTop:6}}>
+            <ProgressSlider value={p.progress||0} color={meta.color} label={`Avancement de ${p.title}`}
+              onCommit={v=>onQuickUpdate(p,{progress:v})}/>
+          </div>
+        </td>
+        <td style={{...cell,whiteSpace:"nowrap"}}>
+          <input type="date" value={p.deliveryDate||""} onChange={e=>onQuickUpdate(p,{deliveryDate:e.target.value})}
+            title="Date de livraison"
+            style={{border:"1px solid #E5E5EA",borderRadius:6,padding:"4px 6px",fontFamily:"'Inter'",fontSize:12,color:p.deliveryDate?"#1D1D1F":"#8E8E93",background:"#FFFFFF",cursor:"pointer"}}/>
+        </td>
+        <td style={{...cell,minWidth:150}}>
+          {urlEdit!==null ? (
+            <div style={{display:"flex",flexDirection:"column",gap:4}}>
+              <input className="input" autoFocus placeholder="https://vimeo.com/…" value={urlEdit}
+                onChange={e=>setUrlEdit(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveUrl();if(e.key==="Escape")setUrlEdit(null);}}
+                style={{fontSize:12,padding:"4px 8px",minWidth:180,borderColor:urlEdit&&!isSafeUrl(urlEdit)?"#FF3B30":undefined}}/>
+              <div style={{display:"flex",gap:5}}>
+                <button className="btn btn-primary" style={{fontSize:11,padding:"3px 9px"}} disabled={busy==="url"} onClick={saveUrl}>{busy==="url"?"…":"✓ Enregistrer"}</button>
+                <button className="btn btn-ghost" style={{fontSize:11,padding:"3px 9px"}} onClick={()=>setUrlEdit(null)}>Annuler</button>
+              </div>
+            </div>
+          ) : hasVideo ? (
+            <div style={{display:"flex",gap:5,alignItems:"center"}}>
+              <a href={p.replayUrl} target="_blank" rel="noreferrer" className="btn btn-green" style={{fontSize:11,padding:"4px 10px",textDecoration:"none",whiteSpace:"nowrap"}}>▶ Voir</a>
+              <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 8px"}} title="Modifier le lien de visionnage" onClick={()=>setUrlEdit(p.replayUrl||"")}>Modifier</button>
+            </div>
+          ) : (
+            <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",whiteSpace:"nowrap"}} title="Déposer le lien de visionnage (Vimeo, YouTube, Drive, WeTransfer, Frame.io…)" onClick={()=>setUrlEdit("")}>＋ Lien vidéo</button>
+          )}
+        </td>
+        <td style={cell}>
+          {ivs.length===0 ? (
+            <span style={{...badge,background:"#8E8E9318",color:"#6E6E73",border:"1px solid #8E8E9340",fontWeight:500}}>Aucune facture</span>
+          ) : (
+            <div style={{display:"flex",flexDirection:"column",gap:3}}>
+              {paid.length>0    && <span style={{...badge,background:"#34C75922",color:"#15803D",border:"1px solid #34C75955"}}>✓ Payé {fmt(sum(paid))}</span>}
+              {sent.length>0    && <span style={{...badge,background:"#FF9F4322",color:"#B45309",border:"1px solid #FF9F4355"}}>⏳ À payer {fmt(sum(sent))}</span>}
+              {overdue.length>0 && <span style={{...badge,background:"#FF3B3022",color:"#D70015",border:"1px solid #FF3B3055"}}>⚠ Retard {fmt(sum(overdue))}</span>}
+            </div>
+          )}
+        </td>
+        <td style={{...cell,textAlign:"right",whiteSpace:"nowrap"}}>
+          <div style={{display:"inline-flex",gap:6,justifyContent:"flex-end",alignItems:"center"}}>
+            <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onOpenProject(p.id)}>Ouvrir</button>
+            {sent.concat(overdue).length>0
+              ? <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onMarkPaid(sent[0]||overdue[0],p,client)}>Marquer payée</button>
+              : <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onAddInvoice(p,client)}>+ Facture</button>}
+            <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 9px",background:more?"#F2F2F7":undefined}} title="Plus d'actions" aria-expanded={more} onClick={()=>setMore(m=>!m)}>⋯</button>
+          </div>
+        </td>
+      </tr>
+      {panel==="team" && (
+        <tr style={{background:"#FAFAFC"}}>
+          <td colSpan={8} style={{padding:"10px 14px",borderTop:"1px solid #F2F2F7"}}>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                <span style={{fontSize:11,color:"#8E8E93",textTransform:"uppercase",letterSpacing:"0.06em"}}>Attribuer</span>
+                <select className="input" value="" style={{maxWidth:230,fontSize:12,padding:"5px 8px"}}
+                  onChange={e=>{const m=members.find(x=>String(x.id)===e.target.value); if(m) toggleMember(m);}}>
+                  <option value="">Choisir un monteur / membre…</option>
+                  {members.filter(m=>!assignedIds.includes(m.id)).map(m=>(
+                    <option key={m.id} value={m.id}>{m.nom}{m.role?` · ${m.role}`:""}</option>
+                  ))}
+                </select>
+                {assigned.map(a=>{
+                  const m=memberById(a.memberId);
+                  if(!m) return null;
+                  const col=m.color||"#00B4D8";
+                  return(
+                    <button key={a.id} onClick={()=>toggleMember(m)} disabled={busy==="t"+m.id} title={`Retirer ${m.nom}`}
+                      style={{display:"inline-flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:20,cursor:"pointer",
+                        background:col+"1E",border:`1px solid ${col}66`,color:col,fontFamily:"'Inter'",fontSize:12,fontWeight:600,opacity:busy==="t"+m.id?0.5:1}}>
+                      <span style={{width:8,height:8,borderRadius:4,background:col}}/>
+                      {m.nom}{m.role?` · ${m.role}`:""} ✕
+                    </button>
+                  );
+                })}
+                {onCreateMember && (
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>setNewMember(n=>n?null:{nom:"",email:"",role:"monteur"})}>{newMember?"✕ Annuler":"＋ Nouveau monteur"}</button>
+                )}
+                {onCopyMemberLink && assigned.length>0 && assigned.map(a=>{
+                  const m=memberById(a.memberId);
+                  if(!m) return null;
+                  return <button key={"l"+a.id} className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title={`Copier le lien de l'espace de ${m.nom}`} onClick={()=>onCopyMemberLink(m)}>🔗 Lien {m.nom}</button>;
+                })}
+              </div>
+              {newMember && (
+                <div style={{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center",background:"#FFFFFF",border:"1px solid #E5E5EA",borderRadius:8,padding:"8px 10px"}}>
+                  <input className="input" autoFocus placeholder="Nom du monteur *" value={newMember.nom} onChange={e=>setNewMember(n=>({...n,nom:e.target.value}))} style={{fontSize:12,padding:"5px 8px",maxWidth:180}}/>
+                  <input className="input" placeholder="email@exemple.com" value={newMember.email} onChange={e=>setNewMember(n=>({...n,email:e.target.value}))} style={{fontSize:12,padding:"5px 8px",maxWidth:220}}/>
+                  <select className="input" value={newMember.role} onChange={e=>setNewMember(n=>({...n,role:e.target.value}))} style={{fontSize:12,padding:"5px 8px",maxWidth:140}}>
+                    {["monteur","cadreur","photographe","motion designer","chef de projet","drone"].map(r=><option key={r} value={r}>{r}</option>)}
+                  </select>
+                  <button className="btn btn-primary" style={{fontSize:11,padding:"4px 10px"}} disabled={!newMember.nom.trim()||busy==="new"}
+                    onClick={async()=>{
+                      setBusy("new");
+                      const created=await onCreateMember({nom:newMember.nom.trim(),email:newMember.email.trim(),role:newMember.role});
+                      if(created) await onAssign(p,created.id);
+                      setBusy(null);setNewMember(null);
+                    }}>{busy==="new"?"…":"Créer et attribuer"}</button>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+      {more && (
+        <tr style={{background:"#FAFAFC"}}>
+          <td colSpan={8} style={{padding:"10px 14px",borderTop:"1px solid #F2F2F7"}}>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+              {p.statusNote && <span style={{fontSize:12,color:"#6E6E73",marginRight:6,flex:"1 1 220px"}}>📝 {p.statusNote}</span>}
+              {client && onToggleAccess && (
+                <button className={`btn ${p.brief?.clientStepsUnlocked?"btn-green":"btn-ghost"}`} style={{fontSize:11,padding:"4px 10px"}} title={p.brief?.clientStepsUnlocked?"Accès client ouvert — cliquer pour restreindre au brief":"Ouvrir l'accès client aux étapes"} disabled={busy==="a"} onClick={()=>run("a",()=>onToggleAccess(p))}>{p.brief?.clientStepsUnlocked?"🔓 Accès client":"🔒 Accès client"}</button>
+              )}
+              {client && onNotifyClient && (
+                <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Envoyer un email de mise à jour au client" disabled={busy==="n"} onClick={()=>run("n",()=>onNotifyClient(p))}>{busy==="n"?"…":"📨 Notifier le client"}</button>
+              )}
+              {!client && p.brief?.pendingClientEmail && onInviteClient && (
+                <button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} title={`Inviter ${p.brief.pendingClientEmail} à créer son accès et compléter le brief`} disabled={busy==="i"} onClick={()=>run("i",()=>onInviteClient(p))}>{busy==="i"?"…":`📧 Inviter ${p.brief.pendingClientEmail}`}</button>
+              )}
+              {onDeleteProject && (
+                <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px",opacity:0.85,marginLeft:"auto"}} title="Supprimer définitivement le projet" onClick={()=>onDeleteProject(p)}>🗑 Supprimer</button>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onQuickUpdate, teamMembers, assignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
   const[q,setQ]=useState("");
-  const[fStatus,setFStatus]=useState("all"); // brief|storyboard|review|livraison
+  const[fStatus,setFStatus]=useState("all"); // brief|storyboard|tournage|montage|livraison
   const[fInvoice,setFInvoice]=useState("all"); // none|draft|sent|paid|overdue
+  const[groupBy,setGroupBy]=useState("none");  // none|monteur|chef de projet|membre|statut
   const clientById = id => clients.find(c=>c.id===id);
   const inv4 = pid => invoices.filter(i=>i.project_id===pid);
-  const statusLabel = { brief:"Brief", storyboard:"Storyboard", review:"Revue", livraison:"Livraison" };
-  const statusColors = { brief:"#7B9CFF", storyboard:"#00B4D8", review:"#FF9F43", livraison:"#4ECDC4" };
   const list = projects.filter(p=>{
     if(fStatus!=="all" && (p.status||"brief")!==fStatus) return false;
     const ivs = inv4(p.id);
@@ -6485,6 +6882,24 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
     }
     return true;
   });
+  // Regroupement optionnel : par monteur, chef de projet, membre ou étape.
+  const membersList = teamMembers||[];
+  const assignsList = assignments||[];
+  const groups = (()=>{
+    if(groupBy==="none") return [{key:"all",items:list}];
+    if(groupBy==="statut")
+      return LIST_STATUSES.map(s=>({key:s.key,label:s.label,color:s.color,items:list.filter(p=>(p.status||"brief")===s.key)})).filter(g=>g.items.length>0);
+    const pool = groupBy==="membre" ? membersList : membersList.filter(m=>(m.role||"").toLowerCase().includes(groupBy));
+    const res = pool.map(m=>({
+      key:"m"+m.id, label:m.nom, sub:m.role, color:m.color||"#00B4D8", member:m,
+      items:list.filter(p=>assignsList.some(a=>a.projectId===p.id&&a.memberId===m.id)),
+    })).filter(g=>g.items.length>0);
+    const covered = new Set(assignsList.filter(a=>pool.some(m=>m.id===a.memberId)).map(a=>a.projectId));
+    const rest = list.filter(p=>!covered.has(p.id));
+    if(rest.length) res.push({key:"unassigned",label:groupBy==="chef de projet"?"Sans chef de projet":"Non attribué",color:"#8E8E93",items:rest});
+    return res;
+  })();
+
   const totals = projects.reduce((acc,p)=>{
     const ivs=inv4(p.id);
     ivs.forEach(i=>{
@@ -6524,10 +6939,14 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
         <input className="input" placeholder="Rechercher projet, client, email…" value={q} onChange={e=>setQ(e.target.value)} style={{flex:"1 1 220px",minWidth:200,maxWidth:340}}/>
         <select className="input" value={fStatus} onChange={e=>setFStatus(e.target.value)} style={{maxWidth:170}}>
           <option value="all">Tous statuts</option>
-          <option value="brief">Brief</option>
-          <option value="storyboard">Storyboard</option>
-          <option value="review">Revue</option>
-          <option value="livraison">Livraison</option>
+          {LIST_STATUSES.map(s=><option key={s.key} value={s.key}>{s.label}</option>)}
+        </select>
+        <select className="input" value={groupBy} onChange={e=>setGroupBy(e.target.value)} style={{maxWidth:190}} title="Regrouper les projets">
+          <option value="none">Sans regroupement</option>
+          <option value="monteur">Ranger par monteur</option>
+          <option value="chef de projet">Ranger par chef de projet</option>
+          <option value="membre">Ranger par membre d'équipe</option>
+          <option value="statut">Ranger par étape</option>
         </select>
         <select className="input" value={fInvoice} onChange={e=>setFInvoice(e.target.value)} style={{maxWidth:200}}>
           <option value="all">Toutes factures</option>
@@ -6541,82 +6960,62 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
 
       <div className="card" style={{padding:0,overflow:"hidden"}}>
         <div style={{overflowX:"auto"}}>
-          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"'Inter',sans-serif",fontSize:13,minWidth:780}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"'Inter',sans-serif",fontSize:13,minWidth:1180}}>
             <thead>
               <tr style={{background:"#F5F5F7",textAlign:"left"}}>
-                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Projet</th>
-                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Client</th>
-                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Statut</th>
-                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Livraison</th>
-                <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em"}}>Facturation</th>
+                {["Projet","Client","Équipe","Statut & avancement","Livraison","Visionnage","Facturation"].map(h=>(
+                  <th key={h} style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em",whiteSpace:"nowrap"}}>{h}</th>
+                ))}
                 <th style={{padding:"10px 14px",fontWeight:600,fontSize:11,color:"#6E6E73",textTransform:"uppercase",letterSpacing:"0.06em",textAlign:"right"}}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {list.length===0 && (
-                <tr><td colSpan={6} style={{padding:"24px 14px",textAlign:"center",color:"#6E6E73"}}>Aucun projet ne correspond.</td></tr>
+                <tr><td colSpan={8} style={{padding:"24px 14px",textAlign:"center",color:"#6E6E73"}}>Aucun projet ne correspond.</td></tr>
               )}
-              {list.map(p=>{
-                const c = clientById(p.clientId);
-                const ivs = inv4(p.id);
-                const paid = ivs.filter(i=>i.status==="paid");
-                const sent = ivs.filter(i=>i.status==="sent");
-                const overdue = ivs.filter(i=>i.status==="overdue");
-                return(
-                  <tr key={p.id} style={{borderTop:"1px solid #F2F2F7"}}>
-                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
-                      <p style={{fontWeight:600,color:"#1D1D1F"}}>{p.title}</p>
-                      <p style={{fontSize:11,color:"#6E6E73",marginTop:2}}>Créé {p.createdAt||"—"}</p>
-                    </td>
-                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
-                      {c ? (
-                        <>
-                          <p style={{color:"#1D1D1F"}}>{c.name}</p>
-                          <p style={{fontSize:11,color:"#6E6E73"}}>{c.email}</p>
-                        </>
-                      ) : <span style={{color:"#6E6E73",fontStyle:"italic"}}>—</span>}
-                    </td>
-                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
-                      <span style={{background:statusColors[p.status||"brief"]+"22",color:statusColors[p.status||"brief"],border:`1px solid ${statusColors[p.status||"brief"]}55`,borderRadius:6,padding:"2px 9px",fontSize:11,fontWeight:600}}>{statusLabel[p.status||"brief"]||p.status}</span>
-                      <div style={{height:3,background:"#F2F2F7",borderRadius:2,marginTop:6,width:90}}>
-                        <div style={{height:"100%",width:`${p.progress||0}%`,background:statusColors[p.status||"brief"],borderRadius:2}}/>
-                      </div>
-                    </td>
-                    <td style={{padding:"12px 14px",verticalAlign:"top",color:"#1D1D1F"}}>{p.deliveryDate||<span style={{color:"#6E6E73"}}>—</span>}</td>
-                    <td style={{padding:"12px 14px",verticalAlign:"top"}}>
-                      {ivs.length===0 ? (
-                        <span style={{background:"#8E8E9322",color:"#6E6E73",border:"1px solid #8E8E9355",borderRadius:6,padding:"2px 8px",fontSize:11}}>Aucune facture</span>
-                      ) : (
-                        <div style={{display:"flex",flexDirection:"column",gap:3}}>
-                          {paid.length>0 && <span style={{background:"#34C75922",color:"#15803D",border:"1px solid #34C75955",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>✓ Payé {fmt(paid.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
-                          {sent.length>0 && <span style={{background:"#FF9F4322",color:"#B45309",border:"1px solid #FF9F4355",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⏳ À payer {fmt(sent.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
-                          {overdue.length>0 && <span style={{background:"#FF3B3022",color:"#D70015",border:"1px solid #FF3B3055",borderRadius:6,padding:"2px 8px",fontSize:11,fontWeight:600,alignSelf:"flex-start"}}>⚠ Retard {fmt(overdue.reduce((s,i)=>s+Number(i.amount_ttc||0),0))}</span>}
-                        </div>
-                      )}
-                    </td>
-                    <td style={{padding:"12px 14px",verticalAlign:"top",textAlign:"right",whiteSpace:"nowrap"}}>
-                      <div style={{display:"inline-flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
-                        <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onOpenProject(p.id)}>Ouvrir</button>
-                        {c && onToggleAccess && (
-                          <button className={`btn ${p.brief?.clientStepsUnlocked?"btn-green":"btn-ghost"}`} style={{fontSize:11,padding:"4px 10px"}} title={p.brief?.clientStepsUnlocked?"Accès client ouvert — cliquer pour restreindre au brief":"Ouvrir l'accès client aux étapes"} disabled={busyId===p.id} onClick={async()=>{setBusyId(p.id);await onToggleAccess(p);setBusyId(null);}}>{p.brief?.clientStepsUnlocked?"🔓 Accès":"🔒 Accès"}</button>
-                        )}
-                        {c && onNotifyClient && (
-                          <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Envoyer un email de mise à jour au client" disabled={busyId==="n"+p.id} onClick={async()=>{setBusyId("n"+p.id);await onNotifyClient(p);setBusyId(null);}}>{busyId==="n"+p.id?"…":"📨 Notifier"}</button>
-                        )}
-                        {!c && (p.brief?.pendingClientEmail) && onInviteClient && (
-                          <button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} title={`Inviter ${p.brief.pendingClientEmail} à créer son accès et compléter le brief`} disabled={busyId==="i"+p.id} onClick={async()=>{setBusyId("i"+p.id);await onInviteClient(p);setBusyId(null);}}>{busyId==="i"+p.id?"…":"📧 Inviter"}</button>
-                        )}
-                        {sent.concat(overdue).length>0
-                          ? <button className="btn btn-green" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onMarkPaid(sent[0]||overdue[0],p,c)}>Marquer payée</button>
-                          : <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onAddInvoice(p,c)}>+ Facture</button>}
-                        {onDeleteProject && (
-                          <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px",opacity:0.85}} title="Supprimer définitivement le projet" onClick={()=>onDeleteProject(p)}>🗑</button>
+              {groups.map(g=>(
+                <Fragment key={g.key}>
+                {groupBy!=="none" && (
+                  <tr style={{background:"#F5F5F7"}}>
+                    <td colSpan={8} style={{padding:"8px 14px",borderTop:"1px solid #E5E5EA"}}>
+                      <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                        <span style={{width:9,height:9,borderRadius:5,background:g.color}}/>
+                        <span style={{fontFamily:"'Urbanist'",fontSize:13,fontWeight:700,color:"#162040"}}>{g.label}</span>
+                        {g.sub && <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{g.sub}</span>}
+                        <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>· {g.items.length} projet{g.items.length>1?"s":""}</span>
+                        {g.member && onCopyMemberLink && (
+                          <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 9px"}} title={`Copier le lien de l'espace de ${g.label}`} onClick={()=>onCopyMemberLink(g.member)}>🔗 Lien espace</button>
                         )}
                       </div>
                     </td>
                   </tr>
-                );
-              })}
+                )}
+                {g.items.map(p=>(
+                <ProjectListRow
+                  key={g.key+"-"+p.id}
+                  p={p}
+                  client={clientById(p.clientId)}
+                  ivs={inv4(p.id)}
+                  fmt={fmt}
+                  onQuickUpdate={onQuickUpdate}
+                  onOpenProject={onOpenProject}
+                  onAddInvoice={onAddInvoice}
+                  onMarkPaid={onMarkPaid}
+                  onNotifyClient={onNotifyClient}
+                  onToggleAccess={onToggleAccess}
+                  onInviteClient={onInviteClient}
+                  onDeleteProject={onDeleteProject}
+                  onNotif={onNotif}
+                  teamMembers={teamMembers}
+                  rowAssignments={(assignments||[]).filter(a=>a.projectId===p.id)}
+                  onAssign={onAssign}
+                  onUnassign={onUnassign}
+                  onCreateMember={onCreateMember}
+                  onCopyMemberLink={onCopyMemberLink}
+                />
+                ))}
+                </Fragment>
+              ))}
             </tbody>
           </table>
         </div>
@@ -7048,7 +7447,7 @@ function AppMain() {
       if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
       if(bookingsData) setBookings(bookingsData.map(b=>({...b,projectId:b.project_id||null,client:b.client_name||"",team:b.team||"A",status:b.status||"option",note:b.note||"",startTime:b.start_time||"08:00",endTime:b.end_time||"17:00",createdAt:b.created_at?.split("T")[0],expiresAt:b.expires_at||null,extras:b.extras||[],confirmType:b.confirm_type||null})));
       if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",company:p.company||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isSupervisor:p.is_supervisor===true,isActive:p.is_active!==false})));
-      if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#00B4D8"})));
+      if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#00B4D8",accessToken:m.access_token||"",accessRevokedAt:m.access_revoked_at||null})));
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
       if(notesData) setMeetingNotes(notesData.map(n=>({id:n.id,projectId:n.project_id,date:n.date,participants:n.participants||"",content:n.content||"",decisions:n.decisions||""})));
@@ -7216,6 +7615,10 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     if(f.deliveryDate!==undefined) payload.delivery_date=f.deliveryDate||null;
     if(f.statusNote!==undefined) payload.status_note=f.statusNote||null;
     if(f.clientId!==undefined) payload.client_id=f.clientId||null;
+    if(f.replayUrl!==undefined){
+      if(f.replayUrl && !isSafeUrl(f.replayUrl)){showNotif("Lien non autorisé — domaine refusé");return;}
+      payload.replay_url=f.replayUrl||null;
+    }
     const{error}=await supabase.from("projects").update(payload).eq("id",project.id);
     if(error){showNotif("Erreur : "+error.message);return;}
     updProject({...project,
@@ -7225,11 +7628,51 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
       ...(f.deliveryDate!==undefined?{deliveryDate:f.deliveryDate||""}:{}),
       ...(f.statusNote!==undefined?{statusNote:f.statusNote||""}:{}),
       ...(f.clientId!==undefined?{clientId:f.clientId||null}:{}),
+      ...(f.replayUrl!==undefined?{replayUrl:f.replayUrl||""}:{}),
     });
     if(f.status!==undefined && f.status!==project.status){
       supabase.from("project_events").insert({project_id:project.id,kind:"step",label:`Étape passée à « ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status} »`}).then(()=>{});
       showNotif(`« ${project.title} » → ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status}`);
     } else showNotif("Projet mis à jour");
+  };
+  // Création d'un monteur (nom + email) directement depuis la liste projets.
+  const createTeamMember=async({nom,email,role})=>{
+    const colors=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#7C3AED"];
+    const color=colors[teamMembers.length%colors.length];
+    const{data,error}=await supabase.from("team_members")
+      .insert({nom,email:email||null,role:role||"monteur",team:"A",color}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return null;}
+    const m={id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||color,accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null};
+    setTeamMembers(prev=>[...prev,m]);
+    showNotif(`${nom} ajouté à l'équipe`);
+    return m;
+  };
+  // Lien de l'espace monteur (régénère le jeton s'il manque ou a été révoqué).
+  const copyMemberSpaceLink=async(m)=>{
+    let token=m.accessToken;
+    if(!token||m.accessRevokedAt){
+      token=(crypto.randomUUID?crypto.randomUUID():String(Date.now())).replace(/-/g,"");
+      const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
+      if(error){showNotif("Erreur : "+error.message);return;}
+      setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
+    }
+    const url=`${window.location.origin}/?monteur=${token}`;
+    try{ await navigator.clipboard.writeText(url); showNotif(`Lien de l'espace de ${m.nom} copié`); }
+    catch{ window.prompt("Lien de l'espace monteur :",url); }
+  };
+  // Attribution rapide depuis la liste : project_assignments ↔ team_members.
+  const assignMemberToProject=async(project,memberId)=>{
+    const{data,error}=await supabase.from("project_assignments").insert({project_id:project.id,member_id:memberId,role_on_project:""}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setAssignments(prev=>[...prev,{id:data.id,projectId:data.project_id,memberId:data.member_id,roleOnProject:data.role_on_project||""}]);
+    const m=teamMembers.find(x=>x.id===memberId);
+    showNotif(`${m?.nom||"Membre"} attribué à « ${project.title} »`);
+  };
+  const unassignMember=async(assignment)=>{
+    const{error}=await supabase.from("project_assignments").delete().eq("id",assignment.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setAssignments(prev=>prev.filter(a=>a.id!==assignment.id));
+    showNotif("Membre retiré");
   };
   const quickCreateProject=async(title,status)=>{
     const{data,error}=await supabase.from("projects").insert({title,client_id:null,status:status||"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
@@ -7304,7 +7747,15 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
       text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
       cta:{label:"Créer mon accès",url:link},
     }});
-    if(error){showNotif("Erreur envoi : "+error.message);return false;}
+    if(error){
+      // functions.invoke masque le corps de la réponse : on va le lire pour
+      // afficher la vraie cause (JWT, rôle, SMTP…) au lieu d'un "non-2xx".
+      let detail="";
+      try{ const body=await error.context?.json?.(); detail=body?.error||""; }catch{ /* corps illisible */ }
+      showNotif(`Envoi impossible${detail?` : ${detail}`:` : ${error.message}`} — lien copié, envoie-le à la main`);
+      try{ await navigator.clipboard.writeText(link); }catch{ window.prompt("Lien d'invitation :",link); }
+      return false;
+    }
     showNotif("Invitation envoyée au client ✉️");
     return true;
   };
@@ -7540,6 +7991,13 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     onToggleAccess={toggleProjectAccess}
                     onInviteClient={sendClientInvite}
                     onDeleteProject={deleteProject}
+                    onQuickUpdate={quickUpdateProject}
+                    teamMembers={teamMembers}
+                    assignments={assignments}
+                    onAssign={assignMemberToProject}
+                    onUnassign={unassignMember}
+                    onCreateMember={createTeamMember}
+                    onCopyMemberLink={copyMemberSpaceLink}
                   />
                 )}
                 {projetsView==="detail" && selProject && (
@@ -7691,6 +8149,7 @@ export default function App(){
   const params=new URLSearchParams(window.location.search);
   if(params.has("guest"))return <GuestView/>;
   if(params.has("prestataire"))return <PrestaireResponsePage token={params.get("prestataire")}/>;
+  if(params.has("monteur"))return <MonteurEspacePage token={params.get("monteur")}/>;
   if(params.has("nouveau"))return <NouveauProjetPage token={params.get("nouveau")}/>;
   return <AppMain/>;
 }
