@@ -191,7 +191,7 @@ const FontLoader = () => (
 // ─────────────────────────────────────────────────────────────────────────────
 const STATUS_STEPS   = ["Brief","Storyboard","Tournage","Montage","Livraison"];
 const STATUS_INDEX   = { brief:0, storyboard:1, tournage:2, montage:3, livraison:4 };
-const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com)(\/|$)/i;
+const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|replay\.dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com|thirdone\.studio)(\/|$)/i;
 const isSafeUrl=(url)=>{if(!url)return false;try{return ALLOWED_DOMAINS.test(new URL(url).href);}catch{return false;}};
 const safePortfolioUrl=(url)=>{if(!url)return null;try{const u=new URL(url.trim());return["https:","http:"].includes(u.protocol)?u.href:null;}catch{return null;}};
 const prettyName=(n)=>{const s=(n||"").trim();if(!s)return"";const base=s.includes("@")?s.split("@")[0]:s;const w=base.split(/[._\-\s]+/).filter(Boolean)[0]||base;return w.charAt(0).toUpperCase()+w.slice(1);};
