@@ -872,7 +872,7 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   const assignClient=async(clientId)=>{const val=clientId||null;await supabase.from("projects").update({client_id:val}).eq("id",project.id);onUpdate({...project,clientId:val});onNotif(clientId?"Client assigné !":"Client retiré");};
   const briefFields=[{k:"objective",l:"Objectif",p:"Quel message / contexte ?"},{k:"target",l:"Cible",p:"Âge, CSP..."},{k:"duration",l:"Durée",p:"30s, 2min..."},{k:"tone",l:"Ton",p:"Premium, documentaire..."},{k:"deliverables",l:"Livrables",p:"Formats, versions..."},{k:"deliveryWished",l:"Livraison souhaitée",p:"Date ou délai souhaité"}];
   const[brief,setBrief]=useState({...project.brief});
-  const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||"",replayUrl:project.replayUrl||"",sbDate:project.brief?.stepDates?.storyboard||"",montageDate:project.brief?.stepDates?.montage||""});
+  const[statusMeta,setStatusMeta]=useState({deliveryDate:project.deliveryDate||"",shootDate:project.shootDate||"",statusNote:project.statusNote||"",replayUrl:project.replayUrl||"",replayLinks:(project.brief?.replayLinks||[]).map(l=>({label:l.label||"",url:l.url||""})),sbDate:project.brief?.stepDates?.storyboard||"",montageDate:project.brief?.stepDates?.montage||""});
   const addSB=async sb=>{
     const{data,error}=await supabase.from("storyboards").insert({project_id:project.id,title:sb.title||"Storyboard",frames:sb.frames||[],validation_status:sb.validationStatus||"pending"}).select().single();
     if(error){onNotif("Erreur storyboard : "+error.message);return;}
@@ -949,8 +949,10 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   };
   const saveBrief=async()=>{
     if(statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)){onNotif("URL invalide — domaine non autorisé");return;}
+    const cleanLinks=(statusMeta.replayLinks||[]).map(l=>({label:(l.label||"").trim(),url:(l.url||"").trim()})).filter(l=>l.url);
+    if(cleanLinks.some(l=>!isSafeUrl(l.url))){onNotif("Un lien supplémentaire est invalide — domaine non autorisé");return;}
     if(statusMeta.shootDate&&statusMeta.deliveryDate&&statusMeta.deliveryDate<statusMeta.shootDate){onNotif("La date de livraison ne peut pas être antérieure à la date de tournage.");return;}
-    const newBrief={...brief,videoStatus:project.videoStatus,videoComment:project.videoComment,stepDates:{storyboard:statusMeta.sbDate||"",montage:statusMeta.montageDate||""},complements:project.brief?.complements||brief.complements||[]};
+    const newBrief={...brief,videoStatus:project.videoStatus,videoComment:project.videoComment,replayLinks:cleanLinks,stepDates:{storyboard:statusMeta.sbDate||"",montage:statusMeta.montageDate||""},complements:project.brief?.complements||brief.complements||[]};
     const safeUrl=statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)?statusMeta.replayUrl:null;
     await supabase.from("projects").update({brief:newBrief,delivery_date:statusMeta.deliveryDate||null,shoot_date:statusMeta.shootDate||null,status_note:statusMeta.statusNote||null,replay_url:safeUrl}).eq("id",project.id);
     onUpdate({...project,brief:newBrief,deliveryDate:statusMeta.deliveryDate,shootDate:statusMeta.shootDate,statusNote:statusMeta.statusNote,replayUrl:safeUrl||"",status:project.status==="brief"?"storyboard":project.status});
@@ -1068,6 +1070,20 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                   {statusMeta.replayUrl&&isSafeUrl(statusMeta.replayUrl)&&<a href={statusMeta.replayUrl} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗ Voir</a>}
                 </div>
                 {statusMeta.replayUrl&&!isSafeUrl(statusMeta.replayUrl)&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#D70015",marginTop:4}}>⚠ Domaine non autorisé — utilisez YouTube, Vimeo, Dropbox, Drive, WeTransfer ou Frame.io</p>}
+              </div>
+              <div>
+                <Lbl>Liens de visionnage supplémentaires (versions, formats, teasers…)</Lbl>
+                <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                  {(statusMeta.replayLinks||[]).map((l,i)=>(
+                    <div key={i} style={{display:"flex",gap:8}}>
+                      <input className="input" placeholder="Libellé (ex: Version 9:16)" value={l.label} onChange={e=>setStatusMeta(p=>({...p,replayLinks:p.replayLinks.map((x,j)=>j===i?{...x,label:e.target.value}:x)}))} style={{width:170,flexShrink:0}}/>
+                      <input className="input" placeholder="https://replay.dropbox.com/..." value={l.url} onChange={e=>setStatusMeta(p=>({...p,replayLinks:p.replayLinks.map((x,j)=>j===i?{...x,url:e.target.value}:x)}))} style={{flex:1,borderColor:l.url&&!isSafeUrl(l.url)?"#FF3B30":undefined}}/>
+                      {l.url&&isSafeUrl(l.url)&&<a href={l.url} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none",whiteSpace:"nowrap"}}>↗</a>}
+                      <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 9px"}} title="Retirer ce lien" onClick={()=>setStatusMeta(p=>({...p,replayLinks:p.replayLinks.filter((_,j)=>j!==i)}))}>✕</button>
+                    </div>
+                  ))}
+                  <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",alignSelf:"flex-start"}} onClick={()=>setStatusMeta(p=>({...p,replayLinks:[...(p.replayLinks||[]),{label:"",url:""}]}))}>＋ Ajouter un lien de visionnage</button>
+                </div>
               </div>
               {project.videoStatus&&(
                 <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF3B3018":"#00B4D818",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC433":project.videoStatus==="revision"?"#FF3B3033":"#00B4D833"}`}}>
@@ -1319,6 +1335,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
   const[showInvite,setShowInvite]=useState(false);
   const[inviteName,setInviteName]=useState("");
   const[copiedToken,setCopiedToken]=useState(null);
+  const[linkIdx,setLinkIdx]=useState(0);
 
   const getVideoType=(url)=>{
     if(!url||!isSafeUrl(url))return null;
@@ -1347,19 +1364,32 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
     setShowRevForm(false);
   };
 
-  const videoType=getVideoType(project.replayUrl);
-  const embedUrl=getEmbedUrl(project.replayUrl);
+  const links=[
+    ...(project.replayUrl&&isSafeUrl(project.replayUrl)?[{label:"Version principale",url:project.replayUrl}]:[]),
+    ...((project.brief?.replayLinks||[]).filter(l=>l.url&&isSafeUrl(l.url))),
+  ];
+  const current=links[Math.min(linkIdx,Math.max(links.length-1,0))]||null;
+  const videoType=getVideoType(current?.url);
+  const embedUrl=getEmbedUrl(current?.url);
 
   return(
     <div className="card fadeUp" style={{padding:18}}>
       <SH icon="▶" title="VALIDATION VIDÉO" sub="Visionnez et approuvez ou demandez des révisions"/>
 
-      {!project.replayUrl&&(
+      {links.length===0&&(
         <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",textAlign:"center",padding:"30px 0"}}>Aucune vidéo partagée pour l'instant.<br/><span style={{fontSize:11}}>L'équipe vous notifiera dès qu'une version sera disponible.</span></p>
       )}
 
-      {project.replayUrl&&(
+      {links.length>0&&(
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          {/* Sélecteur de version (plusieurs liens de visionnage) */}
+          {links.length>1&&(
+            <div className="hscroll" style={{display:"flex",gap:4,background:"#F5F5F7",padding:4,borderRadius:8,overflowX:"auto",width:"fit-content",maxWidth:"100%"}}>
+              {links.map((l,i)=>(
+                <button key={i} className={`tab ${current===l?"active":""}`} style={{whiteSpace:"nowrap",fontSize:12}} onClick={()=>setLinkIdx(i)}>{l.label||`Version ${i+1}`}</button>
+              ))}
+            </div>
+          )}
           {/* Statut actuel */}
           {project.videoStatus&&(
             <div style={{padding:"10px 14px",borderRadius:8,background:project.videoStatus==="approved"?"#4ECDC418":project.videoStatus==="revision"?"#FF9F4318":"#00B4D818",border:`1px solid ${project.videoStatus==="approved"?"#4ECDC440":project.videoStatus==="revision"?"#FF9F4340":"#00B4D840"}`,display:"flex",alignItems:"center",gap:8}}>
@@ -1380,7 +1410,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
                 <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F",marginBottom:4}}>Dropbox Replay</p>
                 <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.5}}>Ouvrez la vidéo dans Dropbox Replay pour laisser des commentaires horodatés directement sur la timeline.</p>
               </div>
-              <a href={project.replayUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:"#0061FF",color:"#fff",fontFamily:"'Inter'",fontSize:13,fontWeight:600,padding:"10px 22px",borderRadius:7,letterSpacing:"0.03em",display:"inline-flex",alignItems:"center",gap:8}}>
+              <a href={current.url} target="_blank" rel="noreferrer" style={{textDecoration:"none",background:"#0061FF",color:"#fff",fontFamily:"'Inter'",fontSize:13,fontWeight:600,padding:"10px 22px",borderRadius:7,letterSpacing:"0.03em",display:"inline-flex",alignItems:"center",gap:8}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M6 2L0 6l6 4 6-4-6-4zm12 0l-6 4 6 4 6-4-6-4zM0 14l6 4 6-4-6-4-6 4zm18-4l-6 4 6 4 6-4-6-4zM6 19l6 4 6-4-6-4-6 4z"/></svg>
                 Ouvrir dans Dropbox Replay
               </a>
@@ -1400,7 +1430,7 @@ function VideoValidationPanel({project,onUpdate,onNotif,isGuest=false}){
             <div style={{background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,padding:"24px",display:"flex",flexDirection:"column",alignItems:"center",gap:10}}>
               <span style={{fontSize:32}}>▶</span>
               <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",textAlign:"center"}}>Visualisez la vidéo sur la plateforme de revue</p>
-              <a href={project.replayUrl} target="_blank" rel="noreferrer" className="btn btn-primary" style={{textDecoration:"none"}}>Ouvrir la vidéo →</a>
+              <a href={current.url} target="_blank" rel="noreferrer" className="btn btn-primary" style={{textDecoration:"none"}}>Ouvrir la vidéo →</a>
             </div>
           )}
 
@@ -6664,7 +6694,7 @@ const LIST_STATUSES = [
 ];
 const listStatusMeta = s => LIST_STATUSES.find(x=>x.key===(s||"brief")) || { key:s, label:s||"—", color:"#8E8E93" };
 
-function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onAddInvoice, onMarkPaid, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onNotif, teamMembers, rowAssignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
+function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onAddInvoice, onMarkPaid, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onDuplicateProject, onNotif, teamMembers, rowAssignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
   const meta = listStatusMeta(p.status);
   const[panel,setPanel]=useState(null); // null | "more" | "team"
   const[urlEdit,setUrlEdit]=useState(null);
@@ -6852,6 +6882,9 @@ function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onA
               {!client && p.brief?.pendingClientEmail && onInviteClient && (
                 <button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} title={`Inviter ${p.brief.pendingClientEmail} à créer son accès et compléter le brief`} disabled={busy==="i"} onClick={()=>run("i",()=>onInviteClient(p))}>{busy==="i"?"…":`📧 Inviter ${p.brief.pendingClientEmail}`}</button>
               )}
+              {onDuplicateProject && (
+                <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Créer une copie du projet (brief, client, équipe)" disabled={busy==="dup"} onClick={()=>run("dup",()=>onDuplicateProject(p))}>{busy==="dup"?"…":"⧉ Dupliquer"}</button>
+              )}
               {onDeleteProject && (
                 <button className="btn btn-red" style={{fontSize:11,padding:"4px 10px",opacity:0.85,marginLeft:"auto"}} title="Supprimer définitivement le projet" onClick={()=>onDeleteProject(p)}>🗑 Supprimer</button>
               )}
@@ -6863,7 +6896,7 @@ function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onA
   );
 }
 
-function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onQuickUpdate, teamMembers, assignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
+function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInvoice, onMarkPaid, onCreateForClient, onNotif, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onDuplicateProject, onQuickUpdate, teamMembers, assignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
   const[q,setQ]=useState("");
   const[fStatus,setFStatus]=useState("all"); // brief|storyboard|tournage|montage|livraison
   const[fInvoice,setFInvoice]=useState("all"); // none|draft|sent|paid|overdue
@@ -7005,6 +7038,7 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
                   onToggleAccess={onToggleAccess}
                   onInviteClient={onInviteClient}
                   onDeleteProject={onDeleteProject}
+                  onDuplicateProject={onDuplicateProject}
                   onNotif={onNotif}
                   teamMembers={teamMembers}
                   rowAssignments={(assignments||[]).filter(a=>a.projectId===p.id)}
@@ -7792,6 +7826,22 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     showNotif("Projet supprimé");
   };
 
+  // Duplique un projet : brief + client + équipe copiés ; validation vidéo, liens de visionnage et dates remis à zéro.
+  const duplicateProject=async(project)=>{
+    const nb={...(project.brief||{})};
+    delete nb.videoStatus; delete nb.videoComment; delete nb.replayLinks; delete nb.complements; delete nb.stepDates;
+    const{data,error}=await supabase.from("projects").insert({title:`${project.title} (copie)`,client_id:project.clientId||null,status:project.status||"brief",progress:0,brief:nb,replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    if(error){showNotif("Erreur duplication : "+error.message);return;}
+    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:nb,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:nb.moodboard||[],storyboards:[],comments:[],livrables:[]};
+    const rows=assignments.filter(a=>a.projectId===project.id).map(a=>({project_id:data.id,member_id:a.memberId,role_on_project:a.roleOnProject||""}));
+    if(rows.length){
+      const{data:aData}=await supabase.from("project_assignments").insert(rows).select();
+      if(aData) setAssignments(pa=>[...pa,...aData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""}))]);
+    }
+    setProjects(ps=>[np,...ps]);
+    showNotif(`Projet dupliqué : « ${np.title} »`);
+  };
+
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
 
   const renderProjRow=(p)=>(
@@ -7991,6 +8041,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     onToggleAccess={toggleProjectAccess}
                     onInviteClient={sendClientInvite}
                     onDeleteProject={deleteProject}
+                    onDuplicateProject={duplicateProject}
                     onQuickUpdate={quickUpdateProject}
                     teamMembers={teamMembers}
                     assignments={assignments}
