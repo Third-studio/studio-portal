@@ -1025,11 +1025,32 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
   };
   const tabs=[{k:"brief",l:"Brief"},{k:"charte",l:"Charte graphique"},{k:"moodboard",l:`Moodboard (${(project.moodboard||[]).length})`},{k:"storyboards",l:`Storyboards (${project.storyboards.length})`},{k:"comments",l:`Messages (${project.comments.length})`},{k:"livrables",l:"Livrables"},{k:"facturation",l:`💶 Facturation (${projInvoices.length})`},{k:"reservations",l:`Réservations (${bookings.filter(b=>String(b.projectId)===String(project.id)).length})`},{k:"equipe",l:`Équipe (${assignments.filter(a=>a.projectId===project.id).length})`},{k:"notes",l:`Notes (${meetingNotes.filter(n=>n.projectId===project.id).length})`},...(briefServices.length>0||prestataireMissions.filter(m=>m.project_id===project.id).length>0?[{k:"prestataires",l:`🤝 Prestataires (${prestataireMissions.filter(m=>m.project_id===project.id).length})`}]:[{k:"prestataires",l:"🤝 Prestataires"}]),{k:"journal",l:"📜 Journal"}];
   const[linkingBookingId,setLinkingBookingId]=useState("");
+  const[titleEdit,setTitleEdit]=useState(null);
+  const saveTitle=async()=>{
+    const t=(titleEdit||"").trim();
+    if(!t||t===project.title){setTitleEdit(null);return;}
+    const{error}=await supabase.from("projects").update({title:t}).eq("id",project.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,title:t});
+    setTitleEdit(null);
+    onNotif("Projet renommé");
+  };
   return(
     <div style={{display:"flex",flexDirection:"column",gap:18}}>
       <div className="fadeUp">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
-          <div><h2 style={{fontFamily:"'Urbanist'",fontSize:26,fontWeight:800,color:"#1D1D1F",letterSpacing:"-0.01em"}}>{project.title}</h2></div>
+          {titleEdit!==null?(
+            <div style={{display:"flex",gap:8,alignItems:"center",flex:"1 1 320px"}}>
+              <input className="input" autoFocus value={titleEdit} onChange={e=>setTitleEdit(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")saveTitle();if(e.key==="Escape")setTitleEdit(null);}} style={{fontFamily:"'Urbanist'",fontSize:20,fontWeight:800,maxWidth:420}}/>
+              <button className="btn btn-primary" style={{fontSize:11,padding:"5px 12px"}} onClick={saveTitle}>✓ Enregistrer</button>
+              <button className="btn btn-ghost" style={{fontSize:11,padding:"5px 10px"}} onClick={()=>setTitleEdit(null)}>Annuler</button>
+            </div>
+          ):(
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <h2 style={{fontFamily:"'Urbanist'",fontSize:26,fontWeight:800,color:"#1D1D1F",letterSpacing:"-0.01em"}}>{project.title}</h2>
+              <button className="btn btn-ghost" style={{fontSize:12,padding:"4px 8px"}} title="Renommer le projet" onClick={()=>setTitleEdit(project.title)}>✏️</button>
+            </div>
+          )}
           <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
             {clients&&clients.length>0&&(<select className="input" style={{width:"auto",fontSize:12,padding:"6px 10px"}} value={project.clientId||""} onChange={e=>assignClient(e.target.value)}><option value="">— Aucun client —</option>{clients.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select>)}
             {project.clientId&&onPreviewClient&&(()=>{const c=clients.find(x=>x.id===project.clientId);return c?<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px",color:"#4F46E5",borderColor:"#7B9CFF40"}} onClick={()=>onPreviewClient(c)}>👁 Voir côté client</button>:null;})()}
@@ -6882,6 +6903,7 @@ function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onA
               {!client && p.brief?.pendingClientEmail && onInviteClient && (
                 <button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} title={`Inviter ${p.brief.pendingClientEmail} à créer son accès et compléter le brief`} disabled={busy==="i"} onClick={()=>run("i",()=>onInviteClient(p))}>{busy==="i"?"…":`📧 Inviter ${p.brief.pendingClientEmail}`}</button>
               )}
+              <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Renommer le projet" onClick={()=>{const t=window.prompt("Nouveau nom du projet :",p.title);if(t&&t.trim()&&t.trim()!==p.title)onQuickUpdate(p,{title:t.trim()});}}>✏ Renommer</button>
               {onDuplicateProject && (
                 <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Créer une copie du projet (brief, client, équipe)" disabled={busy==="dup"} onClick={()=>run("dup",()=>onDuplicateProject(p))}>{busy==="dup"?"…":"⧉ Dupliquer"}</button>
               )}
