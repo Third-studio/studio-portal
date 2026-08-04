@@ -6715,7 +6715,7 @@ const LIST_STATUSES = [
 ];
 const listStatusMeta = s => LIST_STATUSES.find(x=>x.key===(s||"brief")) || { key:s, label:s||"—", color:"#8E8E93" };
 
-function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onAddInvoice, onMarkPaid, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onDuplicateProject, onNotif, teamMembers, rowAssignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
+function ProjectListRow({ p, client, clients, ivs, fmt, onQuickUpdate, onOpenProject, onAddInvoice, onMarkPaid, onNotifyClient, onToggleAccess, onInviteClient, onDeleteProject, onDuplicateProject, onNotif, teamMembers, rowAssignments, onAssign, onUnassign, onCreateMember, onCopyMemberLink }){
   const meta = listStatusMeta(p.status);
   const[panel,setPanel]=useState(null); // null | "more" | "team"
   const[urlEdit,setUrlEdit]=useState(null);
@@ -6753,12 +6753,13 @@ function ProjectListRow({ p, client, ivs, fmt, onQuickUpdate, onOpenProject, onA
           <p style={{fontSize:11,color:"#6E6E73",marginTop:2}}>Créé {p.createdAt||"—"}</p>
         </td>
         <td style={cell}>
-          {client ? (
-            <>
-              <p style={{color:"#1D1D1F",whiteSpace:"nowrap"}}>{client.name}</p>
-              <p style={{fontSize:11,color:"#6E6E73",whiteSpace:"nowrap"}}>{client.email}</p>
-            </>
-          ) : <span style={{color:"#8E8E93",fontStyle:"italic"}}>Sans client</span>}
+          <select value={p.clientId||""} title="Attribuer un client — le projet apparaîtra dans son espace"
+            onChange={e=>onQuickUpdate(p,{clientId:e.target.value||null})}
+            style={{border:"1px solid #E5E5EA",borderRadius:6,padding:"4px 6px",fontFamily:"'Inter'",fontSize:12,background:"#FFFFFF",cursor:"pointer",maxWidth:170,color:client?"#1D1D1F":"#8E8E93",fontStyle:client?"normal":"italic"}}>
+            <option value="">— Sans client —</option>
+            {(clients||[]).map(c=><option key={c.id} value={c.id} style={{fontStyle:"normal",color:"#1D1D1F"}}>{c.name}</option>)}
+          </select>
+          {client&&<p style={{fontSize:11,color:"#6E6E73",whiteSpace:"nowrap",marginTop:3}}>{client.email}</p>}
         </td>
         <td style={{...cell,minWidth:132}}>
           <div style={{display:"flex",alignItems:"center",gap:4,flexWrap:"wrap"}}>
@@ -7050,6 +7051,7 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
                   key={g.key+"-"+p.id}
                   p={p}
                   client={clientById(p.clientId)}
+                  clients={clients}
                   ivs={inv4(p.id)}
                   fmt={fmt}
                   onQuickUpdate={onQuickUpdate}
