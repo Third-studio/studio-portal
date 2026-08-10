@@ -532,9 +532,9 @@ function AIGenerator({project,onGenerated}){
     if(!prompt.trim())return;
     setLoading(true);setError(null);
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:`Tu es storyboarder pro. Réponds UNIQUEMENT en JSON valide sans markdown.\nFormat: {"title":"...","frames":[{"id":1,"visual":"emoji","desc":"description cinématographique 30-60 mots"}]}\n4 à 6 plans.`,messages:[{role:"user",content:`${briefTxt}\nInstructions: ${prompt}`}]})});
-      const data=await res.json();
-      const raw=data.content?.[0]?.text||"";
+      const{data,error}=await supabase.functions.invoke("ai-generate",{body:{max_tokens:1000,system:`Tu es storyboarder pro. Réponds UNIQUEMENT en JSON valide sans markdown.\nFormat: {"title":"...","frames":[{"id":1,"visual":"emoji","desc":"description cinématographique 30-60 mots"}]}\n4 à 6 plans.`,messages:[{role:"user",content:`${briefTxt}\nInstructions: ${prompt}`}]}});
+      if(error)throw error;
+      const raw=data?.content?.[0]?.text||"";
       const parsed=JSON.parse(raw.replace(/```json|```/g,"").trim());
       onGenerated({...parsed,id:Date.now(),validationStatus:"pending",createdAt:new Date().toISOString().split("T")[0]});
     }catch{setError("Erreur de génération. Réessaie.");}
@@ -2086,19 +2086,24 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
     if(!form.client.trim())return;
     const slotDef=TIME_SLOTS.find(s=>s.id===form.slot)||TIME_SLOTS[0];
     const exp=new Date(Date.now()+48*3600000).toISOString();
-    const newB={id:Date.now(),date,team:form.team,client:form.client,status:"option",confirmType:null,extras:[],note:form.note,createdAt:isoToday(),expiresAt:exp,startTime:slotDef.start,endTime:slotDef.end,projectId:form.projectId||null};
-    const{error}=await supabase.from("bookings").insert({date,team:form.team,client_name:form.client,status:"option",note:form.note,expires_at:exp,start_time:slotDef.start,end_time:slotDef.end,project_id:form.projectId||null});
-    if(!error)setBookings(bs=>[...bs,newB]);
+    const{data:inserted,error}=await supabase.from("bookings").insert({date,team:form.team,client_name:form.client,status:"option",note:form.note,expires_at:exp,start_time:slotDef.start,end_time:slotDef.end,project_id:form.projectId||null}).select().single();
+    if(error||!inserted){onNotif("Erreur : option non enregistrée — "+(error?.message||"réessaie"));return;}
+    setBookings(bs=>[...bs,{id:inserted.id,date,team:form.team,client:form.client,status:"option",confirmType:null,extras:[],note:form.note,createdAt:isoToday(),expiresAt:exp,startTime:slotDef.start,endTime:slotDef.end,projectId:form.projectId||null}]);
     onNotif(`Option posée — Équipe ${form.team} ${slotDef.label} le ${fmtS(date)} · valable 48h`);onClose();
   };
 
-  const confirm=(booking)=>{
+  const confirm=async(booking)=>{
     if(!confirmCheck.devis&&!confirmCheck.acompte){onNotif("Coche devis signé ou acompte reçu");return;}
-    setBookings(bs=>bs.map(b=>b.id===booking.id?{...b,status:"confirmed",confirmType:confirmCheck.devis?"devis":"acompte",expiresAt:null}:b));
+    const ct=confirmCheck.devis?"devis":"acompte";
+    const{error}=await supabase.from("bookings").update({status:"confirmed",confirm_type:ct,expires_at:null}).eq("id",booking.id);
+    if(error){onNotif("Erreur : confirmation non enregistrée — "+error.message);return;}
+    setBookings(bs=>bs.map(b=>b.id===booking.id?{...b,status:"confirmed",confirmType:ct,expiresAt:null}:b));
     onNotif("Réservation confirmée et bloquée !");setConfirmTarget(null);onClose();
   };
 
-  const refuse=(id)=>{
+  const refuse=async(id)=>{
+    const{error}=await supabase.from("bookings").update({status:"refused"}).eq("id",id);
+    if(error){onNotif("Erreur : refus non enregistré — "+error.message);return;}
     setBookings(bs=>bs.map(b=>b.id===id?{...b,status:"refused"}:b));
     onNotif("Option refusée");onClose();
   };
@@ -2247,7 +2252,7 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
                 </select>
               </div>
               <input className="input" placeholder="Note (optionnel)" value={form.note} onChange={e=>setForm(p=>({...p,note:e.target.value}))}/>
-              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>⏱ L'option expire automatiquement après 72h si non confirmée.</p>
+              <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>⏱ L'option expire automatiquement après 48h si non confirmée.</p>
               <button className="btn btn-primary" onClick={addOption} disabled={!form.client.trim()}>Poser l'option</button>
             </div>
           </div>
@@ -2391,9 +2396,9 @@ function ClickUpSync({sheet,onSynced,onNotif}){
   const fetchLists=async()=>{
     setLoading(true);
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,system:"Réponds UNIQUEMENT en JSON valide. Format: {\"lists\":[{\"id\":\"...\",\"name\":\"...\"}]}",messages:[{role:"user",content:"Liste les listes ClickUp disponibles."}],mcp_servers:[{type:"url",url:"https://mcp.clickup.com/mcp",name:"clickup"}]})});
-      const data=await res.json();
-      const text=data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"{}";
+      const{data,error}=await supabase.functions.invoke("ai-generate",{body:{max_tokens:500,clickup:true,system:"Réponds UNIQUEMENT en JSON valide. Format: {\"lists\":[{\"id\":\"...\",\"name\":\"...\"}]}",messages:[{role:"user",content:"Liste les listes ClickUp disponibles."}]}});
+      if(error)throw error;
+      const text=data?.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"{}";
       const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
       setLists(parsed.lists||[{id:"production",name:"Production"},{id:"clients",name:"Projets Clients"}]);
     }catch{setLists([{id:"production",name:"Production"},{id:"clients",name:"Projets Clients"}]);}
@@ -2402,12 +2407,13 @@ function ClickUpSync({sheet,onSynced,onNotif}){
   const create=async()=>{
     if(!sel)return;setLoading(true);
     try{
-      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,system:"Réponds UNIQUEMENT en JSON. Format: {\"task_id\":\"...\"}",messages:[{role:"user",content:`Crée une tâche ClickUp dans la liste "${sel}": "[${sheet.shootType}] ${sheet.projectTitle} – ${sheet.client}" Équipe ${sheet.team}, dates: ${sheet.dates.map(fmtS).join(", ")}`}],mcp_servers:[{type:"url",url:"https://mcp.clickup.com/mcp",name:"clickup"}]})});
-      const data=await res.json();
-      const text=data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"{}";
+      const{data,error}=await supabase.functions.invoke("ai-generate",{body:{max_tokens:500,clickup:true,system:"Réponds UNIQUEMENT en JSON. Format: {\"task_id\":\"...\"}",messages:[{role:"user",content:`Crée une tâche ClickUp dans la liste "${sel}": "[${sheet.shootType}] ${sheet.projectTitle} – ${sheet.client}" Équipe ${sheet.team}, dates: ${sheet.dates.map(fmtS).join(", ")}`}]}});
+      if(error)throw error;
+      const text=data?.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"{}";
       const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
-      onSynced(parsed.task_id||"task_"+Date.now());onNotif("Tâche ClickUp créée !");
-    }catch{onSynced("task_"+Date.now());onNotif("Tâche créée !");}
+      if(parsed.task_id){onSynced(parsed.task_id);onNotif("Tâche ClickUp créée !");}
+      else onNotif("ClickUp n'a pas confirmé la création — vérifie la connexion ClickUp.");
+    }catch{onNotif("Échec de la synchronisation ClickUp — réessaie.");}
     setLoading(false);
   };
   return lists.length===0?(
@@ -3048,12 +3054,11 @@ Ton : ${brief.tone || "professionnel"}
 Réseau : ${net.label}
 Génère UNIQUEMENT la caption (200 mots max), avec emojis adaptés et hashtags pertinents. Pas de commentaire.`;
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:400, messages:[{role:"user", content:prompt}] }),
+      const { data, error } = await supabase.functions.invoke("ai-generate", {
+        body: { max_tokens:400, messages:[{role:"user", content:prompt}] },
       });
-      const data = await res.json();
-      const text = data.content?.[0]?.text || "";
+      if (error) throw error;
+      const text = data?.content?.[0]?.text || "";
       s("caption", text.trim());
     } catch { setAiError("Erreur de génération, réessaie."); }
     setAiLoading(false);
@@ -4315,6 +4320,30 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
     onNotif("Compte supprimé");
   };
 
+  const newShareToken=()=>(crypto.randomUUID()+crypto.randomUUID()).replace(/-/g,"");
+  const copyShareLink=async(c)=>{
+    let tok=c.shareToken;
+    if(!tok){
+      tok=newShareToken();
+      const{error}=await supabase.from("profiles").update({share_token:tok}).eq("id",c.id);
+      if(error){onNotif("Erreur : colonne share_token manquante — lance la migration espace_client_lien.sql");return;}
+      setClients(cs=>cs.map(x=>x.id===c.id?{...x,shareToken:tok}:x));
+    }
+    const url=`${window.location.origin}/?projets=${tok}`;
+    try{await navigator.clipboard.writeText(url);onNotif(`🔗 Lien projets copié — à envoyer à ${c.name} (aucun compte requis)`);}
+    catch{window.prompt("Copiez le lien :",url);}
+  };
+  const regenShareLink=async(c)=>{
+    if(!window.confirm(`Régénérer le lien projets de ${c.name} ?\n\nL'ancien lien ne fonctionnera plus.`))return;
+    const tok=newShareToken();
+    const{error}=await supabase.from("profiles").update({share_token:tok,share_revoked_at:null}).eq("id",c.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setClients(cs=>cs.map(x=>x.id===c.id?{...x,shareToken:tok}:x));
+    const url=`${window.location.origin}/?projets=${tok}`;
+    try{await navigator.clipboard.writeText(url);onNotif("↻ Nouveau lien copié — l'ancien est révoqué");}
+    catch{window.prompt("Copiez le nouveau lien :",url);}
+  };
+
   const toggleShortone=async(c)=>{
     const v=!c.shortoneEnabled;
     const{error}=await supabase.from("profiles").update({shortone_enabled:v}).eq("id",c.id);
@@ -4436,6 +4465,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
               {c.discount>0&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#00B4D820",color:"#0077B6"}}>-{c.discount}%</span>}
               {c.simulatorEnabled&&<span style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,background:"#4ECDC420",color:"#0F766E"}}>Simulateur</span>}
               <button onClick={()=>toggleShortone(c)} style={{fontFamily:"'Inter'",fontSize:11,padding:"3px 8px",borderRadius:4,border:`1px solid ${c.shortoneEnabled?"#00d4ff40":"#E5E5EA"}`,background:c.shortoneEnabled?"#00d4ff18":"transparent",color:c.shortoneEnabled?"#00d4ff":"#8E8E93",cursor:"pointer"}}>◆ Shortone</button>
+              <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} title="Copier le lien public listant tous ses projets (aucun compte requis)" onClick={()=>copyShareLink(c)}>🔗 Lien projets</button>
+              {c.shareToken&&<button className="btn btn-ghost" style={{fontSize:11,padding:"4px 8px",opacity:0.7}} title="Régénérer le lien (révoque l'ancien)" onClick={()=>regenShareLink(c)}>↻</button>}
               <button className="btn btn-blue" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onPreviewClient(c)}>👁 Voir l'espace</button>
               {onCreateProject&&<button className="btn btn-purple" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>onCreateProject(c)}>+ Projet</button>}
               <button className="btn btn-ghost" style={{fontSize:11,padding:"4px 10px"}} onClick={()=>openEdit(c)}>✏️ Modifier</button>
@@ -5755,6 +5786,102 @@ function MonteurEspacePage({token}){
             })}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function ClientEspacePage({token}){
+  const[data,setData]=useState(null);
+  const[loading,setLoading]=useState(true);
+  const[errMsg,setErrMsg]=useState("");
+
+  useEffect(()=>{
+    supabase.rpc("get_client_space",{p_token:token}).then(({data:res,error})=>{
+      if(error||!res||!res.valid)setErrMsg(res?.reason||"Lien introuvable ou révoqué.");
+      else setData(res);
+      setLoading(false);
+    });
+  },[token]);
+
+  if(loading)return<div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center"}}><FontLoader/><p style={{color:"#0090B3",fontFamily:"'Urbanist'",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p></div>;
+  if(errMsg)return(
+    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:10,padding:24,textAlign:"center"}}>
+      <FontLoader/>
+      <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20,fontWeight:800}}>LIEN INVALIDE</p>
+      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13}}>{errMsg}</p>
+      <p style={{color:"#8E8E93",fontFamily:"'Inter'",fontSize:12}}>Contactez Third-One Studio pour recevoir un nouveau lien.</p>
+    </div>
+  );
+
+  const projects=data.projects||[];
+  const enCours=projects.filter(p=>p.status!=="livraison");
+  const livres=projects.filter(p=>p.status==="livraison");
+  const fmtD=d=>{if(!d)return null;try{return new Date(d).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});}catch{return null;}};
+
+  const ProjetCard=({p})=>{
+    const meta=listStatusMeta(p.status);
+    const links=[
+      ...(isSafeUrl(p.replayUrl)?[{label:"▶ Voir la vidéo",url:p.replayUrl}]:[]),
+      ...((p.replayLinks||[]).filter(l=>isSafeUrl(l.url)&&l.url!==p.replayUrl).map(l=>({label:`▶ ${l.label||"Version"}`,url:l.url}))),
+    ];
+    const done=p.status==="livraison";
+    return(
+      <div className="card" style={{padding:16}}>
+        <div style={{display:"flex",justifyContent:"space-between",gap:12,flexWrap:"wrap",alignItems:"flex-start"}}>
+          <div style={{flex:"1 1 240px"}}>
+            <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{p.title}</p>
+            <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:3}}>
+              {[p.shootDate&&`Tournage ${fmtD(p.shootDate)}`,p.deliveryDate&&`${done?"Livré":"Livraison"} ${fmtD(p.deliveryDate)}`].filter(Boolean).join(" · ")||`Démarré ${fmtD(p.createdAt)}`}
+            </p>
+          </div>
+          <span style={{display:"inline-flex",alignItems:"center",gap:5,background:`${meta.color}15`,color:meta.color,fontFamily:"'Inter'",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20}}>{meta.label}</span>
+        </div>
+        {!done&&(
+          <div style={{display:"flex",alignItems:"center",gap:10,marginTop:12}}>
+            <div style={{flex:1,height:6,background:"#F5F5F7",borderRadius:3,overflow:"hidden"}}>
+              <div style={{width:`${Math.min(100,Math.max(0,p.progress||0))}%`,height:"100%",background:`linear-gradient(90deg,#3DD0ED,#0096BC)`,borderRadius:3}}/>
+            </div>
+            <span style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#0090B3",fontWeight:600}}>{p.progress||0}%</span>
+          </div>
+        )}
+        {p.statusNote&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:10,background:"#F5F5F7",borderRadius:7,padding:"8px 10px"}}>📝 {p.statusNote}</p>}
+        {links.length>0&&(
+          <div style={{display:"flex",gap:6,marginTop:10,flexWrap:"wrap"}}>
+            {links.map((l,i)=><a key={i} href={l.url} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none"}}>{l.label}</a>)}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const Groupe=({label,color,items})=>items.length===0?null:(
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{width:8,height:8,borderRadius:4,background:color}}/>
+        <h2 style={{fontFamily:"'Urbanist'",fontSize:14,fontWeight:700,color:"#162040",letterSpacing:"0.06em",textTransform:"uppercase"}}>{label}</h2>
+        <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>{items.length}</span>
+      </div>
+      {items.map(p=><ProjetCard key={p.id} p={p}/>)}
+    </div>
+  );
+
+  return(
+    <div style={{minHeight:"100vh",background:"#FFFFFF",padding:"24px 16px 60px"}}>
+      <FontLoader/>
+      <div style={{maxWidth:820,margin:"0 auto",display:"flex",flexDirection:"column",gap:16}}>
+        <div style={{background:"linear-gradient(135deg,#00B4D810,#7B9CFF08)",border:"1px solid #00B4D820",borderRadius:12,padding:"18px 20px"}}>
+          <p style={{fontFamily:"'Urbanist'",fontSize:12,fontWeight:800,letterSpacing:"0.12em",color:"#00B4D8"}}>THIRD<span style={{color:"#162040"}}>ONE</span> · VOS PROJETS</p>
+          <h1 style={{fontFamily:"'Urbanist'",fontSize:26,fontWeight:800,color:"#162040",marginTop:6,letterSpacing:"-0.02em"}}>Bonjour {data.client?.nom||""}</h1>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73",marginTop:4}}>
+            {projects.length===0?"Aucun projet pour le moment.":`${enCours.length} projet${enCours.length>1?"s":""} en cours · ${livres.length} livré${livres.length>1?"s":""}. Suivez ici l'avancement en temps réel.`}
+          </p>
+        </div>
+        <Groupe label="En cours" color="#00B4D8" items={enCours}/>
+        <Groupe label="Livrés" color="#4ECDC4" items={livres}/>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93",textAlign:"center",marginTop:8}}>
+          Une question ? <a href="mailto:contact@thirdone.studio" style={{color:"#0090B3"}}>contact@thirdone.studio</a>
+        </p>
       </div>
     </div>
   );
@@ -7504,7 +7631,7 @@ function AppMain() {
       }
       if(postsData) setPosts(postsData.map(p=>({id:p.id,projectId:p.project_id,network:p.network,caption:p.caption||"",assetName:p.asset_name||"",scheduledAt:p.scheduled_at,status:p.status||"draft",comment:p.comment||"",cmNote:p.cm_note||"",createdAt:p.created_at?.split("T")[0]})));
       if(bookingsData) setBookings(bookingsData.map(b=>({...b,projectId:b.project_id||null,client:b.client_name||"",team:b.team||"A",status:b.status||"option",note:b.note||"",startTime:b.start_time||"08:00",endTime:b.end_time||"17:00",createdAt:b.created_at?.split("T")[0],expiresAt:b.expires_at||null,extras:b.extras||[],confirmType:b.confirm_type||null})));
-      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",company:p.company||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isSupervisor:p.is_supervisor===true,isActive:p.is_active!==false})));
+      if(profilesData && profilesData.length > 0) setClients(profilesData.map(p=>({id:p.id,name:p.nom||p.email||"Client",email:p.email||"",company:p.company||"",discount:p.discount||0,type:p.client_type||"PME",simulatorEnabled:p.simulator_enabled||false,shortoneEnabled:p.shortone_enabled||false,isSupervisor:p.is_supervisor===true,isActive:p.is_active!==false,shareToken:p.share_token||null})));
       if(membersData) setTeamMembers(membersData.map(m=>({id:m.id,nom:m.nom,role:m.role||"",email:m.email||"",team:m.team||"A",color:m.color||"#00B4D8",accessToken:m.access_token||"",accessRevokedAt:m.access_revoked_at||null})));
       if(assignData) setAssignments(assignData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""})));
       if(slotsData) setPlanningSlots(slotsData.map(s=>({id:s.id,memberId:s.member_id,projectId:s.project_id,date:s.date,type:s.type||"tournage",startTime:s.start_time||"",endTime:s.end_time||"",note:s.note||""})));
@@ -8225,6 +8352,7 @@ export default function App(){
   if(params.has("guest"))return <GuestView/>;
   if(params.has("prestataire"))return <PrestaireResponsePage token={params.get("prestataire")}/>;
   if(params.has("monteur"))return <MonteurEspacePage token={params.get("monteur")}/>;
+  if(params.has("projets"))return <ClientEspacePage token={params.get("projets")}/>;
   if(params.has("nouveau"))return <NouveauProjetPage token={params.get("nouveau")}/>;
   return <AppMain/>;
 }
