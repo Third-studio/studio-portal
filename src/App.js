@@ -4684,7 +4684,8 @@ function ShortoneReferences({onNotif,onCreateFromReference,isAdmin}){
   const[refs,setRefs]=useState([]);
   const[loading,setLoading]=useState(true);
   const[ouvert,setOuvert]=useState(null);
-  const[niche,setNiche]=useState("Toutes");
+  const[filtres,setFiltres]=useState([]);
+  const[recherche,setRecherche]=useState("");
 
   useEffect(()=>{
     supabase.from("shortone_references").select("*").eq("actif",true).order("created_at",{ascending:false})
@@ -4694,8 +4695,17 @@ function ShortoneReferences({onNotif,onCreateFromReference,isAdmin}){
       });
   },[]);
 
-  const niches=["Toutes",...new Set(refs.map(r=>r.niche).filter(Boolean))];
-  const vues=niche==="Toutes"?refs:refs.filter(r=>r.niche===niche);
+  // Mots-clés d'une référence = sa niche + ses tags d'analyse.
+  const tagsDe=r=>[...new Set([r.niche,...(r.tags||[])].filter(Boolean))];
+  const tousTags=[...new Set(refs.flatMap(tagsDe))].sort((a,b)=>a.localeCompare(b,"fr"));
+  const basculer=t=>setFiltres(f=>f.includes(t)?f.filter(x=>x!==t):[...f,t]);
+  const vues=refs.filter(r=>{
+    const t=tagsDe(r);
+    if(filtres.length>0&&!filtres.every(f=>t.includes(f)))return false;
+    const q=recherche.trim().toLowerCase();
+    if(q&&![r.titre,r.source,r.plateforme,...t].filter(Boolean).join(" ").toLowerCase().includes(q))return false;
+    return true;
+  });
   const fmtS=v=>v==null?"—":`${Number(v).toFixed(Number(v)<10?2:1)}s`;
 
   if(loading)return<div style={{textAlign:"center",padding:"30px 0",fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block",marginRight:8}}>⟳</span>Chargement des références...</div>;
@@ -4709,11 +4719,23 @@ function ShortoneReferences({onNotif,onCreateFromReference,isAdmin}){
 
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-        {niches.map(n=>(
-          <button key={n} onClick={()=>setNiche(n)} style={{background:niche===n?"#00B4D8":"#FFFFFF",border:`1px solid ${niche===n?"#00B4D8":"#E5E5EA"}`,borderRadius:999,color:niche===n?"#FFFFFF":"#6E6E73",fontFamily:"'Inter'",fontWeight:600,fontSize:11,padding:"4px 13px",cursor:"pointer"}}>{n}</button>
-        ))}
+      <input className="input" style={{fontSize:13}} placeholder="🔍 Rechercher — titre, marque, mot-clé…" value={recherche} onChange={e=>setRecherche(e.target.value)}/>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+        {tousTags.map(t=>{
+          const actif=filtres.includes(t);
+          return(
+            <button key={t} onClick={()=>basculer(t)} style={{background:actif?"#00B4D8":"#FFFFFF",border:`1px solid ${actif?"#00B4D8":"#E5E5EA"}`,borderRadius:999,color:actif?"#FFFFFF":"#6E6E73",fontFamily:"'Inter'",fontWeight:600,fontSize:11,padding:"4px 13px",cursor:"pointer"}}>{actif?"✓ ":""}{t}</button>
+          );
+        })}
+        {(filtres.length>0||recherche)&&(
+          <button onClick={()=>{setFiltres([]);setRecherche("");}} style={{background:"transparent",border:"none",color:"#D70015",fontFamily:"'Inter'",fontWeight:600,fontSize:11,cursor:"pointer"}}>✕ Effacer</button>
+        )}
       </div>
+      {vues.length===0&&(
+        <div style={{background:"#FFFFFF",border:"1px dashed #E5E5EA",borderRadius:10,padding:"26px 20px",textAlign:"center"}}>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Aucune référence ne correspond — essaie d'autres mots-clés.</p>
+        </div>
+      )}
 
       {vues.map(r=>{
         const f=r.fiche||{};
@@ -4730,7 +4752,9 @@ function ShortoneReferences({onNotif,onCreateFromReference,isAdmin}){
                 <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
                   <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:"#0077B6",background:"#00B4D818",borderRadius:999,padding:"2px 8px"}}>{r.nb_plans} plans</span>
                   <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:"#7C3AED",background:"#B47FFF18",borderRadius:999,padding:"2px 8px"}}>{fmtS(r.asl_s)}/plan</span>
-                  <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",background:"#F5F5F7",borderRadius:999,padding:"2px 8px"}}>{r.style_deduit}</span>
+                  {tagsDe(r).slice(0,5).map(t=>(
+                    <span key={t} style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",background:"#F5F5F7",borderRadius:999,padding:"2px 8px"}}>{t}</span>
+                  ))}
                 </div>
               </div>
               <span style={{color:"#6E6E73",fontSize:10,transform:open?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
