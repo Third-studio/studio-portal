@@ -4669,7 +4669,275 @@ const RADAR_TRENDS = [
   { id:4, tag:"#AITools2025",     platform:"LinkedIn",   niche:"Tech",    views:"890K", growth:"+203%", why:"L'IA en entreprise fascine. Les contenus 'avant/après productivité' performent fort.",  hook:"Ces 3 outils IA ont remplacé 4h de mon travail...", plans:["Problème","Outil 1","Outil 2","Outil 3","CTA"] },
 ];
 
-function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNotif,onCreateFromTrend,isAdmin}){
+// ── Shortone · Références analysées ────────────────────────────────────────
+// Chaque fiche vient de video-tools/shortone_analyze.py : le rythme réel d'un
+// reel (ASL, coupes/min, structure du hook, actes, palette, shotlist).
+const SO_ACCENT="linear-gradient(135deg,#00d4ff,#8b5cf6)";
+const soMetric=(v,l,c)=>(
+  <div key={l} style={{flex:"1 1 70px",minWidth:70,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,padding:"8px 10px"}}>
+    <div style={{fontFamily:"'Urbanist'",fontSize:17,fontWeight:800,color:c||"#162040"}}>{v}</div>
+    <div style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",marginTop:1}}>{l}</div>
+  </div>
+);
+
+function ShortoneReferences({onNotif,onCreateFromReference,isAdmin}){
+  const[refs,setRefs]=useState([]);
+  const[loading,setLoading]=useState(true);
+  const[ouvert,setOuvert]=useState(null);
+  const[niche,setNiche]=useState("Toutes");
+
+  useEffect(()=>{
+    supabase.from("shortone_references").select("*").eq("actif",true).order("created_at",{ascending:false})
+      .then(({data,error})=>{
+        if(!error&&data)setRefs(data);
+        setLoading(false);
+      });
+  },[]);
+
+  const niches=["Toutes",...new Set(refs.map(r=>r.niche).filter(Boolean))];
+  const vues=niche==="Toutes"?refs:refs.filter(r=>r.niche===niche);
+  const fmtS=v=>v==null?"—":`${Number(v).toFixed(Number(v)<10?2:1)}s`;
+
+  if(loading)return<div style={{textAlign:"center",padding:"30px 0",fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}><span style={{animation:"spin 1s linear infinite",display:"inline-block",marginRight:8}}>⟳</span>Chargement des références...</div>;
+
+  if(refs.length===0)return(
+    <div style={{background:"#FFFFFF",border:"1px dashed #E5E5EA",borderRadius:10,padding:"36px 20px",textAlign:"center"}}>
+      <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Aucune référence analysée pour l'instant.</p>
+      {isAdmin&&<p style={{fontFamily:"'JetBrains Mono'",fontSize:11,color:"#8E8E93",marginTop:8}}>shortone_sync.py push ~/shortone-refs/…</p>}
+    </div>
+  );
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:12}}>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        {niches.map(n=>(
+          <button key={n} onClick={()=>setNiche(n)} style={{background:niche===n?"#00B4D8":"#FFFFFF",border:`1px solid ${niche===n?"#00B4D8":"#E5E5EA"}`,borderRadius:999,color:niche===n?"#FFFFFF":"#6E6E73",fontFamily:"'Inter'",fontWeight:600,fontSize:11,padding:"4px 13px",cursor:"pointer"}}>{n}</button>
+        ))}
+      </div>
+
+      {vues.map(r=>{
+        const f=r.fiche||{};
+        const open=ouvert===r.id;
+        return(
+          <div key={r.id} className="card" style={{padding:0,overflow:"hidden",borderColor:open?"#00d4ff40":"#E5E5EA"}}>
+            <div onClick={()=>setOuvert(open?null:r.id)} style={{display:"flex",gap:12,padding:14,cursor:"pointer",alignItems:"center"}}>
+              {r.planche_url&&<img src={r.planche_url} alt="" style={{width:110,height:62,objectFit:"cover",borderRadius:6,flexShrink:0,background:"#F5F5F7"}}/>}
+              <div style={{flex:1,minWidth:0}}>
+                <p style={{fontFamily:"'Inter'",fontSize:14,fontWeight:600,color:"#1D1D1F"}}>{r.titre}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:2}}>
+                  {[r.source,r.plateforme,r.format,fmtS(r.duree_s)].filter(Boolean).join(" · ")}
+                </p>
+                <div style={{display:"flex",gap:6,marginTop:6,flexWrap:"wrap"}}>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:"#0077B6",background:"#00B4D818",borderRadius:999,padding:"2px 8px"}}>{r.nb_plans} plans</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:"#7C3AED",background:"#B47FFF18",borderRadius:999,padding:"2px 8px"}}>{fmtS(r.asl_s)}/plan</span>
+                  <span style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",background:"#F5F5F7",borderRadius:999,padding:"2px 8px"}}>{r.style_deduit}</span>
+                </div>
+              </div>
+              <span style={{color:"#6E6E73",fontSize:10,transform:open?"rotate(180deg)":"none",transition:"transform .2s"}}>▼</span>
+            </div>
+
+            {open&&(
+              <div style={{padding:"0 14px 16px",borderTop:"1px solid #E5E5EA",paddingTop:14,display:"flex",flexDirection:"column",gap:14}}>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {soMetric(fmtS(f.rythme?.asl_s),"Plan moyen","#7C3AED")}
+                  {soMetric(f.rythme?.coupes_par_minute??"—","Coupes/min","#0077B6")}
+                  {soMetric(fmtS(f.hook?.premier_plan_s),"1re coupe","#C2410C")}
+                  {soMetric(f.audio?.bpm?`${f.audio.bpm}`:"—","BPM","#0F766E")}
+                  {soMetric(f.audio?.taux_sync!=null?`${Math.round(f.audio.taux_sync*100)}%`:"—","Sur le beat","#0F766E")}
+                </div>
+
+                {f.hook?.verdict&&(
+                  <div style={{borderLeft:"3px solid #00d4ff",paddingLeft:12}}>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#0077B6",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:4}}>Les 3 premières secondes</div>
+                    <p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",margin:0}}>{f.hook.verdict}</p>
+                  </div>
+                )}
+
+                {Array.isArray(f.actes)&&f.actes.length>0&&(
+                  <div>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#0077B6",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:8}}>Densité de coupes par acte</div>
+                    <div style={{display:"flex",gap:8}}>
+                      {f.actes.map(a=>{
+                        const max=Math.max(...f.actes.map(x=>x.densite||0),1);
+                        return(
+                          <div key={a.nom} style={{flex:1}}>
+                            <div style={{height:44,display:"flex",alignItems:"flex-end",background:"#F5F5F7",borderRadius:6,padding:3}}>
+                              <div style={{width:"100%",height:`${Math.max(6,(a.densite||0)/max*100)}%`,background:SO_ACCENT,borderRadius:4}}/>
+                            </div>
+                            <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73",marginTop:4,textAlign:"center"}}>{a.nom}<br/><span style={{color:"#8E8E93"}}>{a.nb_coupes} coupes</span></p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {Array.isArray(f.palette)&&f.palette.length>0&&(
+                  <div>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#0077B6",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:6}}>Palette · {f.ambiance?.lecture||""}</div>
+                    <div style={{display:"flex",gap:5}}>
+                      {f.palette.slice(0,6).map((p,i)=>(
+                        <div key={i} title={p.hex} style={{flex:1,height:26,borderRadius:5,background:p.hex,border:"1px solid #E5E5EA"}}/>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {f.mouvement?.lecture&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",margin:0}}>🎥 {f.mouvement.lecture}</p>}
+
+                {Array.isArray(f.shotlist)&&f.shotlist.length>0&&(
+                  <div>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#0077B6",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700,marginBottom:6}}>Shotlist reconstituée — {f.shotlist.length} plans</div>
+                    <div style={{maxHeight:190,overflowY:"auto",border:"1px solid #E5E5EA",borderRadius:8}}>
+                      {f.shotlist.map(s=>(
+                        <div key={s.n} style={{display:"flex",alignItems:"center",gap:10,padding:"5px 10px",borderBottom:"1px solid #F5F5F7",fontFamily:"'Inter'",fontSize:11}}>
+                          <span style={{color:"#8E8E93",width:26,fontFamily:"'JetBrains Mono'"}}>{s.n}</span>
+                          <span style={{color:"#8E8E93",width:52,fontFamily:"'JetBrains Mono'"}}>{s.debut_s}s</span>
+                          <span style={{color:"#1D1D1F",fontWeight:600,width:52}}>{s.duree_s}s</span>
+                          <span style={{color:"#6E6E73",flex:1}}>{s.tenue}</span>
+                          <span style={{color:"#8E8E93",fontSize:10}}>{s.acte}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {r.notes&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",background:"#F5F5F7",borderRadius:7,padding:"8px 10px",margin:0}}>{r.notes}</p>}
+
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  {isSafeUrl(r.url)&&<a href={r.url} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:11,textDecoration:"none"}}>↗ Voir l'original</a>}
+                  <button onClick={()=>onCreateFromReference(r)} style={{flex:1,minWidth:180,padding:"10px",background:SO_ACCENT,border:"none",borderRadius:8,color:"#fff",fontFamily:"'Inter'",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+                    ✦ Faire pareil — créer la mission
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {isAdmin&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>Ajouter une référence : <span style={{fontFamily:"'JetBrains Mono'"}}>shortone_analyze.py &lt;url&gt;</span> puis <span style={{fontFamily:"'JetBrains Mono'"}}>shortone_sync.py push</span>.</p>}
+    </div>
+  );
+}
+
+// ── Shortone · Ma vidéo (dépôt + comparaison à une référence) ───────────────
+function ShortoneMaVideo({onNotif,clientId}){
+  const[analyses,setAnalyses]=useState([]);
+  const[refs,setRefs]=useState([]);
+  const[refId,setRefId]=useState("");
+  const[envoi,setEnvoi]=useState(false);
+  const[loading,setLoading]=useState(true);
+  const[ouvert,setOuvert]=useState(null);
+
+  const charger=useCallback(async()=>{
+    const[{data:a},{data:r}]=await Promise.all([
+      supabase.from("shortone_analyses").select("*").order("created_at",{ascending:false}).limit(20),
+      supabase.from("shortone_references").select("id,titre,source,asl_s").eq("actif",true).order("titre"),
+    ]);
+    setAnalyses(a||[]);
+    setRefs(r||[]);
+    if(r&&r.length>0)setRefId(p=>p||r[0].id);
+    setLoading(false);
+  },[]);
+  useEffect(()=>{charger();},[charger]);
+
+  const deposer=async(e)=>{
+    const file=e.target.files?.[0];
+    e.target.value="";
+    if(!file)return;
+    if(!clientId){onNotif("Session expirée — reconnecte-toi.");return;}
+    if(!/^video\//.test(file.type)){onNotif("Dépose un fichier vidéo (MP4, MOV…).");return;}
+    if(file.size>200*1024*1024){onNotif("Fichier trop lourd — 200 Mo maximum.");return;}
+    setEnvoi(true);
+    const ext=(file.name.split(".").pop()||"mp4").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const chemin=`${clientId}/${Date.now()}.${ext}`;
+    const{error:upErr}=await supabase.storage.from("shortone-uploads").upload(chemin,file,{contentType:file.type});
+    if(upErr){setEnvoi(false);onNotif("Envoi impossible : "+upErr.message);return;}
+    const{error}=await supabase.from("shortone_analyses").insert({
+      client_id:clientId,reference_id:refId||null,titre:file.name.slice(0,120),
+      fichier_path:chemin,statut:"en_attente",
+    });
+    setEnvoi(false);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onNotif("Vidéo envoyée — l'analyse arrive sous peu ✓");
+    charger();
+  };
+
+  const badge=s=>({en_attente:{l:"En attente",c:"#C2410C"},en_cours:{l:"Analyse en cours",c:"#0077B6"},termine:{l:"Analysé",c:"#0F766E"},erreur:{l:"Échec",c:"#D70015"}}[s]||{l:s,c:"#6E6E73"});
+
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:14}}>
+      <div style={{background:"linear-gradient(135deg,#00d4ff10,#8b5cf608)",border:"1px solid #00d4ff25",borderRadius:10,padding:"16px 18px"}}>
+        <p style={{fontFamily:"'Inter'",fontSize:13,color:"#1D1D1F",fontWeight:600}}>Compare ton montage à une référence</p>
+        <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:4}}>
+          Dépose ta vidéo : on mesure ton rythme de coupe, ton accroche et ton étalonnage, puis on te dit ce qui s'écarte de la référence choisie.
+        </p>
+        <div style={{display:"flex",gap:8,marginTop:12,flexWrap:"wrap",alignItems:"center"}}>
+          <select className="input" style={{flex:"1 1 200px",fontSize:12}} value={refId} onChange={e=>setRefId(e.target.value)}>
+            {refs.length===0&&<option value="">Aucune référence disponible</option>}
+            {refs.map(r=><option key={r.id} value={r.id}>{r.titre}{r.source?` — ${r.source}`:""}</option>)}
+          </select>
+          <label style={{background:envoi?"#00d4ff22":SO_ACCENT,border:"none",borderRadius:8,color:envoi?"#0077B6":"#fff",fontFamily:"'Inter'",fontWeight:700,fontSize:12,padding:"9px 18px",cursor:envoi?"not-allowed":"pointer"}}>
+            {envoi?"⟳ Envoi...":"⬆ Déposer ma vidéo"}
+            <input type="file" accept="video/*" onChange={deposer} disabled={envoi} style={{display:"none"}}/>
+          </label>
+        </div>
+      </div>
+
+      {loading&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73"}}>Chargement...</p>}
+      {!loading&&analyses.length===0&&(
+        <div style={{background:"#FFFFFF",border:"1px dashed #E5E5EA",borderRadius:10,padding:"30px 20px",textAlign:"center"}}>
+          <p style={{fontFamily:"'Inter'",fontSize:13,color:"#6E6E73"}}>Aucune vidéo déposée pour l'instant.</p>
+        </div>
+      )}
+
+      {analyses.map(a=>{
+        const b=badge(a.statut);
+        const open=ouvert===a.id;
+        const c=a.comparaison;
+        return(
+          <div key={a.id} className="card" style={{padding:14}}>
+            <div onClick={()=>c&&setOuvert(open?null:a.id)} style={{display:"flex",justifyContent:"space-between",gap:10,alignItems:"center",cursor:c?"pointer":"default",flexWrap:"wrap"}}>
+              <div style={{minWidth:0,flex:1}}>
+                <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F",overflow:"hidden",textOverflow:"ellipsis"}}>{a.titre||"Vidéo"}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",marginTop:2}}>{new Date(a.created_at).toLocaleDateString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</p>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                {c&&<span style={{fontFamily:"'Urbanist'",fontSize:20,fontWeight:800,color:c.score>=60?"#0F766E":c.score>=30?"#C2410C":"#D70015"}}>{c.score}<span style={{fontSize:11,color:"#8E8E93"}}>/100</span></span>}
+                <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,color:b.c,background:b.c+"18",borderRadius:999,padding:"3px 9px"}}>{b.l}</span>
+                {c&&<span style={{color:"#6E6E73",fontSize:10,transform:open?"rotate(180deg)":"none"}}>▼</span>}
+              </div>
+            </div>
+            {a.message&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015",marginTop:8}}>{a.message}</p>}
+
+            {open&&c&&(
+              <div style={{marginTop:14,borderTop:"1px solid #E5E5EA",paddingTop:14,display:"flex",flexDirection:"column",gap:12}}>
+                {Array.isArray(c.ecarts)&&c.ecarts.map(e=>(
+                  <div key={e.cle} style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                    <span style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",flex:"1 1 150px"}}>{e.label}</span>
+                    <span style={{fontFamily:"'JetBrains Mono'",fontSize:12,color:"#1D1D1F"}}>{e.client}{e.unite}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93"}}>vs {e.reference}{e.unite}</span>
+                    <span style={{fontFamily:"'Inter'",fontSize:10,fontWeight:700,borderRadius:999,padding:"2px 8px",color:e.verdict==="aligné"?"#0F766E":"#C2410C",background:(e.verdict==="aligné"?"#4ECDC4":"#FF9F43")+"20"}}>
+                      {e.verdict}{e.verdict!=="aligné"?` ${e.ecart_pct>0?"+":""}${e.ecart_pct}%`:""}
+                    </span>
+                  </div>
+                ))}
+                {Array.isArray(c.recommandations)&&c.recommandations.length>0&&(
+                  <div style={{background:"#F5F5F7",borderRadius:8,padding:"10px 12px",display:"flex",flexDirection:"column",gap:6}}>
+                    <div style={{fontFamily:"'Inter'",fontSize:9,color:"#0077B6",textTransform:"uppercase",letterSpacing:".1em",fontWeight:700}}>À corriger</div>
+                    {c.recommandations.map((r,i)=><p key={i} style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",margin:0,lineHeight:1.5}}>→ {r}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNotif,onCreateFromTrend,onCreateFromReference,clientId,isAdmin}){
   const [view,setView]=useState("radar");
   const [expanded,setExpanded]=useState(null);
   const [nicheFilter,setNicheFilter]=useState("Tous");
@@ -4738,11 +5006,16 @@ function ShortoneModule({projects,clients,onSelectProject,onSectionChange,onNoti
         {/* Sub-tabs */}
         <div style={{display:"flex",gap:4,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,padding:3}}>
           <button className={view==="radar"?"tab active":"tab"} style={{fontSize:12,padding:"5px 14px"}} onClick={()=>setView("radar")}>⚡ Radar</button>
+          <button className={view==="references"?"tab active":"tab"} style={{fontSize:12,padding:"5px 14px"}} onClick={()=>setView("references")}>◈ Références</button>
+          <button className={view==="mavideo"?"tab active":"tab"} style={{fontSize:12,padding:"5px 14px"}} onClick={()=>setView("mavideo")}>◉ Ma vidéo</button>
           <button className={view==="missions"?"tab active":"tab"} style={{fontSize:12,padding:"5px 14px"}} onClick={()=>setView("missions")}>
             ⬡ Missions {projects.length>0&&<span style={{marginLeft:4,background:"#FF9F43",color:"#FFFFFF",borderRadius:999,fontSize:9,fontWeight:800,padding:"1px 5px"}}>{projects.length}</span>}
           </button>
         </div>
       </div>
+
+      {view==="references"&&<ShortoneReferences onNotif={onNotif} onCreateFromReference={onCreateFromReference} isAdmin={isAdmin}/>}
+      {view==="mavideo"&&<ShortoneMaVideo onNotif={onNotif} clientId={clientId}/>}
 
       {/* ── RADAR ── */}
       {view==="radar"&&(
@@ -8250,6 +8523,37 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                 onSectionChange={setProdSection}
                 isAdmin={true}
                 onNotif={showNotif}
+                clientId={user?.id}
+                onCreateFromReference={async(ref)=>{
+                  const f=ref.fiche||{};
+                  const{data,error}=await supabase.from("projects").insert({
+                    title:`Reel calqué — ${ref.titre}`.slice(0,120),
+                    client_id:null,status:"brief",progress:0,
+                    brief:{
+                      source:"shortone_reference",referenceId:ref.id,referenceTitle:ref.titre,
+                      referenceUrl:ref.url||"",
+                      objective:`Reproduire la grammaire de montage de « ${ref.titre} »${ref.source?` (${ref.source})`:""}.`,
+                      duration:ref.duree_s?`${Math.round(ref.duree_s)}s`:"",
+                      tone:ref.style_deduit||"",
+                      montage:{
+                        aslCible:ref.asl_s,cpmCible:ref.cpm,nbPlans:ref.nb_plans,
+                        format:ref.format,bpm:f.audio?.bpm??null,
+                        syncBeat:f.audio?.taux_sync??null,
+                        hook:f.hook?.verdict||"",premierPlan:f.hook?.premier_plan_s??null,
+                        palette:(f.palette||[]).slice(0,5).map(p=>p.hex),
+                        ambiance:f.ambiance?.lecture||"",
+                      },
+                      shotlist:(f.shotlist||[]).map(s=>`Plan ${s.n} — ${s.duree_s}s (${s.tenue}, ${s.acte})`),
+                    },
+                    replay_url:"",delivery_date:null,shoot_date:null,status_note:null
+                  }).select().single();
+                  if(error){showNotif("Erreur : "+error.message);return;}
+                  const np={id:data.id,title:data.title,clientId:null,status:"brief",progress:0,createdAt:data.created_at?.split("T")[0],brief:data.brief,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]};
+                  setProjects(ps=>[np,...ps]);
+                  setSelectedProjectId(np.id);
+                  setProdSection("projets");
+                  showNotif(`Mission créée — shotlist de ${f.shotlist?.length||0} plans calquée ✓`);
+                }}
                 onCreateFromTrend={async(trend)=>{
                   const{data,error}=await supabase.from("projects").insert({
                     title:`Reel ${trend.tag}`,
@@ -8322,7 +8626,9 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                 onSectionChange={setClientSection}
                 isAdmin={false}
                 onNotif={showNotif}
+                clientId={user?.id}
                 onCreateFromTrend={()=>showNotif("Contacte ton chargé de projet pour créer une mission.")}
+                onCreateFromReference={()=>showNotif("Contacte ton chargé de projet pour lancer cette mission.")}
               />
             )}
             {appView==="client"&&clientReady&&clientSection==="estimation"&&activeClient?.simulatorEnabled&&(
