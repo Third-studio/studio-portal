@@ -3884,6 +3884,19 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
 // MODULE F — PLANNING ÉQUIPE
 // ─────────────────────────────────────────────────────────────────────────────
 function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlots,projects,bookings,onNotif}){
+  // Heures chronométrées ce mois-ci par membre (sessions de l'espace monteur).
+  const[memberHours,setMemberHours]=useState({});
+  useEffect(()=>{
+    const debut=new Date();debut.setDate(1);debut.setHours(0,0,0,0);
+    supabase.from("member_time_entries").select("member_id,started_at,ended_at")
+      .gte("started_at",debut.toISOString()).not("ended_at","is",null)
+      .then(({data})=>{
+        if(!data)return;
+        const h={};
+        data.forEach(e=>{h[e.member_id]=(h[e.member_id]||0)+(new Date(e.ended_at)-new Date(e.started_at))/3600000;});
+        setMemberHours(h);
+      });
+  },[]);
   const[view,setView]=useState("planning");
   const[weekStart,setWeekStart]=useState(()=>{
     const d=new Date(TODAY);
@@ -4127,6 +4140,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                       <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>{m.nom}</p>
                       <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73"}}>{m.role}{m.email?` · ${m.email}`:""}</p>
                     </div>
+                    {memberHours[m.id]>0.05&&<span title="Temps chronométré ce mois-ci depuis son espace" style={{fontFamily:"'Inter'",fontSize:10,color:"#C2410C",background:"#FF9F4315",border:"1px solid #FF9F4330",borderRadius:8,padding:"2px 7px",flexShrink:0}}>⏱ {memberHours[m.id].toFixed(1).replace(".",",")}h</span>}
                     <span style={{fontFamily:"'Inter'",fontSize:10,color:m.team==="A"?"#00B4D8":"#4ECDC4",background:m.team==="A"?"#00B4D818":"#4ECDC418",border:`1px solid ${m.team==="A"?"#00B4D830":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{m.team}</span>
                     <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",whiteSpace:"nowrap"}} title={m.accessRevokedAt?"Lien révoqué — cliquer pour en générer un nouveau":"Copier le lien de l'espace monteur (tous ses projets attribués)"} onClick={()=>copyMemberLink(m)}>{m.accessRevokedAt?"↻ Nouveau lien":"🔗 Lien espace"}</button>
                     <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>deleteMember(m.id)}>✕</button>
@@ -4487,9 +4501,18 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 const ACCENT_COLORS={or:"#0077B6",cyan:"#0F766E",bleu:"#4F46E5",violet:"#7C3AED",rouge:"#D70015"};
 const DEFAULT_SETTINGS={fontSize:"normale",density:"normale",accent:"or",contrast:false};
 
-function SettingsPanel({settings,onChange,onClose,user,onLogout}){
+function SettingsPanel({settings,onChange,onClose,user,onLogout,clientNotif,onSaveNotif}){
   const S=(k,v)=>onChange({...settings,[k]:v});
   const densityLabel={"compact":"Compact","normale":"Normal","spacieux":"Spacieux"};
+  const[waOn,setWaOn]=useState(clientNotif?.enabled||false);
+  const[waNum,setWaNum]=useState(clientNotif?.number||"");
+  const[waSaving,setWaSaving]=useState(false);
+  const saveWa=async(enabled)=>{
+    setWaSaving(true);
+    const ok=await onSaveNotif(waNum,enabled);
+    setWaSaving(false);
+    if(ok)setWaOn(enabled);
+  };
   return(
     <>
       <div onClick={onClose} style={{position:"fixed",inset:0,zIndex:998,background:"#00000055"}}/>
@@ -4499,6 +4522,17 @@ function SettingsPanel({settings,onChange,onClose,user,onLogout}){
           <span style={{fontFamily:"'Urbanist'",fontSize:18,color:"#1D1D1F",letterSpacing:"0.06em"}}>PARAMÈTRES</span>
           <button onClick={onClose} style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:18,lineHeight:1}}>✕</button>
         </div>
+        {clientNotif&&(
+          <div style={{padding:"16px 20px",borderBottom:"1px solid #E5E5EA",display:"flex",flexDirection:"column",gap:9}}>
+            <span style={{fontFamily:"'Inter'",fontSize:11,fontWeight:700,color:"#6E6E73",textTransform:"uppercase",letterSpacing:".08em"}}>📲 Notifications WhatsApp</span>
+            <p style={{fontFamily:"'Inter'",fontSize:11,color:"#8E8E93",margin:0}}>Recevez les messages et les avancées de vos projets sur WhatsApp, en plus de l'email.</p>
+            <input className="input" style={{fontSize:12}} placeholder="Numéro WhatsApp — ex. +596 696 12 34 56" value={waNum} onChange={e=>setWaNum(e.target.value)}/>
+            <button className={waOn?"btn btn-ghost":"btn btn-primary"} disabled={waSaving} style={{fontSize:12}} onClick={()=>saveWa(!waOn)}>
+              {waSaving?"⟳ …":waOn?"Désactiver WhatsApp":"Activer WhatsApp"}
+            </button>
+            {waOn&&<span style={{fontFamily:"'Inter'",fontSize:11,color:"#0F766E"}}>✓ Actives sur {clientNotif.number||waNum}</span>}
+          </div>
+        )}
 
         <div style={{flex:1,overflowY:"auto",padding:"18px 20px",display:"flex",flexDirection:"column",gap:22}}>
 
@@ -5939,6 +5973,15 @@ function ProgressSlider({ value, color, onCommit, width=96, label }){
 // Un lien = un membre = tous ses projets attribués. Lecture + dépôt d'un lien
 // de montage. Tout passe par les RPC get_member_workspace / member_add_delivery.
 // ─────────────────────────────────────────────────────────────────────────────
+// Chrono en cours du monteur — affiche le temps de LA session, jamais un total.
+function ChronoBadge({startedAt}){
+  const[,tick]=useState(0);
+  useEffect(()=>{const t=setInterval(()=>tick(x=>x+1),1000);return()=>clearInterval(t);},[]);
+  const s=Math.max(0,Math.floor((Date.now()-new Date(startedAt).getTime())/1000));
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  return<span style={{fontFamily:"'JetBrains Mono'",fontSize:12,fontWeight:600,color:"#C2410C"}}>{h>0?`${h}:${String(m).padStart(2,"0")}`:`${m}`}:{String(sec).padStart(2,"0")}</span>;
+}
+
 function MonteurEspacePage({token}){
   const[data,setData]=useState(null);
   const[loading,setLoading]=useState(true);
@@ -5947,6 +5990,9 @@ function MonteurEspacePage({token}){
   const[form,setForm]=useState({url:"",note:""});
   const[saving,setSaving]=useState(false);
   const[notif,setNotif]=useState("");
+  const[msgOpenId,setMsgOpenId]=useState(null);
+  const[msgText,setMsgText]=useState("");
+  const[msgSending,setMsgSending]=useState(false);
 
   const load=useCallback(async()=>{
     const{data:res,error}=await supabase.rpc("get_member_workspace",{p_token:token});
@@ -5965,6 +6011,32 @@ function MonteurEspacePage({token}){
     });
     if(error||!res?.ok){setNotif(res?.error||"Mise à jour impossible — réessaie.");load();return;}
     setNotif(fields.status?`Étape mise à jour : ${listStatusMeta(fields.status).label}`:`Avancement : ${fields.progress} %`);
+  };
+
+  const timerStart=async(projectId)=>{
+    const{data:res,error}=await supabase.rpc("member_timer_start",{p_token:token,p_project:projectId});
+    if(error||!res?.ok){setNotif(res?.error||"Chrono indisponible — réessaie.");return;}
+    setData(d=>d?{...d,timer:{projectId,startedAt:new Date().toISOString()}}:d);
+    setNotif("Chrono lancé ⏱");
+  };
+  const timerStop=async()=>{
+    const{data:res,error}=await supabase.rpc("member_timer_stop",{p_token:token});
+    if(error||!res?.ok){setNotif(res?.error||"Arrêt impossible — réessaie.");return;}
+    setData(d=>d?{...d,timer:null}:d);
+    const mn=res.minutes||0;
+    setNotif(`Session enregistrée — ${mn>=60?`${Math.floor(mn/60)}h${String(mn%60).padStart(2,"0")}`:`${mn} min`} ✓`);
+  };
+
+  const sendMessage=async(projectId)=>{
+    const text=msgText.trim();
+    if(!text)return;
+    setMsgSending(true);
+    const{data:res,error}=await supabase.rpc("member_send_message",{p_token:token,p_project:projectId,p_content:text});
+    setMsgSending(false);
+    if(error||!res?.ok){setNotif(res?.error||"Envoi impossible — réessaie.");return;}
+    setData(d=>d?{...d,projects:(d.projects||[]).map(x=>x.id===projectId?{...x,messages:[...(x.messages||[]),{id:`local-${x.messages?.length||0}`,author:d.member?.nom,content:text,role:"monteur",at:new Date().toISOString()}]}:x)}:d);
+    setMsgText("");
+    setNotif(res.emailed?"Message envoyé — le client est prévenu par email ✓":"Message envoyé ✓");
   };
 
   const submit=async(projectId)=>{
@@ -6041,7 +6113,25 @@ function MonteurEspacePage({token}){
                     </select>
                     <ProgressSlider value={p.progress||0} color={listStatusMeta(p.status).color} label={`Avancement de ${p.title}`}
                       width={120} onCommit={v=>updateProgress(p.id,{progress:v})}/>
+                    {data.timer?.projectId===p.id?(
+                      <button onClick={timerStop} style={{display:"inline-flex",alignItems:"center",gap:7,background:"#FF9F4318",border:"1px solid #FF9F4355",borderRadius:6,padding:"4px 11px",cursor:"pointer",fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#C2410C"}}>
+                        ⏹ Arrêter <ChronoBadge startedAt={data.timer.startedAt}/>
+                      </button>
+                    ):(
+                      <button onClick={()=>timerStart(p.id)} disabled={!!data.timer} title={data.timer?"Un chrono tourne déjà sur un autre projet":"Chronométrer mon temps sur ce projet"}
+                        style={{background:"transparent",border:"1px solid #E5E5EA",borderRadius:6,padding:"4px 11px",cursor:data.timer?"not-allowed":"pointer",fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:data.timer?"#C7C7CC":"#6E6E73",opacity:data.timer?0.6:1}}>
+                        ⏱ Chronométrer
+                      </button>
+                    )}
                   </div>
+                  {p.clientFeedback?.status&&(
+                    <div style={{marginTop:10,borderRadius:7,padding:"8px 10px",background:p.clientFeedback.status==="approved"?"#4ECDC418":"#FF9F4318",border:`1px solid ${p.clientFeedback.status==="approved"?"#4ECDC440":"#FF9F4340"}`}}>
+                      <p style={{fontFamily:"'Inter'",fontSize:12,fontWeight:700,color:p.clientFeedback.status==="approved"?"#0F766E":"#C2410C",margin:0}}>
+                        {p.clientFeedback.status==="approved"?"✅ Vidéo validée par le client":"🔁 Le client demande des modifications"}
+                      </p>
+                      {p.clientFeedback.comment&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",margin:"5px 0 0"}}>« {p.clientFeedback.comment} »</p>}
+                    </div>
+                  )}
                   {p.statusNote && <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginTop:10,background:"#F5F5F7",borderRadius:7,padding:"8px 10px"}}>📝 {p.statusNote}</p>}
                   {(p.brief?.objective||p.brief?.duration||p.brief?.tone) && (
                     <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:3}}>
@@ -6078,6 +6168,32 @@ function MonteurEspacePage({token}){
                       ))}
                     </div>
                   )}
+
+                  <div style={{marginTop:12,borderTop:"1px solid #F2F2F7",paddingTop:10}}>
+                    <button onClick={()=>{setMsgOpenId(msgOpenId===p.id?null:p.id);setMsgText("");}}
+                      style={{background:"transparent",border:"none",cursor:"pointer",fontFamily:"'Inter'",fontSize:12,fontWeight:600,color:"#0090B3",padding:0}}>
+                      💬 Échanges avec le client{(p.messages||[]).length>0?` (${p.messages.length})`:""} {msgOpenId===p.id?"▲":"▼"}
+                    </button>
+                    {msgOpenId===p.id&&(
+                      <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:8}}>
+                        {(p.messages||[]).length===0&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#8E8E93"}}>Aucun échange pour l'instant — écris le premier message.</p>}
+                        {(p.messages||[]).map(msg=>{
+                          const moi=msg.role==="monteur";
+                          return(
+                            <div key={msg.id} style={{display:"flex",flexDirection:"column",alignItems:moi?"flex-end":"flex-start",gap:2}}>
+                              <span style={{fontFamily:"'Inter'",fontSize:10,color:"#8E8E93"}}>{msg.author}{msg.at?` · ${new Date(msg.at).toLocaleDateString("fr-FR",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`:""}</span>
+                              <div style={{maxWidth:"85%",background:moi?"#00B4D815":"#F5F5F7",border:`1px solid ${moi?"#00B4D830":"#E5E5EA"}`,borderRadius:9,padding:"7px 11px",fontFamily:"'Inter'",fontSize:12,color:"#1D1D1F",whiteSpace:"pre-wrap"}}>{msg.content}</div>
+                            </div>
+                          );
+                        })}
+                        <div style={{display:"flex",gap:7,alignItems:"flex-end"}}>
+                          <textarea className="input" rows={2} style={{flex:1,fontSize:12}} placeholder="Écris au client — il sera prévenu par email"
+                            value={msgText} onChange={e=>setMsgText(e.target.value)}/>
+                          <button className="btn btn-primary" style={{fontSize:11}} disabled={msgSending||!msgText.trim()} onClick={()=>sendMessage(p.id)}>{msgSending?"Envoi…":"Envoyer"}</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -8671,7 +8787,15 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
         {notif&&<Notif msg={notif} onDone={()=>setNotif(null)}/>}
         {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} initialClientId={createForClientId} onClose={()=>{setShowCreateModal(false);setCreateForClientId(null);}} onCreate={createProject}/>}
         {invoiceModal&&<InvoiceModal project={invoiceModal.project} client={invoiceModal.client} existing={invoiceModal.existing} onClose={()=>setInvoiceModal(null)} onSave={saveInvoice}/>}
-        {showSettings&&<SettingsPanel settings={settings} onChange={setSettings} onClose={()=>setShowSettings(false)} user={user} onLogout={()=>supabase.auth.signOut()}/>}
+        {showSettings&&<SettingsPanel settings={settings} onChange={setSettings} onClose={()=>setShowSettings(false)} user={user} onLogout={()=>supabase.auth.signOut()}
+          clientNotif={userRole==="client"?{enabled:userProfile?.notify_whatsapp===true,number:userProfile?.whatsapp_number||""}:null}
+          onSaveNotif={async(number,enabled)=>{
+            const{data:res,error}=await supabase.rpc("set_my_notifications",{p_number:number,p_enabled:enabled});
+            if(error||!res?.ok){showNotif(res?.error||"Enregistrement impossible — réessaie.");return false;}
+            setUserProfile(p=>p?{...p,notify_whatsapp:enabled,whatsapp_number:number}:p);
+            showNotif(enabled?"📲 Notifications WhatsApp activées":"Notifications WhatsApp désactivées");
+            return true;
+          }}/>}
         {(isAdmin||isCollab||userRole==="client")&&<Assistant isTeam={isAdmin||isCollab} currentProjectId={selectedProjectId}/>}
       </div>
     </>
