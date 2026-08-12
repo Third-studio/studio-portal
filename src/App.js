@@ -3785,6 +3785,9 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
 // ─────────────────────────────────────────────────────────────────────────────
 // MEETING NOTES SECTION (fiche projet — admin)
 // ─────────────────────────────────────────────────────────────────────────────
+function escHtml(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
 function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}){
   const notes=meetingNotes.filter(n=>n.projectId===project.id);
   const[showAdd,setShowAdd]=useState(false);
@@ -3809,7 +3812,7 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
 
   const exportPDF=(note)=>{
     const win=window.open("","_blank");
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Note de réunion — ${project.title}</title><style>
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Note de réunion — ${escHtml(project.title)}</title><style>
       body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:40px;max-width:720px;margin:0 auto}
       h1{font-size:22px;font-weight:800;margin-bottom:4px}
       .sub{color:#666;font-size:13px;margin-bottom:24px}
@@ -3821,10 +3824,10 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
       @media print{body{padding:20px}button{display:none}}
     </style></head><body>
       <h1>Note de réunion</h1>
-      <p class="sub">Projet : ${project.title} — ${new Date(note.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
-      ${note.participants?`<p class="label">Participants</p><p class="box">${note.participants}</p>`:""}
-      <p class="label">Notes</p><div class="box">${note.content.replace(/\n/g,"<br>")}</div>
-      ${note.decisions?`<p class="label">Décisions prises</p><div class="box decisions">${note.decisions.split("\n").filter(Boolean).map(d=>`<div class="decision-item">${d}</div>`).join("")}</div>`:""}
+      <p class="sub">Projet : ${escHtml(project.title)} — ${new Date(note.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+      ${note.participants?`<p class="label">Participants</p><p class="box">${escHtml(note.participants)}</p>`:""}
+      <p class="label">Notes</p><div class="box">${escHtml(note.content).replace(/\n/g,"<br>")}</div>
+      ${note.decisions?`<p class="label">Décisions prises</p><div class="box decisions">${note.decisions.split("\n").filter(Boolean).map(d=>`<div class="decision-item">${escHtml(d)}</div>`).join("")}</div>`:""}
       <p style="color:#aaa;font-size:11px;margin-top:32px">Généré par Third-One Studio — ${new Date().toLocaleDateString("fr-FR")}</p>
       <script>window.onload=()=>window.print()</script>
     </body></html>`);

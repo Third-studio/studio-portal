@@ -29,12 +29,19 @@ security definer (l'anon key est publique par design).
 
 ## À faire — CRITIQUE / HAUTE
 
-- [ ] `supabase/functions/refresh-trends/index.ts` : AUCUN check d'auth — invocable par
-      n'importe qui avec l'anon key. Ajouter le même check JWT+rôle que `assistant`.
-- [ ] `supabase/functions/mail-classify/index.ts:34` : aucun check d'auth, écritures
-      service_role déclenchables avec l'anon key. Même correctif.
-- [ ] XSS stocké dans l'export PDF des notes de réunion (`document.write` sans échappement,
-      App.js ~3806). Échapper toutes les valeurs interpolées (title, attendees, summary…).
+- [x] `supabase/functions/refresh-trends/index.ts` : AUCUN check d'auth — corrigé (2026-08-12) :
+      ajout du check JWT + rôle admin/collaborateur (même pattern que `assistant`), 403 sinon.
+      N'importe qui avec l'anon key pouvait déclencher des appels Claude payants et écraser les
+      tendances actives.
+- [x] `supabase/functions/mail-classify/index.ts:34` : aucun check d'auth — corrigé (2026-08-12) :
+      même check JWT + rôle admin/collaborateur ajouté avant tout traitement. Empêche un
+      utilisateur non-équipe de forcer la classification d'emails et l'écriture service_role
+      (tasks/reminders/invoices/quotes) avec l'anon key.
+- [x] XSS stocké dans l'export PDF des notes de réunion (`document.write` sans échappement,
+      App.js) — corrigé (2026-08-12) : ajout d'un helper `escHtml` et échappement de
+      project.title, note.participants, note.content et chaque ligne de note.decisions avant
+      interpolation dans le HTML généré. Empêchait l'exécution de script arbitraire dans
+      l'onglet PDF ouvert par un admin consultant une note de réunion piégée.
 - [ ] Injection HTML dans les emails transactionnels : nom client / titre projet non
       échappés (App.js ~7755/7804) ET `send-email` accepte to/subject/text libres depuis
       le client (App.js ~917). Durcir côté edge function `send-email` : échappement HTML

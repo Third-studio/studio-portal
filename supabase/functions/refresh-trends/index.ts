@@ -13,6 +13,20 @@ const CORS = {
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
 
+  const supabaseAuth = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+
+  // ── Auth : session valide + rôle équipe (admin/collaborateur)
+  const auth = req.headers.get("Authorization") || "";
+  const jwt = auth.replace("Bearer ", "");
+  if (!jwt) return json({ error: "Missing auth" }, 401);
+  const { data: u } = await supabaseAuth.auth.getUser(jwt);
+  if (!u?.user) return json({ error: "Invalid session" }, 401);
+  const { data: profile } = await supabaseAuth.from("profiles")
+    .select("role").eq("id", u.user.id).single();
+  if (!["admin", "collaborateur"].includes(profile?.role ?? "")) {
+    return json({ error: "Forbidden" }, 403);
+  }
+
   try {
     // ── 1. Google Trends RSS (France + global)
     const rssUrls = [
@@ -116,3 +130,9 @@ Analyse ces tendances et crée exactement 6 idées de contenu social media percu
     );
   }
 });
+
+function json(payload: unknown, status = 200) {
+  return new Response(JSON.stringify(payload), {
+    status, headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}

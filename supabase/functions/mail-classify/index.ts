@@ -31,6 +31,18 @@ serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  // ── Auth : session valide + rôle équipe (admin/collaborateur)
+  const auth = req.headers.get("Authorization") || "";
+  const jwt = auth.replace("Bearer ", "");
+  if (!jwt) return json({ error: "Missing auth" }, 401);
+  const { data: u } = await supabase.auth.getUser(jwt);
+  if (!u?.user) return json({ error: "Invalid session" }, 401);
+  const { data: profile } = await supabase.from("profiles")
+    .select("role").eq("id", u.user.id).single();
+  if (!["admin", "collaborateur"].includes(profile?.role ?? "")) {
+    return json({ error: "Forbidden" }, 403);
+  }
+
   try {
     const { email_id } = (await req.json()) as { email_id: string };
     if (!email_id) return json({ error: "missing email_id" }, 400);
