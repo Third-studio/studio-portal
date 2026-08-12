@@ -3978,17 +3978,25 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
   };
   // Lien de l'espace monteur : un lien permanent par membre. Si le lien a été
   // révoqué (ou n'existe pas), on en régénère un avant de le copier.
+  const ensureMemberToken=async(m)=>{
+    if(m.accessToken&&!m.accessRevokedAt)return m.accessToken;
+    const token=(crypto.randomUUID()+crypto.randomUUID()).replace(/-/g,"");
+    const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
+    if(error){onNotif("Erreur : "+error.message);return null;}
+    setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
+    return token;
+  };
   const copyMemberLink=async(m)=>{
-    let token=m.accessToken;
-    if(!token||m.accessRevokedAt){
-      token=(crypto.randomUUID?crypto.randomUUID():String(Date.now())).replace(/-/g,"");
-      const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
-      if(error){onNotif("Erreur : "+error.message);return;}
-      setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
-    }
+    const token=await ensureMemberToken(m);
+    if(!token)return;
     const url=`${window.location.origin}/?monteur=${token}`;
     try{ await navigator.clipboard.writeText(url); onNotif(`Lien de ${m.nom} copié`); }
     catch{ window.prompt("Lien de l'espace monteur :",url); }
+  };
+  const openMemberSpace=async(m)=>{
+    const token=await ensureMemberToken(m);
+    if(!token)return;
+    window.open(`${window.location.origin}/?monteur=${token}`,"_blank","noopener");
   };
 
   const weekLabel=`${new Date(weekDays[0]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} – ${new Date(weekDays[6]+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}`;
@@ -4142,6 +4150,7 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
                     </div>
                     {memberHours[m.id]>0.05&&<span title="Temps chronométré ce mois-ci depuis son espace" style={{fontFamily:"'Inter'",fontSize:10,color:"#C2410C",background:"#FF9F4315",border:"1px solid #FF9F4330",borderRadius:8,padding:"2px 7px",flexShrink:0}}>⏱ {memberHours[m.id].toFixed(1).replace(".",",")}h</span>}
                     <span style={{fontFamily:"'Inter'",fontSize:10,color:m.team==="A"?"#00B4D8":"#4ECDC4",background:m.team==="A"?"#00B4D818":"#4ECDC418",border:`1px solid ${m.team==="A"?"#00B4D830":"#4ECDC430"}`,borderRadius:8,padding:"2px 7px",flexShrink:0}}>Éq.{m.team}</span>
+                    <button className="btn btn-blue" style={{fontSize:10,padding:"3px 8px",whiteSpace:"nowrap"}} title="Ouvrir son espace tel qu'il le voit (nouvel onglet)" onClick={()=>openMemberSpace(m)}>👁 Voir l'espace</button>
                     <button className="btn btn-ghost" style={{fontSize:10,padding:"3px 8px",whiteSpace:"nowrap"}} title={m.accessRevokedAt?"Lien révoqué — cliquer pour en générer un nouveau":"Copier le lien de l'espace monteur (tous ses projets attribués)"} onClick={()=>copyMemberLink(m)}>{m.accessRevokedAt?"↻ Nouveau lien":"🔗 Lien espace"}</button>
                     <button className="btn btn-red" style={{fontSize:10,padding:"3px 7px"}} onClick={()=>deleteMember(m.id)}>✕</button>
                   </div>
