@@ -56,8 +56,8 @@ security definer (l'anon key est publique par design).
 
 ## À faire — MOYENNE
 
-- [ ] Token monteur : fallback prévisible `Date.now()` quand crypto indisponible
-      (App.js ~3966/7712/7833). Exiger crypto.randomUUID (toujours dispo en HTTPS).
+- [x] Token monteur : fallback prévisible `Date.now()` — remplacé par 2×crypto.randomUUID
+      dans ensureMemberToken (2026-08-12). Vérifier qu'aucun autre site de génération ne subsiste.
 - [ ] Supervision : vérifier que les policies RLS de la migration `20260618130000_supervision`
       couvrent bien tout ce que l'UI superviseur affiche (décision côté client, App.js ~7549).
 - [ ] `claim_pending_projects()` : rattachement par simple correspondance d'email — un compte
