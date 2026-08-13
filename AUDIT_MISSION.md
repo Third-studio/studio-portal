@@ -70,9 +70,19 @@ security definer (l'anon key est publique par design).
       rechargement. À investiguer : soit un insert/delete Supabase manquant dans ProdLivrables,
       soit les fichiers visibles proviennent d'un autre flux (upload client/monteur) et cet
       onglet admin est cassé depuis un moment.
-- [ ] Flags d'autorisation dans `projects.brief` (clientStepsUnlocked, submitted…) alors que
-      le client peut réécrire tout le JSON brief (App.js ~1583/7909). Déplacer les flags
-      admin dans une colonne non modifiable par le client (policy ou trigger).
+- [x] Flags d'autorisation dans `projects.brief` — corrigé (2026-08-13) pour `clientStepsUnlocked`
+      (déverrouille moodboard/storyboards/révisions/livrables côté client, App.js gatedTabs) :
+      posé uniquement par `toggleClientAccess`/`toggleProjectAccess` (admin), mais le client a
+      le droit d'UPDATE sa colonne `brief` entière pour éditer son brief → rien n'empêchait un
+      appel API direct (JWT client valide) avec `clientStepsUnlocked:true` pour s'auto-débloquer
+      l'accès. Policy RESTRICTIVE ajoutée (`projects_client_steps_unlocked_lock`, migration
+      `20260813100000_lock_client_steps_unlocked.sql`, même technique que pour les livrables
+      internes) : interdit à tout rôle non admin/collaborateur de modifier ce flag par rapport
+      à sa valeur déjà enregistrée. À déployer par Idriss (`supabase db push`).
+      `submitted` (l'autre flag cité dans l'item d'origine) est en réalité un flag légitimement
+      client-writable — c'est le client lui-même qui le passe à `true` en soumettant son brief
+      (`submitBrief`, App.js) ; pas d'action prise dessus, le préciser sous ce nom prêtait à
+      confusion mais ce n'est pas un flag "admin" au même titre.
 - [ ] Réservations : noms clients + notes internes envoyés aux visiteurs non-admin, masquage
       UI seulement (App.js ~2176) ; formulaire « Poser une option » accessible aux
       non-admins (~2220). Filtrer côté requête/RLS selon le rôle.
