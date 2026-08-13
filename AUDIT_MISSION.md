@@ -37,6 +37,12 @@ security definer (l'anon key est publique par design).
       même check JWT + rôle admin/collaborateur ajouté avant tout traitement. Empêche un
       utilisateur non-équipe de forcer la classification d'emails et l'écriture service_role
       (tasks/reminders/invoices/quotes) avec l'anon key.
+      RÉGRESSION corrigée (2026-08-13) : ce check cassait l'appel interne
+      `gmail-sync` → `mail-classify` (le supabase-js client de gmail-sync est créé avec la
+      service role key, pas un JWT utilisateur → `auth.getUser()` échouait → 401 →
+      classification automatique des emails entrants silencieusement cassée en prod, gmail-sync
+      avale l'erreur). Ajout d'un bypass explicite quand le bearer token égale la service role
+      key, avant toute vérification JWT/rôle.
 - [x] XSS stocké dans l'export PDF des notes de réunion (`document.write` sans échappement,
       App.js) — corrigé (2026-08-12) : ajout d'un helper `escHtml` et échappement de
       project.title, note.participants, note.content et chaque ligne de note.decisions avant
@@ -110,14 +116,16 @@ security definer (l'anon key est publique par design).
       l'ouverture d'un projet plutôt que pour tous les projets au login — refactor plus
       large (état + tous les composants qui lisent project.messages/files/storyboards),
       volontairement laissé pour un run dédié plutôt que bâclé dans le budget de celui-ci.
-- [ ] NOUVEAU (découvert 2026-08-13 en traitant l'item livrables internes) : `ProdLivrables`
-      (App.js, `add()`/`del()`) ne persiste jamais en base — passe uniquement par `onUpdate`
-      → `updProject` qui ne fait que `setProjects` en mémoire (pas d'insert/delete Supabase
-      sur `public.files`). Un ajout/suppression de rushes/droits/livrable final depuis la
-      fiche projet disparaît donc silencieusement au rechargement de page — perte de données
-      pour l'équipe. À vérifier : soit ajouter le vrai insert/delete vers `public.files` dans
-      `ProdLivrables`, soit comprendre par quel autre flux les fichiers actuellement visibles
-      en base ont été créés.
+- [x] NOUVEAU (découvert 2026-08-13 en traitant l'item livrables internes) : `ProdLivrables`
+      (App.js, `add()`/`del()`) ne persistait jamais en base — corrigé (2026-08-13) :
+      `add()`/`del()` font maintenant un vrai `insert`/`delete` sur `public.files`
+      (project_id/name/url/note/category), avec vérification d'erreur avant de mettre à jour
+      l'état local (auparavant `onUpdate` → `updProject` ne faisait que `setProjects` en
+      mémoire — perte silencieuse des rushes/droits/livrables ajoutés/supprimés au rechargement
+      de page). Migration `20260813130000_files_insert_delete_team.sql` ajoutée (policies
+      INSERT/DELETE PERMISSIVE admin/collaborateur sur `public.files` — policies historiques
+      inconnues, schéma non versionné, donc ajout plutôt que remplacement, cf. même approche
+      que `20260813090000`). À déployer par Idriss (`supabase db push`).
 
 ## À faire — MOYENNE
 
@@ -128,8 +136,11 @@ security definer (l'anon key est publique par design).
 - [ ] `claim_pending_projects()` : rattachement par simple correspondance d'email — un compte
       créé avec l'email visé récupère les projets en attente. Exiger email confirmé.
 - [ ] `invite-upload` : expires_at/single_use ignorés + uploads illimités (index.ts ~48).
-- [ ] `project-export` : injection de formule CSV (préfixer ' les cellules commençant
-      par = + - @, index.ts ~87).
+- [x] `project-export` : injection de formule CSV — corrigé (2026-08-13) : `csvLine()`
+      préfixe maintenant d'un `'` toute cellule dont la valeur (converties en string) commence
+      par `=`, `+`, `-` ou `@` avant l'échappement des guillemets. Un titre de tâche, sujet de
+      mail ou libellé de facture piégé (ex: `=HYPERLINK(...)`) exécutait une formule à
+      l'ouverture du CSV dans Excel/Sheets par l'admin qui exporte.
 - [ ] `calendar-sync` : re-push de TOUTES les tâches ouvertes à chaque run (~200 appels
       Google). Ne pousser que les deltas.
 - [ ] `Number()` sur des ids projet UUID casse la liaison post↔projet (App.js ~3092).
