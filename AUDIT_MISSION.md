@@ -52,8 +52,24 @@ security definer (l'anon key est publique par design).
       les destinataires de `send-email` aux emails liés au projet — la fonction est aussi
       utilisée pour des digests internes (weekly-recap, daily-briefing) qui n'ont pas de
       destinataire "lié à un projet", donc une restriction globale casserait ces usages.
-- [ ] Livrables « internes » (rushes, droits, notes) stockés dans la ligne `projects`
-      lisible par le client (App.js ~562). Séparer ou filtrer côté RLS/RPC.
+- [x] Livrables « internes » (rushes, droits) lisibles par le client — corrigé (2026-08-13) :
+      en réalité stockés dans une vraie table `public.files` (colonne `category`) jointe au
+      projet via `files(*)`, pas dans la ligne `projects` comme indiqué initialement — le
+      masquage « Interne » (App.js, ProdLivrables) n'est que visuel, la requête embarquée
+      renvoie tout au client (visible en onglet réseau). Policy historique introuvable dans
+      les migrations versionnées (schéma de base non versionné) → au lieu de la deviner et
+      la remplacer à l'aveugle, ajout d'une policy RESTRICTIVE (`files_categorie_interne_restrict`,
+      migration `20260813090000_files_internes_restriction.sql`) qui se combine en ET avec
+      n'importe quelle policy permissive existante et bloque category≠'finaux' pour tout rôle
+      hors admin/collaborateur — narrows l'accès quel que soit le nom de la policy en place.
+      À déployer par Idriss (`supabase db push`).
+      Découverte annexe (hors périmètre de cet item, à traiter séparément) : `ProdLivrables.add()`
+      /`del()` (App.js) n'écrivent jamais dans `public.files` — ils passent par `onUpdate` qui
+      ne fait que du `setProjects` en mémoire (App.js, `updProject`). Les livrables
+      ajoutés/supprimés depuis cet onglet ne sont donc pas persistés et disparaissent au
+      rechargement. À investiguer : soit un insert/delete Supabase manquant dans ProdLivrables,
+      soit les fichiers visibles proviennent d'un autre flux (upload client/monteur) et cet
+      onglet admin est cassé depuis un moment.
 - [ ] Flags d'autorisation dans `projects.brief` (clientStepsUnlocked, submitted…) alors que
       le client peut réécrire tout le JSON brief (App.js ~1583/7909). Déplacer les flags
       admin dans une colonne non modifiable par le client (policy ou trigger).
@@ -66,6 +82,14 @@ security definer (l'anon key est publique par design).
       imbriqués, sans limite (App.js ~7430/7551) et TOUT est rechargé à chaque refresh de
       token / retour d'onglet (~7497). Charger les détails à l'ouverture d'un projet,
       limiter les colonnes du select initial, ignorer les TOKEN_REFRESHED.
+- [ ] NOUVEAU (découvert 2026-08-13 en traitant l'item livrables internes) : `ProdLivrables`
+      (App.js, `add()`/`del()`) ne persiste jamais en base — passe uniquement par `onUpdate`
+      → `updProject` qui ne fait que `setProjects` en mémoire (pas d'insert/delete Supabase
+      sur `public.files`). Un ajout/suppression de rushes/droits/livrable final depuis la
+      fiche projet disparaît donc silencieusement au rechargement de page — perte de données
+      pour l'équipe. À vérifier : soit ajouter le vrai insert/delete vers `public.files` dans
+      `ProdLivrables`, soit comprendre par quel autre flux les fichiers actuellement visibles
+      en base ont été créés.
 
 ## À faire — MOYENNE
 
