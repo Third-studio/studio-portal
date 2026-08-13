@@ -1932,7 +1932,7 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
   useEffect(()=>{
     const expired=bookings.filter(b=>b.status==="option"&&b.expiresAt&&new Date(b.expiresAt)<Date.now());
     if(expired.length===0)return;
-    expired.forEach(b=>supabase.from("bookings").update({status:"expired"}).eq("id",b.id));
+    if(isAdmin)expired.forEach(b=>supabase.from("bookings").update({status:"expired"}).eq("id",b.id));
     setBookings(bs=>bs.map(b=>expired.some(e=>e.id===b.id)?{...b,status:"expired"}:b));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
@@ -2221,8 +2221,10 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
           );
         })}
 
-        {/* Add option form */}
-        {teamsWithSlots.length>0&&(
+        {/* Add option form — admin/collaborateur uniquement : la table bookings refuse
+            désormais les insert/update hors admin (policy RESTRICTIVE), ce gate évite
+            juste d'afficher un formulaire qui échouerait silencieusement pour un client. */}
+        {isAdmin&&teamsWithSlots.length>0&&(
           <div style={{paddingTop:14,borderTop:"1px solid #E5E5EA"}}>
             <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:10}}>Poser une option :</p>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -7981,7 +7983,7 @@ function AppMain() {
       const queries = [
         supabase.from("projects").select("*, messages(*), files(*), storyboards(*)").order("created_at",{ascending:false}),
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
-        supabase.from("bookings").select("*").order("date",{ascending:true}),
+        supabase.rpc("get_bookings"),
         supabase.from("service_types").select("*").order("label"),
         supabase.from("invoices").select("*").order("issued_at",{ascending:false}),
       ];
