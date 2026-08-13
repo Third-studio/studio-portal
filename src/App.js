@@ -568,14 +568,20 @@ function ProdLivrables({project,onUpdate,onNotif,notifyClient,client}){
     if(!form.name.trim())return;
     if(form.url&&!safePortfolioUrl(form.url)){onNotif("URL invalide — utilisez un lien https://");return;}
     const cat=showAdd;
-    onUpdate({...project,livrables:[...(project.livrables||[]),{id:Date.now(),...form,category:cat,date:new Date().toISOString().split("T")[0]}]});
+    const{data,error}=await supabase.from("files").insert({project_id:project.id,name:form.name,url:form.url,note:form.note,category:cat}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,livrables:[...(project.livrables||[]),{id:data.id,name:data.name,url:data.url,note:data.note,category:data.category,date:data.created_at?.split("T")[0]}]});
     onNotif("Fichier ajouté !");
     if(cat==="finaux"&&notify&&notifyClient&&client?.email){
       await notifyClient({ project, client, kind:"livrable", extra:`Fichier : ${form.name}` });
     }
     setForm({name:"",url:"",note:""});setShowAdd(null);
   };
-  const del=id=>onUpdate({...project,livrables:(project.livrables||[]).filter(l=>l.id!==id)});
+  const del=async(id)=>{
+    const{error}=await supabase.from("files").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,livrables:(project.livrables||[]).filter(l=>l.id!==id)});
+  };
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       {sections.map(sec=>{
