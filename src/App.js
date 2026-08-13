@@ -7930,7 +7930,13 @@ function AppMain() {
       .catch(() => { setUser(null); setAuthLoading(false); })
       .finally(() => clearTimeout(timeout));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+      // TOKEN_REFRESHED (rafraîchi périodiquement, y compris au retour d'onglet) renvoie le
+      // même utilisateur : garder la même référence évite de redéclencher le useEffect [user]
+      // qui recharge TOUS les projets/messages/fichiers/storyboards depuis zéro.
+      setUser(prev => {
+        const next = session?.user || null;
+        return prev?.id === next?.id ? prev : next;
+      });
     });
     return () => subscription.unsubscribe();
   }, []);

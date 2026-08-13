@@ -100,9 +100,16 @@ security definer (l'anon key est publique par design).
       famille de bug) vérifient maintenant `error` et notifient l'échec au lieu d'afficher
       « Accès révoqué »/« Compte suspendu » alors que la base n'a pas été mise à jour.
 - [ ] PERF : le login charge TOUS les projets avec TOUS les messages/fichiers/storyboards
-      imbriqués, sans limite (App.js ~7430/7551) et TOUT est rechargé à chaque refresh de
-      token / retour d'onglet (~7497). Charger les détails à l'ouverture d'un projet,
-      limiter les colonnes du select initial, ignorer les TOKEN_REFRESHED.
+      imbriqués, sans limite (App.js ~7430/7551). PARTIEL (2026-08-13) : le volet
+      « TOUT est rechargé à chaque refresh de token / retour d'onglet » est corrigé —
+      `onAuthStateChange` gardait une nouvelle référence `user` à chaque événement (y
+      compris TOKEN_REFRESHED, déclenché périodiquement + au retour d'onglet), ce qui
+      redéclenchait le `useEffect [user]` de chargement complet ; il compare maintenant
+      l'id et garde la même référence si l'utilisateur n'a pas changé. Reste à faire :
+      limiter les colonnes du select initial et charger messages/fichiers/storyboards à
+      l'ouverture d'un projet plutôt que pour tous les projets au login — refactor plus
+      large (état + tous les composants qui lisent project.messages/files/storyboards),
+      volontairement laissé pour un run dédié plutôt que bâclé dans le budget de celui-ci.
 - [ ] NOUVEAU (découvert 2026-08-13 en traitant l'item livrables internes) : `ProdLivrables`
       (App.js, `add()`/`del()`) ne persiste jamais en base — passe uniquement par `onUpdate`
       → `updProject` qui ne fait que `setProjects` en mémoire (pas d'insert/delete Supabase
