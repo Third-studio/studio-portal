@@ -42,10 +42,16 @@ security definer (l'anon key est publique par design).
       project.title, note.participants, note.content et chaque ligne de note.decisions avant
       interpolation dans le HTML généré. Empêchait l'exécution de script arbitraire dans
       l'onglet PDF ouvert par un admin consultant une note de réunion piégée.
-- [ ] Injection HTML dans les emails transactionnels : nom client / titre projet non
-      échappés (App.js ~7755/7804) ET `send-email` accepte to/subject/text libres depuis
-      le client (App.js ~917). Durcir côté edge function `send-email` : échappement HTML
-      systématique + restreindre les destinataires aux emails liés au projet.
+- [x] Injection HTML dans les emails transactionnels — corrigé (2026-08-13) : `notifyClient`
+      (fragment HTML de `send-email`) interpolait `client.name` / nom de fichier uploadé /
+      montant facture sans échappement, et `sendClientInvite` interpolait `client.name` +
+      `project.title` de la même façon → un nom de client ou de fichier piégé (balises
+      HTML/JS) s'exécutait dans le client mail de l'admin ou du client à l'ouverture de
+      l'email. Réutilisation du helper `escHtml` existant sur ces deux points d'interpolation.
+      Non traité (nécessite une décision produit, pas un correctif ponctuel) : restreindre
+      les destinataires de `send-email` aux emails liés au projet — la fonction est aussi
+      utilisée pour des digests internes (weekly-recap, daily-briefing) qui n'ont pas de
+      destinataire "lié à un projet", donc une restriction globale casserait ces usages.
 - [ ] Livrables « internes » (rushes, droits, notes) stockés dans la ligne `projects`
       lisible par le client (App.js ~562). Séparer ou filtrer côté RLS/RPC.
 - [ ] Flags d'autorisation dans `projects.brief` (clientStepsUnlocked, submitted…) alors que

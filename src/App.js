@@ -8182,10 +8182,12 @@ Accéder à votre espace : ${link}
 
 — Third-One Studio`;
       // Le template de marque est appliqué côté serveur (send-email).
+      // greet/lead/extra peuvent contenir un nom client ou un nom de fichier fournis
+      // par un tiers (client, upload) : échappement avant interpolation HTML.
       const fragment = html ||
-`<p style="margin:0 0 14px;">${greet}</p>
-<p style="margin:0 0 14px;">${lead}</p>
-${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
+`<p style="margin:0 0 14px;">${escHtml(greet)}</p>
+<p style="margin:0 0 14px;">${escHtml(lead)}</p>
+${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""}`;
       const{ error } = await supabase.functions.invoke("send-email", { body: {
         to, subject: finalSubject, text: finalText, html: fragment,
         kicker: "Suivi de projet", title: finalSubject,
@@ -8353,7 +8355,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     const{error}=await supabase.functions.invoke("send-email",{body:{
       to:email,subject:`Votre espace projet – ${project.title}`,
       kicker:"Invitation",title:`Votre projet ${project.title}`,
-      html:`<p style="margin:0 0 14px;">Bonjour ${name||""},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${project.title}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
+      html:`<p style="margin:0 0 14px;">Bonjour ${escHtml(name)},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${escHtml(project.title)}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
       text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
       cta:{label:"Créer mon accès",url:link},
     }});
