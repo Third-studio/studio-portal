@@ -83,11 +83,22 @@ security definer (l'anon key est publique par design).
       client-writable — c'est le client lui-même qui le passe à `true` en soumettant son brief
       (`submitBrief`, App.js) ; pas d'action prise dessus, le préciser sous ce nom prêtait à
       confusion mais ce n'est pas un flag "admin" au même titre.
-- [ ] Réservations : noms clients + notes internes envoyés aux visiteurs non-admin, masquage
-      UI seulement (App.js ~2176) ; formulaire « Poser une option » accessible aux
-      non-admins (~2220). Filtrer côté requête/RLS selon le rôle.
-- [ ] Révocation d'accès collaborateur : update sans vérification d'erreur → échec silencieux
-      (App.js ~6762/7640). Vérifier error + notifier.
+- [x] Réservations : noms clients + notes internes envoyés aux visiteurs non-admin — corrigé
+      (2026-08-13) : `bookings` était chargée en entier (`select("*")`) pour tous les rôles,
+      le masquage (isAdmin && ...) n'était que visuel — un client recevait déjà, dans le
+      state React et la réponse réseau, les noms/notes de TOUTES les réservations. Nouvelle
+      RPC `get_bookings()` (security definer) qui masque client_name/note pour les non
+      admin/collaborateur ; policies RESTRICTIVE select/insert/update sur `bookings`
+      réservées à admin/collaborateur (empêche aussi le contournement par appel REST direct
+      + bloque l'insertion via le formulaire « Poser une option », qui n'était pas gardé par
+      rôle et permettait à un client d'insérer une réservation arbitraire). Formulaire
+      masqué aux non-admins côté UI. Migration `20260813110000_bookings_role_filter.sql`
+      à déployer par Idriss (`supabase db push`).
+- [x] Révocation d'accès collaborateur/client : update sans vérification d'erreur → échec
+      silencieux — corrigé (2026-08-13) : `revoke()` (AccessManager, révocation collaborateur)
+      et `toggleActive()` (ClientsManager, suspension/activation client — même défaut, même
+      famille de bug) vérifient maintenant `error` et notifient l'échec au lieu d'afficher
+      « Accès révoqué »/« Compte suspendu » alors que la base n'a pas été mise à jour.
 - [ ] PERF : le login charge TOUS les projets avec TOUS les messages/fichiers/storyboards
       imbriqués, sans limite (App.js ~7430/7551) et TOUT est rechargé à chaque refresh de
       token / retour d'onglet (~7497). Charger les détails à l'ouverture d'un projet,

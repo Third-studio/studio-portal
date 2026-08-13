@@ -4336,7 +4336,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 
   const toggleActive=async(c)=>{
     const v=!c.isActive;
-    await supabase.from("profiles").update({is_active:v}).eq("id",c.id);
+    const{error}=await supabase.from("profiles").update({is_active:v}).eq("id",c.id);
+    if(error){onNotif("Erreur : "+(v?"activation":"suspension")+" non enregistrée — "+error.message);return;}
     setClients(cs=>cs.map(x=>x.id===c.id?{...x,isActive:v}:x));
     onNotif(v?"Compte activé":"Compte suspendu");
   };
@@ -7193,7 +7194,8 @@ function AccessManager({onNotif}){
 
   const revoke=async(c)=>{
     await supabase.rpc("promote_to_collaborateur",{target_email:"__revoke__"});
-    await supabase.from("profiles").update({role:"client",is_active:false}).eq("id",c.id);
+    const{error}=await supabase.from("profiles").update({role:"client",is_active:false}).eq("id",c.id);
+    if(error){onNotif("Erreur : révocation non enregistrée — "+error.message);return;}
     setCollabs(prev=>prev.filter(x=>x.id!==c.id));
     onNotif("Accès révoqué");
   };
