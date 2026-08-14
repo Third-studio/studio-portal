@@ -131,11 +131,32 @@ security definer (l'anon key est publique par design).
 
 - [x] Token monteur : fallback prévisible `Date.now()` — remplacé par 2×crypto.randomUUID
       dans ensureMemberToken (2026-08-12). Vérifier qu'aucun autre site de génération ne subsiste.
-- [ ] Supervision : vérifier que les policies RLS de la migration `20260618130000_supervision`
-      couvrent bien tout ce que l'UI superviseur affiche (décision côté client, App.js ~7549).
-- [ ] `claim_pending_projects()` : rattachement par simple correspondance d'email — un compte
-      créé avec l'email visé récupère les projets en attente. Exiger email confirmé.
-- [ ] `invite-upload` : expires_at/single_use ignorés + uploads illimités (index.ts ~48).
+- [x] Supervision : vérifié (2026-08-14) — la migration `20260618130000_supervision.sql`
+      couvre bien toutes les surfaces exposées par l'UI superviseur : projects (select+update),
+      messages (select+insert, commentaires), files (select seule — le superviseur ne modifie
+      jamais les livrables côté UI), posts (select+update, validation contenus CM), storyboards
+      (select+update, validation). Le moodboard est stocké dans `projects.brief` (jsonb), donc
+      déjà couvert par `projects_supervisor_update` — pas de policy dédiée nécessaire. La valeur
+      `isSupervisor` calculée côté client (App.js) n'est qu'un affichage : l'accès réel passe par
+      `is_supervisor()`/`supervises_client()` (security definer, lues en base), donc un client
+      qui falsifierait cette valeur en front n'obtiendrait rien de plus via l'API. RAS, aucune
+      lacune trouvée.
+- [x] `claim_pending_projects()` : rattachement par simple correspondance d'email — corrigé
+      (2026-08-14, migration `20260814090000_claim_pending_projects_email_confirme.sql`) :
+      la fonction ne lit plus que les comptes dont `auth.users.email_confirmed_at is not null`.
+      Avant : un compte créé avec l'email d'un vrai client (même jamais confirmé) rattachait
+      immédiatement tous ses projets/briefs en attente — usurpation sans preuve de possession
+      de la boîte mail. À déployer par Idriss (`supabase db push`).
+- [x] `invite-upload` : expires_at ignoré + uploads illimités — corrigé (2026-08-14,
+      supabase/functions/invite-upload/index.ts) : la fonction ne vérifiait que `revoked_at`,
+      un lien expiré continuait donc à délivrer des URLs d'upload signées indéfiniment. Ajout du
+      check `expires_at` (403 si expiré) et d'une limite de 20 fichiers par projet (comptage via
+      `storage.list` sur le préfixe du projet), conforme au commentaire d'origine qui annonçait
+      cette limite sans jamais l'appliquer. `single_use` volontairement PAS vérifié ici : ce flag
+      gouverne la création du projet (déjà appliqué dans `create_project_from_invite`, migration
+      `20260713150000`) — le bloquer aussi dans invite-upload casserait les dépôts de fichiers
+      légitimes qui suivent la création d'un projet unique-usage. À redéployer par Idriss
+      (`supabase functions deploy invite-upload`).
 - [x] `project-export` : injection de formule CSV — corrigé (2026-08-13) : `csvLine()`
       préfixe maintenant d'un `'` toute cellule dont la valeur (converties en string) commence
       par `=`, `+`, `-` ou `@` avant l'échappement des guillemets. Un titre de tâche, sujet de
@@ -178,7 +199,11 @@ security definer (l'anon key est publique par design).
 
 ## Rappels déploiement (à faire par Idriss, pas par la routine)
 
-- `supabase db push --linked` → applique `20260807100000_espace_client_lien.sql`
+- `supabase db push --linked` → applique toutes les migrations en attente, dont
+  `20260807100000_espace_client_lien.sql`, `20260813090000_files_internes_restriction.sql`,
+  `20260813100000_lock_client_steps_unlocked.sql`, `20260813110000_bookings_role_filter.sql`,
+  `20260813130000_files_insert_delete_team.sql`,
+  `20260814090000_claim_pending_projects_email_confirme.sql`
 - `supabase functions deploy ai-generate` (+ redéployer refresh-trends/mail-classify
-  une fois corrigées)
+  une fois corrigées, + `invite-upload` pour le check expires_at/limite 20 fichiers)
 - Secrets déjà en place : ANTHROPIC_API_KEY ; optionnel : CLICKUP_MCP_TOKEN
