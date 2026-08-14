@@ -105,12 +105,12 @@ Sois conservateur : si tu doutes du montant, propose un fourchette basse réalis
       notes = `⚠️ Pas de devis trouvé — montant estimé par IA, à valider.\n${(parsed.summary_lines || []).join("\n")}`;
     }
 
-    // Numéro de facture auto : F-YYYY-NNNN
+    // Numéro de facture auto : F-YYYY-NNNN, via un compteur atomique (évite les
+    // doublons entre deux exécutions concurrentes, cf. next_invoice_number).
     const year = new Date().getFullYear();
-    const { count } = await supabase.from("invoices")
-      .select("id", { count: "exact", head: true })
-      .gte("issued_at", `${year}-01-01`);
-    const number = `F-${year}-${String((count || 0) + 1).padStart(4, "0")}`;
+    const { data: seq, error: seqErr } = await supabase.rpc("next_invoice_number", { p_year: year });
+    if (seqErr) throw seqErr;
+    const number = `F-${year}-${String(seq).padStart(4, "0")}`;
 
     const today = new Date().toISOString().slice(0, 10);
     const dueDate = new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10);

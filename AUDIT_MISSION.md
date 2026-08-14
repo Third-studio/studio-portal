@@ -214,8 +214,13 @@ security definer (l'anon key est publique par design).
       exploitable via un appel direct à l'API. RPC absente des migrations versionnées (schéma
       de base) → impossible de confirmer si le check existe déjà côté serveur sans lire sa
       définition réelle en base. À reprendre avec accès à la définition actuelle de la RPC.
-- [ ] ai-generate : rate limit simple (compteur par user/heure dans une table) — un client
-      peut appeler en boucle avec system libre.
+- [x] ai-generate : rate limit simple — corrigé (2026-08-14) : nouvelle table générique
+      `edge_function_calls` (migration `20260814110000_edge_function_rate_limit.sql`) +
+      helper `_shared/rateLimit.ts` (compteur glissant 1h par fonction/utilisateur).
+      `ai-generate` limite désormais à 15 appels/h pour un client, 60/h pour
+      admin/collaborateur (429 au-delà) — avant, un compte client pouvait appeler
+      Claude en boucle avec un `system` libre, sans aucune limite de coût. À déployer
+      par Idriss (`supabase db push` + `supabase functions deploy ai-generate`).
 - [ ] PERF memo/refetch : wrappers memo() neutralisés par handlers inline (~8055/8168) ;
       ProjectsListView recalcule O(projets×factures) à chaque frappe (~7056) ;
       TasksReminders refetch 3 tables à chaque clic (TasksReminders.js:20) ; Inbox refetch
@@ -226,8 +231,23 @@ security definer (l'anon key est publique par design).
 
 ## À faire — BASSE
 
-- [ ] `notify-new-project` : rate-limiter / vérifier l'appartenance du project_id (spam admin).
-- [ ] `auto-invoice` : numérotation par count() → doublons possibles ; utiliser une séquence.
+- [x] `notify-new-project` : rate-limiter / vérifier l'appartenance du project_id — corrigé
+      (2026-08-14) : réutilise `edge_function_calls` (10 appels/h par utilisateur) +
+      un client authentifié ne peut désormais notifier que sur SES PROPRES projets
+      (`project.client_id !== userId` → 403) — avant, n'importe quel client connecté
+      pouvait spammer l'email admin en rappelant la fonction en boucle avec le
+      project_id de n'importe quel projet, y compris ceux d'autres clients. Le check
+      cron (X-Cron-Key) et le rôle admin/collaborateur restent illimités (trigger DB,
+      usage interne légitime). À redéployer par Idriss
+      (`supabase functions deploy notify-new-project`).
+- [x] `auto-invoice` : numérotation par count() → doublons possibles — corrigé (2026-08-14) :
+      remplacé par un compteur atomique en base (`next_invoice_number()`, security definer,
+      migration `20260814120000_invoice_number_sequence.sql`) — l'UPDATE...RETURNING sur
+      une ligne unique par année prend un verrou Postgres qui sérialise les appels
+      concurrents, contrairement au `count()` qui pouvait lire la même valeur pour deux
+      projets passant en "livraison" au même moment et générer deux factures avec le même
+      numéro F-YYYY-NNNN. À déployer par Idriss (`supabase db push` +
+      `supabase functions deploy auto-invoice`).
 - [ ] Section Tarifs seulement masquée par la navigation pour les collaborateurs (~8103).
 - [ ] Suppressions/updates sans vérification d'erreur → state divergent de la base (~3955).
 - [ ] Lien d'invitation client : simple email en paramètre d'URL, sans secret (~7921).
@@ -247,7 +267,10 @@ security definer (l'anon key est publique par design).
   `20260807100000_espace_client_lien.sql`, `20260813090000_files_internes_restriction.sql`,
   `20260813100000_lock_client_steps_unlocked.sql`, `20260813110000_bookings_role_filter.sql`,
   `20260813130000_files_insert_delete_team.sql`,
-  `20260814090000_claim_pending_projects_email_confirme.sql`
-- `supabase functions deploy ai-generate` (+ redéployer refresh-trends/mail-classify
-  une fois corrigées, + `invite-upload` pour le check expires_at/limite 20 fichiers)
+  `20260814090000_claim_pending_projects_email_confirme.sql`,
+  `20260814100000_moodboard_bucket_limits.sql`, `20260814110000_edge_function_rate_limit.sql`,
+  `20260814120000_invoice_number_sequence.sql`
+- `supabase functions deploy ai-generate notify-new-project auto-invoice` (+ redéployer
+  refresh-trends/mail-classify une fois corrigées, + `invite-upload` pour le check
+  expires_at/limite 20 fichiers, + `calendar-sync` pour le filtre tasks déjà synchronisées)
 - Secrets déjà en place : ANTHROPIC_API_KEY ; optionnel : CLICKUP_MCP_TOKEN
