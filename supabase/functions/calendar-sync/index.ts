@@ -54,12 +54,13 @@ serve(async (req) => {
 
     const accessToken = await ensureAccessToken(supabase, integ);
 
-    // ── Tasks à pousser (due_date présente, status != done)
+    // ── Tasks à pousser (due_date présente, status != done, pas encore synchronisée)
     const { data: tasks } = await supabase
       .from("tasks")
       .select("*")
       .not("due_date", "is", null)
       .neq("status", "done")
+      .is("calendar_synced_at", null)
       .limit(200);
 
     for (const t of tasks || []) {

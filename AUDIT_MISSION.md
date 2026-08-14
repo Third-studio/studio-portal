@@ -162,14 +162,58 @@ security definer (l'anon key est publique par design).
       par `=`, `+`, `-` ou `@` avant l'échappement des guillemets. Un titre de tâche, sujet de
       mail ou libellé de facture piégé (ex: `=HYPERLINK(...)`) exécutait une formule à
       l'ouverture du CSV dans Excel/Sheets par l'admin qui exporte.
-- [ ] `calendar-sync` : re-push de TOUTES les tâches ouvertes à chaque run (~200 appels
-      Google). Ne pousser que les deltas.
-- [ ] `Number()` sur des ids projet UUID casse la liaison post↔projet (App.js ~3092).
+- [x] `calendar-sync` : re-push de TOUTES les tâches ouvertes à chaque run (~200 appels
+      Google) — corrigé (2026-08-14) : la requête `tasks` ne filtrait pas sur
+      `calendar_synced_at`, contrairement à celle des `reminders` juste en dessous dans le
+      même fichier qui excluait déjà les éléments déjà synchronisés (`is("calendar_synced_at",
+      null)`) — incohérence manifestement non intentionnelle entre les deux blocs. Ajout du
+      même filtre sur les tasks : seules les tâches jamais poussées sont désormais
+      synchronisées, au lieu des ~200 tâches ouvertes à chaque run. Limite connue (déjà
+      acceptée pour les reminders avec le même mécanisme) : une tâche déjà synchronisée puis
+      modifiée (titre, due_date) ne sera plus re-poussée automatiquement — nécessiterait un
+      suivi `updated_at` absent du schéma actuel, hors périmètre de ce correctif ciblé. À
+      redéployer par Idriss (`supabase functions deploy calendar-sync`).
+- [x] ~~`Number()` sur des ids projet UUID casse la liaison post↔projet (App.js ~3092)~~ —
+      FAUX POSITIF (vérifié 2026-08-14) : `projects.id` est un `bigint` (confirmé par toutes
+      les FK versionnées, ex. `20260803160000_espace_monteur.sql` : `project_id bigint
+      references public.projects(id)`), pas un uuid. Le `Number(e.target.value)` dans
+      `CMPostModal` (sélecteur de projet, App.js ~3106) est nécessaire : la valeur d'un
+      `<select>` HTML est toujours une string, et `projects.find(p=>p.id===form.projectId)`
+      (comparaison stricte) casserait sans cette conversion. Aucun id projet uuid nulle part
+      dans le schéma versionné.
 - [ ] Messages : `author`/`role` fournis par le client → usurpation possible (App.js ~1600).
-      Forcer author/role côté serveur (RLS with check ou trigger).
-- [ ] Upload client sans validation (type/taille) vers bucket public moodboard (App.js ~662).
+      Forcer author/role côté serveur (RLS with check ou trigger). NON TRAITÉ (2026-08-14,
+      analysé mais pas corrigé, item trop risqué pour être bâclé) : au moins 3 chemins
+      d'insertion directe distincts (prod authentifié, client authentifié, prestataire
+      authentifié rôle "partenaire") + le chemin monteur qui, lui, passe déjà par une RPC
+      security definer (`member_send_message`, appelée SANS session JWT — auth.uid() y est
+      NULL, accès par token dans `team_members`). Un trigger de correction basé sur
+      `get_my_role()` casserait ce chemin monteur (déjà sûr) si mal calibré côté NULL, et
+      `get_my_role()` ne couvre explicitement que admin/collaborateur/client dans les
+      migrations versionnées — le rôle "partenaire" (prestataires) n'y apparaît nulle part,
+      son comportement réel est invisible sans lire la définition actuelle de la fonction en
+      base (schéma de base non versionné). Risque de régression du même type que le bug
+      mail-classify/gmail-sync du 2026-08-13 si corrigé à l'aveugle. À reprendre avec accès à
+      la définition actuelle de `get_my_role()` et des policies `messages` en base.
+- [x] Upload client sans validation (type/taille) vers bucket public moodboard — corrigé
+      (2026-08-14) : `addByFile` (MoodboardPanel, App.js) n'imposait aucune whitelist MIME
+      (le `accept="image/*"` de l'`<input>` n'est qu'indicatif, contournable par un appel
+      direct à l'API storage avec l'anon key) ni de taille max — un fichier arbitraire
+      (HTML/SVG avec script, exécutable, fichier énorme) pouvait être déposé et servi
+      publiquement (bucket `moodboard`, `getPublicUrl`) sous le domaine du studio. Ajout
+      d'une whitelist MIME (jpeg/png/webp/gif/avif, extension dérivée du MIME plutôt que du
+      nom de fichier) + limite 15 Mo côté front, ET au niveau du bucket lui-même
+      (`allowed_mime_types`/`file_size_limit`, migration
+      `20260814100000_moodboard_bucket_limits.sql`) pour que la restriction tienne même en
+      cas d'appel direct contournant l'UI. À déployer par Idriss (`supabase db push`).
 - [ ] Liens invités (`?guest=`) : vérifier expiration/révocation appliquées côté serveur
-      (App.js ~1501), pas seulement dans l'UI.
+      (App.js ~1501), pas seulement dans l'UI. NON TRAITÉ (2026-08-14, analysé) : l'expiration
+      (`guest.expiresAt`) n'est vérifiée que côté client (GuestView, App.js ~4654) après appel
+      à la RPC `get_project_by_guest_token` — si cette RPC ne revérifie pas elle-même
+      l'expiration avant de renvoyer les données du projet, un token expiré resterait
+      exploitable via un appel direct à l'API. RPC absente des migrations versionnées (schéma
+      de base) → impossible de confirmer si le check existe déjà côté serveur sans lire sa
+      définition réelle en base. À reprendre avec accès à la définition actuelle de la RPC.
 - [ ] ai-generate : rate limit simple (compteur par user/heure dans une table) — un client
       peut appeler en boucle avec system libre.
 - [ ] PERF memo/refetch : wrappers memo() neutralisés par handlers inline (~8055/8168) ;

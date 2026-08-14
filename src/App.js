@@ -660,10 +660,13 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
     onNotif("Image ajoutée au moodboard !");
   };
 
+  const MOODBOARD_MIME_EXT={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif","image/avif":"avif"};
   const addByFile=async(file)=>{
     if(!file)return;
+    const ext=MOODBOARD_MIME_EXT[file.type];
+    if(!ext){onNotif("Format non supporté (JPEG, PNG, WEBP, GIF ou AVIF uniquement).");return;}
+    if(file.size>15*1024*1024){onNotif("Image trop lourde (15 Mo max).");return;}
     setUploading(true);
-    const ext=file.name.split(".").pop();
     const path=`${project.id}/${Date.now()}.${ext}`;
     const{error}=await supabase.storage.from("moodboard").upload(path,file,{upsert:true});
     if(error){onNotif("Erreur upload : "+error.message);setUploading(false);return;}
