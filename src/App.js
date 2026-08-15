@@ -7502,7 +7502,15 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
   const[fInvoice,setFInvoice]=useState("all"); // none|draft|sent|paid|overdue
   const[groupBy,setGroupBy]=useState("none");  // none|monteur|chef de projet|membre|statut
   const clientById = id => clients.find(c=>c.id===id);
-  const inv4 = pid => invoices.filter(i=>i.project_id===pid);
+  const invoicesByProject = useMemo(()=>{
+    const m=new Map();
+    invoices.forEach(i=>{
+      const arr=m.get(i.project_id);
+      if(arr) arr.push(i); else m.set(i.project_id,[i]);
+    });
+    return m;
+  },[invoices]);
+  const inv4 = pid => invoicesByProject.get(pid) || [];
   const list = projects.filter(p=>{
     if(fStatus!=="all" && (p.status||"brief")!==fStatus) return false;
     const ivs = inv4(p.id);
@@ -7739,7 +7747,15 @@ function ProjectsKanban({ projects, clients, invoices, onOpenProject, onQuickUpd
   const[newTitle,setNewTitle]=useState("");
   const[editProject,setEditProject]=useState(null);
   const clientById=id=>clients.find(c=>c.id===id);
-  const inv4=pid=>invoices.filter(i=>i.project_id===pid);
+  const invoicesByProject=useMemo(()=>{
+    const m=new Map();
+    invoices.forEach(i=>{
+      const arr=m.get(i.project_id);
+      if(arr) arr.push(i); else m.set(i.project_id,[i]);
+    });
+    return m;
+  },[invoices]);
+  const inv4=pid=>invoicesByProject.get(pid) || [];
   const drop=async(colKey)=>{
     setOverCol(null);
     const p=projects.find(x=>x.id===dragId);

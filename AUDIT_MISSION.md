@@ -261,9 +261,22 @@ security definer (l'anon key est publique par design).
       (App.js, l'un pour `role` seul dans `loadData`, l'autre pour le profil complet
       alimentant `userRole`/`userProfile`) ; fusionnés en un seul fetch (`select("*")`)
       dans `loadData`, qui alimente maintenant aussi `userRole`/`userProfile`/`appView` —
-      le second `useEffect` a été supprimé. Restent non traités : memo() neutralisés par
-      handlers inline, ProjectsListView O(projets×factures), moodboard vignettes pleine
-      résolution.
+      le second `useEffect` a été supprimé. « ProjectsListView recalcule O(projets×factures) à
+      chaque frappe » — corrigé (2026-08-15) : `inv4(pid)` refaisait un `invoices.filter(...)`
+      sur le tableau complet à chaque appel (une fois dans le filtre de liste, une fois dans le
+      calcul des totaux, une fois par ligne affichée), recalculé à chaque frappe dans la
+      recherche puisque `q` est un state du même composant. Remplacé par un index
+      `Map(project_id → factures[])` construit une seule fois via `useMemo` (dépendance
+      `invoices` uniquement) — `inv4` est maintenant un lookup O(1). Même correctif appliqué à
+      `ProjectsKanban` (`KanbanCard` faisait le même `invoices.filter` par carte à chaque
+      rendu). Restent non traités : memo() neutralisés par handlers inline (nécessite de
+      passer ~10 handlers de mutation, actuellement de simples fonctions redéfinies à chaque
+      rendu de `App`, sous `useCallback` avec les bonnes dépendances — refactor plus large,
+      risque de closures obsolètes si bâclé, volontairement laissé pour un run dédié) ;
+      moodboard vignettes pleine résolution (nécessite soit l'API de transformation d'image
+      Supabase Storage — indisponible selon le plan, impossible à confirmer sans accès au
+      projet — soit un redimensionnement côté client à l'upload ; pas de fix sûr identifié
+      sans decision produit).
 
 ## À faire — BASSE
 
@@ -320,7 +333,21 @@ security definer (l'anon key est publique par design).
 
 ## Zones non encore auditées (les reviewers ont échoué — à refaire)
 
-- [ ] src/App.js lignes ~4150-6300 (revue sécurité jamais terminée)
+- [x] src/App.js lignes ~4150-6300 (revue sécurité) — faite (2026-08-15). Un nouveau problème
+      trouvé et corrigé : `AccessManager`/`ClientsManager` créent des comptes équipe/client
+      (`supabase.auth.signUp()` + `profiles.upsert({role:"partenaire"|"client",…})`) gardés
+      uniquement par `isAdmin` côté React — rien n'empêchait un utilisateur authentifié
+      d'appeler directement `profiles.update({role:"admin"}).eq("id", sonPropreId)` avec
+      l'anon key si la policy UPDATE historique sur `profiles` (non versionnée) autorise déjà
+      l'édition de sa propre ligne (pattern courant pour nom/avatar) — auto-promotion admin.
+      Policy RESTRICTIVE ajoutée (`profiles_role_lock`, migration
+      `20260815090000_profiles_role_lock.sql`, même technique que `clientStepsUnlocked`/
+      `bookings`/`files`) : verrouille la colonne `role` à sa valeur déjà enregistrée pour
+      tout rôle non admin/collaborateur. Sans effet si aucune policy self-update n'existe déjà
+      (no-op), filet de sécurité si elle existe. À déployer par Idriss (`supabase db push`).
+      Reste du périmètre (prestataires, monteur, client espace via tokens `member_*`/
+      `get_client_space`) : RAS, ces flux passent par des RPC security definer qui revalident
+      le token côté serveur, pas de nouvelle faille trouvée.
 - [ ] Migrations SQL / RLS : reconstituer l'état final du schéma et vérifier les policies
       (get_project_invite, chat anonyme, espace monteur, get_client_space…)
 - [ ] api/nouveau-projet.js, src/Login.js, fichiers *.command, dépendances package.json
@@ -333,7 +360,7 @@ security definer (l'anon key est publique par design).
   `20260813130000_files_insert_delete_team.sql`,
   `20260814090000_claim_pending_projects_email_confirme.sql`,
   `20260814100000_moodboard_bucket_limits.sql`, `20260814110000_edge_function_rate_limit.sql`,
-  `20260814120000_invoice_number_sequence.sql`
+  `20260814120000_invoice_number_sequence.sql`, `20260815090000_profiles_role_lock.sql`
 - `supabase functions deploy ai-generate notify-new-project auto-invoice` (+ redéployer
   refresh-trends/mail-classify une fois corrigées, + `invite-upload` pour le check
   expires_at/limite 20 fichiers, + `calendar-sync` pour le filtre tasks déjà synchronisées,
