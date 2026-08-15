@@ -224,10 +224,16 @@ security definer (l'anon key est publique par design).
 - [ ] PERF memo/refetch : wrappers memo() neutralisés par handlers inline (~8055/8168) ;
       ProjectsListView recalcule O(projets×factures) à chaque frappe (~7056) ;
       TasksReminders refetch 3 tables à chaque clic (TasksReminders.js:20) ; Inbox refetch
-      200 emails + projets à chaque action (Inbox.js ~56/92) ; ProjectAutoStatus relance
-      l'analyse de TOUS les projets pour un seul (ProjectAutoStatus.js:29) ; moodboard
-      affiche les originaux pleine résolution en vignettes 160px (~710) ; profil fetché
-      2× au login (~7527/7545).
+      200 emails + projets à chaque action (Inbox.js ~56/92) ; moodboard affiche les
+      originaux pleine résolution en vignettes 160px (~710) ; profil fetché 2× au login
+      (~7527/7545). PARTIEL (2026-08-15) : le sous-point « ProjectAutoStatus relance
+      l'analyse de TOUS les projets pour un seul » est corrigé — le bouton « ↻ Analyser »
+      (ProjectAutoStatus.js) passe désormais `{project_id}` dans le body de l'invoke, et
+      l'edge function `project-radar` (index.ts) filtre sur cet id unique quand il est
+      fourni au lieu de re-traiter tous les projets actifs (limit 100) à chaque clic —
+      avant : ~1 appel Claude par projet actif rien que pour rafraîchir le statut d'un
+      seul projet. Le cron quotidien (X-Cron-Key, sans body) garde le comportement
+      global inchangé. À redéployer par Idriss (`supabase functions deploy project-radar`).
 
 ## À faire — BASSE
 
@@ -248,9 +254,37 @@ security definer (l'anon key est publique par design).
       projets passant en "livraison" au même moment et générer deux factures avec le même
       numéro F-YYYY-NNNN. À déployer par Idriss (`supabase db push` +
       `supabase functions deploy auto-invoice`).
-- [ ] Section Tarifs seulement masquée par la navigation pour les collaborateurs (~8103).
-- [ ] Suppressions/updates sans vérification d'erreur → state divergent de la base (~3955).
-- [ ] Lien d'invitation client : simple email en paramètre d'URL, sans secret (~7921).
+- [x] Section Tarifs seulement masquée par la navigation pour les collaborateurs — corrigé
+      (2026-08-15) : `pricing` n'est pas en base (constante JS `DEFAULT_PRICING`), donc pas
+      de policy RLS à corriger ; le seul verrou était le filtre du bouton de nav
+      (`COLLAB_BLOCKED=["tarifs"]`), sans garde sur le rendu lui-même — contrairement à
+      la section "comptes" qui vérifie déjà `(isAdmin||isCollab)`. Ajout de `&&isAdmin`
+      sur la condition de rendu de `AdminPricingModule` (App.js) : un collaborateur qui
+      forcerait `prodSection="tarifs"` (devtools/state) ne peut plus afficher le module.
+      Risque résiduel faible et non traité ici : les valeurs par défaut sont déjà dans le
+      bundle JS livré au navigateur, donc pas confidentielles en soi — le gain est la
+      défense en profondeur sur l'UI d'admin (édition des tarifs), pas la confidentialité
+      des montants.
+- [x] Suppressions/updates sans vérification d'erreur → state divergent de la base — corrigé
+      (2026-08-15) : même famille de bug que `revoke()`/`toggleActive()` (déjà traités),
+      trouvé sur 8 handlers supplémentaires dans App.js qui appliquaient le changement
+      côté état React sans vérifier l'`error` retourné par Supabase (policy RLS refusée,
+      contrainte FK…) : retrait d'assignation projet (`remove`), suppression de note de
+      réunion (`del`), sauvegarde/suppression de créneau planning (`saveSlot`/
+      `deleteSlot` — le cas insert affichait même « Créneau ajouté ! » alors que l'insert
+      avait échoué), ajout/suppression de membre équipe (`addMember`/`deleteMember`),
+      ajout/suppression de type de prestation (`addType`/`deleteType`), sauvegarde/
+      suppression de prestataire (`savePrestataire`/`deletePrestataire`). Tous vérifient
+      maintenant `error` et notifient l'échec au lieu de faire silencieusement diverger
+      l'état local de la base.
+- [x] ~~Lien d'invitation client : simple email en paramètre d'URL, sans secret (~7921)~~ —
+      FAUX POSITIF (vérifié 2026-08-15) : le lien (`?invite=EMAIL`, généré App.js) ne fait
+      que pré-remplir le champ email du formulaire d'inscription (Login.js) ; il faut
+      ensuite un mot de passe + confirmation d'email Supabase pour créer un compte, et le
+      rattachement des projets en attente (`claim_pending_projects()`) exige désormais
+      `email_confirmed_at is not null` (migration
+      `20260814090000_claim_pending_projects_email_confirme.sql`, déjà traitée). La simple
+      connaissance de l'email d'un client ne permet donc plus d'usurper son espace.
 - [ ] Mode contraste : sélecteurs CSS `[style*="rgb(...)"]` coûteux (~8058) ; pas de cache
       inter-sections (~8155).
 
@@ -272,5 +306,6 @@ security definer (l'anon key est publique par design).
   `20260814120000_invoice_number_sequence.sql`
 - `supabase functions deploy ai-generate notify-new-project auto-invoice` (+ redéployer
   refresh-trends/mail-classify une fois corrigées, + `invite-upload` pour le check
-  expires_at/limite 20 fichiers, + `calendar-sync` pour le filtre tasks déjà synchronisées)
+  expires_at/limite 20 fichiers, + `calendar-sync` pour le filtre tasks déjà synchronisées,
+  + `project-radar` pour le filtre project_id ciblé)
 - Secrets déjà en place : ANTHROPIC_API_KEY ; optionnel : CLICKUP_MCP_TOKEN

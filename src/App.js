@@ -3744,7 +3744,8 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
     onNotif("Membre assigné !");setShowAdd(false);setSelMember("");setRoleOnProject("");setSaving(false);
   };
   const remove=async(a)=>{
-    await supabase.from("project_assignments").delete().eq("id",a.id);
+    const{error}=await supabase.from("project_assignments").delete().eq("id",a.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     onUpdateAssignments(prev=>prev.filter(x=>x.id!==a.id));
     onNotif("Membre retiré");
   };
@@ -3816,7 +3817,8 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
   };
 
   const del=async(id)=>{
-    await supabase.from("meeting_notes").delete().eq("id",id);
+    const{error}=await supabase.from("meeting_notes").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     onUpdateMeetingNotes(prev=>prev.filter(n=>n.id!==id));
     onNotif("Note supprimée");
   };
@@ -3961,32 +3963,37 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
     if(!slotModal)return;
     const base={memberId:slotModal.memberId,date:slotModal.date,type:slotForm.type,projectId:slotForm.projectId?Number(slotForm.projectId):null,startTime:slotForm.startTime,endTime:slotForm.endTime,note:slotForm.note};
     if(editSlot){
-      await supabase.from("planning_slots").update({type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).eq("id",editSlot.id);
+      const{error}=await supabase.from("planning_slots").update({type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).eq("id",editSlot.id);
+      if(error){onNotif("Erreur : "+error.message);return;}
       setPlanningSlots(prev=>prev.map(s=>s.id===editSlot.id?{...base,id:editSlot.id}:s));
       onNotif("Créneau modifié !");
     }else{
-      const{data}=await supabase.from("planning_slots").insert({member_id:base.memberId,date:base.date,type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).select().single();
-      if(data)setPlanningSlots(prev=>[...prev,{id:data.id,memberId:data.member_id,date:data.date,type:data.type,projectId:data.project_id,startTime:data.start_time||"",endTime:data.end_time||"",note:data.note||""}]);
+      const{data,error}=await supabase.from("planning_slots").insert({member_id:base.memberId,date:base.date,type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).select().single();
+      if(error){onNotif("Erreur : "+error.message);return;}
+      setPlanningSlots(prev=>[...prev,{id:data.id,memberId:data.member_id,date:data.date,type:data.type,projectId:data.project_id,startTime:data.start_time||"",endTime:data.end_time||"",note:data.note||""}]);
       onNotif("Créneau ajouté !");
     }
     setSlotModal(null);setEditSlot(null);
   };
   const deleteSlot=async(id)=>{
-    await supabase.from("planning_slots").delete().eq("id",id);
+    const{error}=await supabase.from("planning_slots").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setPlanningSlots(prev=>prev.filter(s=>s.id!==id));
     onNotif("Créneau supprimé");setSlotModal(null);setEditSlot(null);
   };
 
   const addMember=async()=>{
     if(!memberForm.nom.trim())return;
-    const{data}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
-    if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8",accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null}]);
+    const{data,error}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8",accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null}]);
     onNotif("Membre ajouté !");
     setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#0077B6"});
     setShowAddMember(false);
   };
   const deleteMember=async(id)=>{
-    await supabase.from("team_members").delete().eq("id",id);
+    const{error}=await supabase.from("team_members").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setTeamMembers(prev=>prev.filter(m=>m.id!==id));
     onNotif("Membre supprimé");
   };
@@ -5377,13 +5384,15 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
 
   const addType=async()=>{
     if(!newTypeLabel.trim())return;
-    const{data}=await supabase.from("service_types").insert({label:newTypeLabel.trim(),icone:newTypeIcon,actif:true}).select().single();
-    if(data)setServiceTypes(prev=>[...prev,{id:data.id,label:data.label,icone:data.icone,actif:data.actif}]);
+    const{data,error}=await supabase.from("service_types").insert({label:newTypeLabel.trim(),icone:newTypeIcon,actif:true}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setServiceTypes(prev=>[...prev,{id:data.id,label:data.label,icone:data.icone,actif:data.actif}]);
     setNewTypeLabel("");setNewTypeIcon("🔧");
     onNotif("Type ajouté !");
   };
   const deleteType=async(id)=>{
-    await supabase.from("service_types").delete().eq("id",id);
+    const{error}=await supabase.from("service_types").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setServiceTypes(prev=>prev.filter(t=>t.id!==id));
     onNotif("Type supprimé");
   };
@@ -5414,12 +5423,14 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
     const urls=pForm.portfolio_urls.split("\n").map(u=>u.trim()).filter(Boolean);
     const payload={nom:pForm.nom,email:pForm.email,telephone:pForm.telephone,description:pForm.description,portfolio_urls:urls,service_type_id:pForm.service_type_id,actif:true};
     if(editId){
-      await supabase.from("prestataires").update(payload).eq("id",editId);
+      const{error}=await supabase.from("prestataires").update(payload).eq("id",editId);
+      if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
       setPrestataires(prev=>prev.map(p=>p.id===editId?{...p,...payload}:p));
       onNotif("Prestataire mis à jour");
     }else{
-      const{data}=await supabase.from("prestataires").insert(payload).select().single();
-      if(data)setPrestataires(prev=>[...prev,data]);
+      const{data,error}=await supabase.from("prestataires").insert(payload).select().single();
+      if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
+      setPrestataires(prev=>[...prev,data]);
       onNotif("Prestataire ajouté !");
     }
     setPForm(emptyP);setEditId(null);setSaving(false);
@@ -5429,7 +5440,8 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
     setPForm({nom:p.nom,email:p.email,telephone:p.telephone||"",description:p.description||"",portfolio_urls:(p.portfolio_urls||[]).join("\n"),service_type_id:p.service_type_id||""});
   };
   const deletePrestataire=async(id)=>{
-    await supabase.from("prestataires").delete().eq("id",id);
+    const{error}=await supabase.from("prestataires").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setPrestataires(prev=>prev.filter(p=>p.id!==id));
     onNotif("Prestataire supprimé");
   };
@@ -8673,7 +8685,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""
             {appView==="prod"&&prodSection==="organisation"&&(
               <OrgModule sheets={sheets} setSheets={setSheets} onNotif={showNotif}/>
             )}
-            {appView==="prod"&&prodSection==="tarifs"&&(
+            {appView==="prod"&&prodSection==="tarifs"&&isAdmin&&(
               <AdminPricingModule pricing={pricing} setPricing={setPricing} clients={clients} setClients={setClients} estimates={estimates} setEstimates={setEstimates}/>
             )}
             {appView==="prod"&&prodSection==="planning"&&(

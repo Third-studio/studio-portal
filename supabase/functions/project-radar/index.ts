@@ -37,16 +37,24 @@ serve(async (req) => {
     if (p?.role !== "admin" && p?.role !== "collaborateur") return json({ error: "Forbidden" }, 403);
   }
 
+  let projectId: string | number | null = null;
+  try {
+    const body = await req.json();
+    projectId = body?.project_id ?? null;
+  } catch (_) { /* pas de body : analyse globale */ }
+
   const result = { analyzed: 0, errors: [] as string[] };
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json({ error: "ANTHROPIC_API_KEY missing" }, 500);
 
   try {
     // Projets actifs (pas livrés). On laisse aussi les statuts inconnus pour rattraper.
-    const { data: projects, error: pErr } = await supabase
-      .from("projects").select("id, title, status, brief, shoot_date, delivery_date")
-      .not("status", "in", "(\"livraison\",\"archived\",\"cancelled\")")
-      .limit(100);
+    // project_id fourni : ne (re)analyse que ce projet-là (bouton "↻ Analyser" côté fiche projet).
+    let query = supabase.from("projects").select("id, title, status, brief, shoot_date, delivery_date");
+    query = projectId != null
+      ? query.eq("id", projectId)
+      : query.not("status", "in", "(\"livraison\",\"archived\",\"cancelled\")").limit(100);
+    const { data: projects, error: pErr } = await query;
     if (pErr) throw pErr;
 
     const since = new Date(Date.now() - 14 * 86400_000).toISOString();
