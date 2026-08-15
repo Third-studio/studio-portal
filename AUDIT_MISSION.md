@@ -116,6 +116,17 @@ security definer (l'anon key est publique par design).
       l'ouverture d'un projet plutôt que pour tous les projets au login — refactor plus
       large (état + tous les composants qui lisent project.messages/files/storyboards),
       volontairement laissé pour un run dédié plutôt que bâclé dans le budget de celui-ci.
+      BLOQUANT ADDITIONNEL identifié (2026-08-15, analysé avant de retenter ce run) : le
+      lazy-load par projet n'est PAS un simple découpage — le dashboard prod (badges
+      « derniers messages non lus », App.js ~3424-3437, `p.comments`) lit les messages de
+      TOUS les projets pour déterminer lesquels ont une dernière réponse côté client vs
+      prod, indépendamment du projet actuellement ouvert. Charger les messages seulement
+      à l'ouverture d'un projet casserait ce dashboard. Il faut d'abord soit (a) une RPC
+      dédiée légère (dernier message + rôle par projet, sans le contenu complet) pour ce
+      badge, soit (b) accepter de garder `messages` eager et ne différer que `files`/
+      `storyboards` (aucun usage cross-projets trouvé pour ceux-ci lors de cette analyse).
+      Toujours volontairement non traité dans ce run : périmètre trop large pour être fiable
+      dans un budget de 3 items, cf. note ci-dessus.
 - [x] NOUVEAU (découvert 2026-08-13 en traitant l'item livrables internes) : `ProdLivrables`
       (App.js, `add()`/`del()`) ne persistait jamais en base — corrigé (2026-08-13) :
       `add()`/`del()` font maintenant un vrai `insert`/`delete` sur `public.files`
@@ -234,6 +245,25 @@ security definer (l'anon key est publique par design).
       avant : ~1 appel Claude par projet actif rien que pour rafraîchir le statut d'un
       seul projet. Le cron quotidien (X-Cron-Key, sans body) garde le comportement
       global inchangé. À redéployer par Idriss (`supabase functions deploy project-radar`).
+      Sous-points supplémentaires corrigés (2026-08-15) : « TasksReminders refetch 3
+      tables à chaque clic » — `useEffect` rechargeait `tasks`/`reminders`/`projects`
+      depuis le réseau à chaque changement d'onglet (Tout/Aujourd'hui/Semaine/En retard,
+      TasksReminders.js:20), alors que ce filtre est déjà purement client-side
+      (`filteredTasks`, ligne 60) : chargement au montage uniquement désormais, le filtre
+      continue de s'appliquer en mémoire. « Inbox refetch 200 emails + projets à chaque
+      action » — `reclassify()`/`attachToProject()` (Inbox.js) rappelaient `loadData()`
+      (200 emails + tous les projets) après une action sur UN SEUL email ; remplacé par une
+      mise à jour ciblée de l'état local (`attachToProject`, avec vérification d'erreur
+      ajoutée — absente avant) et un refetch de la seule ligne concernée après reclassement
+      (son contenu est mis à jour côté serveur par l'edge function, pas connu du client).
+      « Profil fetché 2× au login » — deux `useEffect [user]` distincts appelaient
+      `profiles.select(...).eq("id",user.id).single()` en parallèle à chaque connexion
+      (App.js, l'un pour `role` seul dans `loadData`, l'autre pour le profil complet
+      alimentant `userRole`/`userProfile`) ; fusionnés en un seul fetch (`select("*")`)
+      dans `loadData`, qui alimente maintenant aussi `userRole`/`userProfile`/`appView` —
+      le second `useEffect` a été supprimé. Restent non traités : memo() neutralisés par
+      handlers inline, ProjectsListView O(projets×factures), moodboard vignettes pleine
+      résolution.
 
 ## À faire — BASSE
 

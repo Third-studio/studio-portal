@@ -8003,9 +8003,13 @@ function AppMain() {
     const loadData = async () => {
       setDataLoading(true);
       try{
-      // Récupère le rôle d'abord pour adapter les requêtes
-      const { data: myProfile } = await supabase.from("profiles").select("role").eq("id",user.id).single();
-      const isAdminUser = myProfile?.role === "admin" || myProfile?.role === "collaborateur";
+      // Récupère le profil d'abord (rôle pour adapter les requêtes + alimente userRole/userProfile)
+      const { data: myProfile } = await supabase.from("profiles").select("*").eq("id",user.id).single();
+      const myRole = myProfile?.role || "client";
+      setUserRole(myRole);
+      setUserProfile(myProfile || null);
+      if(myRole === "collaborateur" || myRole === "admin") setAppView("prod");
+      const isAdminUser = myRole === "admin" || myRole === "collaborateur";
       // Client : rattache les projets pré-créés depuis un email (brief.pendingClientEmail) avant de charger.
       if(!isAdminUser){ try{ await supabase.rpc("claim_pending_projects"); }catch(_){ /* SQL non déployé */ } }
 
@@ -8104,18 +8108,6 @@ function AppMain() {
 
   const [userRole, setUserRole] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
-
-  useEffect(() => {
-    if (user) {
-      supabase.from("profiles").select("*").eq("id", user.id).single()
-        .then(({ data }) => {
-          const role = data?.role || "client";
-          setUserRole(role);
-          setUserProfile(data || null);
-          if(role === "collaborateur" || role === "admin") setAppView("prod");
-        });
-    }
-  }, [user]);
 
   // ── Handlers & valeurs dérivées mémoïsés ────────────────────────────────────
   // (placés AVANT les return conditionnels ci-dessous → règle des hooks respectée)
