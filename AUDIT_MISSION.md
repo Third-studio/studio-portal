@@ -340,8 +340,27 @@ security definer (l'anon key est publique par design).
       `email_confirmed_at is not null` (migration
       `20260814090000_claim_pending_projects_email_confirme.sql`, déjà traitée). La simple
       connaissance de l'email d'un client ne permet donc plus d'usurper son espace.
-- [ ] Mode contraste : sélecteurs CSS `[style*="rgb(...)"]` coûteux (~8058) ; pas de cache
-      inter-sections (~8155).
+- [x] Mode contraste : sélecteurs CSS `[style*="rgb(...)"]` coûteux ; pas de cache
+      inter-sections — PARTIEL (2026-08-16) : « pas de cache inter-sections » corrigé —
+      le `<style>` de réglages (police/densité/accent/contraste) était un template
+      literal reconstruit et re-diffusé à chaque rendu de `AppMain`, y compris à chaque
+      changement de section (prodSection/clientSection) ou tout autre état sans rapport
+      avec les réglages d'apparence — recréé (`densityPad`/`fontSizePx` étaient aussi deux
+      objets recréés à chaque rendu). Passé sous `useMemo` (déplacé avant les `return`
+      conditionnels du composant, comme les autres hooks du fichier — `useMemo` ne peut
+      pas être appelé après un early return) avec dépendances
+      `[settings.contrast,settings.accent,settings.fontSize,settings.density]` : ce CSS
+      n'est plus recalculé, et React ne retouche plus le nœud `<style>` en DOM, lors des
+      rendus où les réglages n'ont pas changé — c'est-à-dire la quasi-totalité des rendus
+      d'une session. `densityPad`/`fontSizePx` remontés en constantes de module
+      (`DENSITY_PAD`/`FONT_SIZE_PX`, plus recréés à chaque rendu). Non traité : le coût
+      intrinsèque des sélecteurs d'attribut `[style*="..."]` eux-mêmes (recalcul de style
+      coûteux pour le navigateur sur un DOM volumineux) — ils ne sont injectés que si
+      `settings.contrast===true` (déjà le cas avant ce correctif) et ne concernent donc
+      que les sessions ayant activé cette option d'accessibilité ; les supprimer
+      nécessiterait de faire porter les couleurs secondaires par des classes CSS plutôt
+      que par des styles inline générés dynamiquement — refactor large touchant la charte
+      graphique dans une grande partie du fichier, hors périmètre d'un correctif ciblé.
 
 ## Zones non encore auditées (les reviewers ont échoué — à refaire)
 

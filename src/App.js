@@ -4531,6 +4531,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 // SETTINGS PANEL
 const ACCENT_COLORS={or:"#0077B6",cyan:"#0F766E",bleu:"#4F46E5",violet:"#7C3AED",rouge:"#D70015"};
 const DEFAULT_SETTINGS={fontSize:"normale",density:"normale",accent:"or",contrast:false};
+const DENSITY_PAD={"compact":"14px 14px 110px","normale":"22px 24px 120px","spacieux":"32px 36px 130px"};
+const FONT_SIZE_PX={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
 
 function SettingsPanel({settings,onChange,onClose,user,onLogout,clientNotif,onSaveNotif}){
   const S=(k,v)=>onChange({...settings,[k]:v});
@@ -8122,6 +8124,25 @@ function AppMain() {
   const openProjectFromCalendar = useCallback((id)=>{setSelectedProjectId(id);setProdSection("projets");},[]);
   const openProjectDetail = useCallback((id)=>{setSelectedProjectId(id);setProjetsView("detail");},[]);
   const openInvoiceModal = useCallback((p,c)=>setInvoiceModal({project:p,client:c}),[]);
+  // CSS des réglages d'apparence (police/densité/accent/contraste) : mémoïsé sur les
+  // seuls réglages, pas recalculé à chaque rendu (navigation entre sections, frappe...).
+  const settingsStyle = useMemo(()=>{
+    const ac=ACCENT_COLORS[settings.accent]||ACCENT_COLORS.or;
+    return `
+        :root { --accent:${ac}; --fs:${FONT_SIZE_PX[settings.fontSize]}; }
+        .app-main { padding:${DENSITY_PAD[settings.density]||DENSITY_PAD.normale} !important; }
+        body { font-size:${FONT_SIZE_PX[settings.fontSize]}; }
+        ${settings.contrast?`
+          /* Contraste élevé : assombrit les gris secondaires (React sérialise les couleurs inline en rgb()) */
+          [style*="rgb(110, 110, 115)"]{color:#3F3F46 !important}
+          [style*="rgb(142, 142, 147)"]{color:#4A4A52 !important}
+          [style*="rgb(199, 199, 204)"]{color:#5A5A62 !important}
+          [style*="rgb(229, 229, 234)"]{border-color:#9A9AA2 !important}
+          .input::placeholder,input::placeholder,textarea::placeholder{color:#55555C !important}
+          .card,.input{border-color:#9A9AA2 !important}
+        `:""}
+      `;
+  },[settings.contrast,settings.accent,settings.fontSize,settings.density]);
   const createForClient = useCallback((c)=>{setCreateForClientId(c?.id||null);setShowCreateModal(true);},[]);
 
   // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
@@ -8537,27 +8558,12 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""
     ...(activeClient?.shortoneEnabled?[{k:"shortone",l:"Shortone",icon:"◆"}]:[]),
   ];
 
-  const densityPad={"compact":"14px 14px 110px","normale":"22px 24px 120px","spacieux":"32px 36px 130px"};
-  const fontSizePx={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
   const accentColor=ACCENT_COLORS[settings.accent]||ACCENT_COLORS.or;
 
   return(
     <>
       <FontLoader/>
-      <style>{`
-        :root { --accent:${accentColor}; --fs:${fontSizePx[settings.fontSize]}; }
-        .app-main { padding:${densityPad[settings.density]||densityPad.normale} !important; }
-        body { font-size:${fontSizePx[settings.fontSize]}; }
-        ${settings.contrast?`
-          /* Contraste élevé : assombrit les gris secondaires (React sérialise les couleurs inline en rgb()) */
-          [style*="rgb(110, 110, 115)"]{color:#3F3F46 !important}
-          [style*="rgb(142, 142, 147)"]{color:#4A4A52 !important}
-          [style*="rgb(199, 199, 204)"]{color:#5A5A62 !important}
-          [style*="rgb(229, 229, 234)"]{border-color:#9A9AA2 !important}
-          .input::placeholder,input::placeholder,textarea::placeholder{color:#55555C !important}
-          .card,.input{border-color:#9A9AA2 !important}
-        `:""}
-      `}</style>
+      <style>{settingsStyle}</style>
       <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",display:"flex",flexDirection:"column"}}>
 
         {/* ── TOP BAR ── */}
