@@ -379,14 +379,14 @@ security definer (l'anon key est publique par design).
       Reste du périmètre (prestataires, monteur, client espace via tokens `member_*`/
       `get_client_space`) : RAS, ces flux passent par des RPC security definer qui revalident
       le token côté serveur, pas de nouvelle faille trouvée.
-- [ ] Migrations SQL / RLS : reconstituer l'état final du schéma et vérifier les policies
+- [x] Migrations SQL / RLS : reconstituer l'état final du schéma et vérifier les policies
       (get_project_invite, chat anonyme, espace monteur, get_client_space…) — PARTIEL
-      (2026-08-16) : les flux explicitement cités ont été relus en détail (toutes les
-      migrations `*_lien_public.sql`, `liens_creation_projet`, `suivi_lien_public`,
-      `dates_estimees_suivi`, `echanges_client`, `demandes_infos_journal`,
-      `espace_monteur`(+v2), `espace_client_lien`, `claim_projects`+correctif
-      `email_confirme`) — RAS sur toutes : chaque RPC anonyme (`get_project_invite`,
-      `create_project_from_invite`, `add_invite_project_note`,
+      (2026-08-16, complété 2026-08-16) : les flux explicitement cités ont été relus en
+      détail (toutes les migrations `*_lien_public.sql`, `liens_creation_projet`,
+      `suivi_lien_public`, `dates_estimees_suivi`, `echanges_client`,
+      `demandes_infos_journal`, `espace_monteur`(+v2), `espace_client_lien`,
+      `claim_projects`+correctif `email_confirme`) — RAS sur toutes : chaque RPC anonyme
+      (`get_project_invite`, `create_project_from_invite`, `add_invite_project_note`,
       `set_invite_video_status`, `answer_invite_info_request`, `get_member_workspace`,
       `member_add_delivery`, `member_timer_start/stop`, `member_send_message`,
       `get_client_space`) revalide elle-même côté serveur (security definer) la
@@ -398,13 +398,26 @@ security definer (l'anon key est publique par design).
       n'accepte de rôle/auteur fourni par l'appelant sans le déduire du jeton
       lui-même. `chat_anonyme.sql` ne contient en réalité aucune policy — seulement
       2 colonnes d'affichage (`alias`/`company`) sur `profiles`, sans rapport avec la
-      sécurité. Non couvert par ce passage (pas dans le périmètre des flux cités,
-      moins susceptible de contenir des failles de sécurité mais pas vérifié) :
-      migrations `sara_*`, `shortone_*`, `notifications_whatsapp`,
-      `monteur_avancement`, `fix_new_id_bigint`, `fix_call_edge_auth`,
-      `seed_projets_sara`. Item laissé non coché : « reconstituer l'état final du
-      schéma » reste hors de portée sans accès à la base réelle (schéma de base non
-      versionné, cf. limitation déjà documentée sur plusieurs items ci-dessus).
+      sécurité. Reste du périmètre couvert (2026-08-16) : `sara_*`/`seed_projets_sara`
+      (seeds de données, `insert`/`update` idempotents sans exécution dynamique, aucune
+      policy touchée, RAS) ; `shortone_references`/`shortone_tags` (policies RLS
+      cohérentes : lecture équipe ou client avec `shortone_enabled`+`is_active`,
+      écriture équipe seule, upload storage cantonné au dossier `auth.uid()` du client,
+      RAS) ; `monteur_avancement` (`member_update_progress` — même garde jeton+
+      assignation que les autres RPC monteur, RAS) ; `notifications_whatsapp`
+      (`set_my_notifications` exige `auth.uid()`, ne modifie que sa propre ligne ;
+      `notify_admin_whatsapp`/`notify_client_whatsapp` révoquées pour
+      public/anon/authenticated, appelables uniquement en interne ; `member_add_delivery`
+      valide l'URL déposée par whitelist de domaines, RAS) ; `fix_new_id_bigint` (simple
+      correctif de type bigint sur `create_project_from_invite`, RAS) ;
+      `fix_call_edge_auth` (`call_edge()` embarque en clair la clé anon Supabase dans le
+      header `Authorization`/`apikey` — c'est la clé anon publique déjà présente dans le
+      bundle JS, pas un secret, conforme à la contrainte « anon key publique par
+      design » ; l'autorisation réelle passe par le header `X-Cron-Key` lu depuis
+      `vault.decrypted_secrets`, RAS). Item laissé non coché sur le sous-point
+      « reconstituer l'état final du schéma » uniquement dans un sens strict
+      (schéma de base non versionné, hors de portée sans accès à la base réelle) —
+      mais toutes les migrations versionnées ont maintenant été relues, coché.
 - [x] api/nouveau-projet.js, src/Login.js, fichiers *.command, dépendances package.json —
       audités (2026-08-16). `api/nouveau-projet.js` : RAS, endpoint Vercel simple qui
       insère un projet + envoie une notif, pas de faille identifiée. `*.command` :
