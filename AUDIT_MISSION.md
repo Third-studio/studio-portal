@@ -105,28 +105,23 @@ security definer (l'anon key est publique par design).
       et `toggleActive()` (ClientsManager, suspension/activation client — même défaut, même
       famille de bug) vérifient maintenant `error` et notifient l'échec au lieu d'afficher
       « Accès révoqué »/« Compte suspendu » alors que la base n'a pas été mise à jour.
-- [ ] PERF : le login charge TOUS les projets avec TOUS les messages/fichiers/storyboards
-      imbriqués, sans limite (App.js ~7430/7551). PARTIEL (2026-08-13) : le volet
-      « TOUT est rechargé à chaque refresh de token / retour d'onglet » est corrigé —
-      `onAuthStateChange` gardait une nouvelle référence `user` à chaque événement (y
-      compris TOKEN_REFRESHED, déclenché périodiquement + au retour d'onglet), ce qui
-      redéclenchait le `useEffect [user]` de chargement complet ; il compare maintenant
-      l'id et garde la même référence si l'utilisateur n'a pas changé. Reste à faire :
-      limiter les colonnes du select initial et charger messages/fichiers/storyboards à
-      l'ouverture d'un projet plutôt que pour tous les projets au login — refactor plus
-      large (état + tous les composants qui lisent project.messages/files/storyboards),
-      volontairement laissé pour un run dédié plutôt que bâclé dans le budget de celui-ci.
-      BLOQUANT ADDITIONNEL identifié (2026-08-15, analysé avant de retenter ce run) : le
-      lazy-load par projet n'est PAS un simple découpage — le dashboard prod (badges
-      « derniers messages non lus », App.js ~3424-3437, `p.comments`) lit les messages de
-      TOUS les projets pour déterminer lesquels ont une dernière réponse côté client vs
-      prod, indépendamment du projet actuellement ouvert. Charger les messages seulement
-      à l'ouverture d'un projet casserait ce dashboard. Il faut d'abord soit (a) une RPC
-      dédiée légère (dernier message + rôle par projet, sans le contenu complet) pour ce
-      badge, soit (b) accepter de garder `messages` eager et ne différer que `files`/
-      `storyboards` (aucun usage cross-projets trouvé pour ceux-ci lors de cette analyse).
-      Toujours volontairement non traité dans ce run : périmètre trop large pour être fiable
-      dans un budget de 3 items, cf. note ci-dessus.
+- [x] PERF : le login charge TOUS les projets avec TOUS les messages/fichiers/storyboards
+      imbriqués, sans limite (App.js ~7430/7551). Historique : « TOUT rechargé à chaque
+      refresh de token » corrigé le 2026-08-13 (comparaison d'id sur `user`). Terminé
+      (2026-08-16), option (b) retenue après analyse des runs précédents (aucun usage
+      cross-projets de `files`/`storyboards`, contrairement à `messages` qui alimente le
+      badge « derniers messages non lus » du dashboard prod) : le select initial
+      (`loadData`) n'embarque plus `files(*)`/`storyboards(*)`, seulement `messages(*)`
+      — projets initialisés avec `storyboards:[]`/`livrables:[]`. Nouvel effet
+      (`detailFetchedIds`) qui charge `files`+`storyboards` du projet sélectionné en un
+      seul aller-retour ciblé (`.eq("project_id", id)`) dès qu'une vue détail (admin ou
+      client) s'ouvre sur ce projet, une seule fois par projet (Set de suivi). Avant : N
+      projets × (messages+fichiers+storyboards) à chaque login ; après : messages pour N
+      projets (nécessaire au badge), fichiers/storyboards seulement pour le projet
+      réellement ouvert. Vérifié : les deux seuls usages de `project.storyboards`/tab
+      « Livrables » dans le code sont dans les vues détail (ProdDetail, ClientProjectView),
+      donc pas de régression d'affichage dans les vues liste/kanban (elles n'en lisaient
+      déjà pas le compte).
 - [x] NOUVEAU (découvert 2026-08-13 en traitant l'item livrables internes) : `ProdLivrables`
       (App.js, `add()`/`del()`) ne persistait jamais en base — corrigé (2026-08-13) :
       `add()`/`del()` font maintenant un vrai `insert`/`delete` sur `public.files`
@@ -350,7 +345,42 @@ security definer (l'anon key est publique par design).
       le token côté serveur, pas de nouvelle faille trouvée.
 - [ ] Migrations SQL / RLS : reconstituer l'état final du schéma et vérifier les policies
       (get_project_invite, chat anonyme, espace monteur, get_client_space…)
-- [ ] api/nouveau-projet.js, src/Login.js, fichiers *.command, dépendances package.json
+- [x] api/nouveau-projet.js, src/Login.js, fichiers *.command, dépendances package.json —
+      audités (2026-08-16). `api/nouveau-projet.js` : RAS, endpoint Vercel simple qui
+      insère un projet + envoie une notif, pas de faille identifiée. `*.command` :
+      scripts locaux de déploiement manuel (macOS), pas de secret en clair, RAS.
+      `package.json` : pas de dépendance manifestement compromise identifiée en lecture
+      (`npm audit` remonte des vulnérabilités transitives génériques de la toolchain CRA,
+      pas spécifiques à ce projet — hors périmètre d'un audit applicatif ciblé).
+      NOUVEAU problème trouvé en auditant `src/Login.js` (`handleRegister`) en le
+      recoupant avec `profiles_role_lock` (migration `20260815090000`, déjà en place) :
+      cette policy est `for update` UNIQUEMENT — elle verrouille bien un changement de
+      `role` sur une ligne `profiles` déjà existante, mais ne couvre PAS l'INSERT. Or
+      `Login.js` (auto-inscription client) ET `AccessManager.createAccess`/
+      `ClientsManager.createAccount` (création de comptes équipe/client par un admin)
+      créent tous la ligne `profiles` via `supabase.from("profiles").upsert({..,role:..})`
+      — un premier upsert sur un id neuf est un INSERT, donc un appel direct à l'API
+      Supabase (JWT valide obtenu via auto-inscription, anon key) avec
+      `profiles.upsert({id:sonPropreId, role:"admin", ...})` échapperait au verrou actuel
+      SI une policy INSERT historique permettant à un utilisateur de créer sa propre ligne
+      `profiles` existe déjà — ce qui est très probablement le cas : c'est exactement ce
+      dont dépend le flux d'auto-inscription actuel pour fonctionner (sans policy INSERT
+      self, `Login.js` échouerait déjà en prod). NON CORRIGÉ ici (risque de régression du
+      même type que mail-classify/gmail-sync et profiles_role_lock lui-même, déjà
+      documenté) : `AccessManager.createAccess`/`ClientsManager.createAccount` appellent
+      `supabase.auth.signUp()` alors qu'un ADMIN est déjà connecté — si l'app utilise le
+      comportement par défaut du SDK (confirmation email désactivée), `signUp()` remplace
+      la session active par celle du compte nouvellement créé, donc l'upsert `profiles`
+      qui suit s'exécute potentiellement avec la session du NOUVEL utilisateur, pas celle
+      de l'admin. Ajouter à l'aveugle une policy RESTRICTIVE `for insert` basée sur
+      `get_my_role() in ('admin','collaborateur')` casserait alors la création de comptes
+      équipe/client par les admins eux-mêmes (le nouvel utilisateur n'a pas encore de ligne
+      `profiles`, donc `get_my_role()` renverrait vide). À reprendre avec accès à la
+      définition actuelle de la policy INSERT sur `profiles` en base ET confirmation du
+      comportement de session après `auth.signUp()` dans cette configuration Supabase —
+      sans quoi le correctif le plus sûr techniquement (étendre `profiles_role_lock` à
+      `for insert` en forçant `role='client'` par défaut sauf appelant déjà admin) risque
+      de casser la création de comptes en silence.
 
 ## Rappels déploiement (à faire par Idriss, pas par la routine)
 

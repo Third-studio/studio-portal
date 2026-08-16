@@ -8030,7 +8030,7 @@ function AppMain() {
       if(!isAdminUser){ try{ await supabase.rpc("claim_pending_projects"); }catch(_){ /* SQL non déployé */ } }
 
       const queries = [
-        supabase.from("projects").select("*, messages(*), files(*), storyboards(*)").order("created_at",{ascending:false}),
+        supabase.from("projects").select("*, messages(*)").order("created_at",{ascending:false}),
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
         supabase.rpc("get_bookings"),
         supabase.from("service_types").select("*").order("label"),
@@ -8079,13 +8079,9 @@ function AppMain() {
           videoStatus: p.brief?.videoStatus || null,
           videoComment: p.brief?.videoComment || "",
           moodboard: p.brief?.moodboard || [],
-          storyboards: (p.storyboards || []).map(s => ({
-            id: s.id,
-            title: s.title,
-            frames: s.frames || [],
-            validationStatus: s.validation_status || "pending",
-            createdAt: s.created_at?.split("T")[0],
-          })),
+          // storyboards/livrables chargés à la demande à l'ouverture du projet (cf. effet
+          // de détail ci-dessous) : ne plus les embarquer pour TOUS les projets au login.
+          storyboards: [],
           comments: (p.messages || []).map(m => ({
             id: m.id,
             author: m.author,
@@ -8093,14 +8089,7 @@ function AppMain() {
             date: m.created_at?.split("T")[0],
             role: m.role,
           })),
-          livrables: (p.files || []).map(f => ({
-            id: f.id,
-            name: f.name,
-            url: f.url,
-            category: f.category,
-            note: f.note,
-            date: f.created_at?.split("T")[0],
-          })),
+          livrables: [],
         }));
         setProjects(formatted);
         setSelectedProjectId(formatted[0]?.id || null);
@@ -8131,6 +8120,31 @@ function AppMain() {
   const updProject = useCallback(p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x)),[]);
   const goToCalendarProd = useCallback(()=>setProdSection("calendrier"),[]);
   const openProjectFromCalendar = useCallback((id)=>{setSelectedProjectId(id);setProdSection("projets");},[]);
+
+  // ── Storyboards/livrables : chargés à l'ouverture d'un projet, pas pour tous
+  // les projets au login (cf. plus haut, select initial allégé). Le dashboard prod
+  // (badge derniers messages) ne lit que `comments`, resté eager, donc pas d'impact.
+  const [detailFetchedIds,setDetailFetchedIds]=useState(()=>new Set());
+  const wantsProjectDetail = projetsView==="detail" || clientProjectsView==="detail";
+  useEffect(()=>{
+    if(!wantsProjectDetail || !selectedProjectId || detailFetchedIds.has(selectedProjectId)) return;
+    let cancelled=false;
+    (async()=>{
+      const [{data:filesData,error:filesErr},{data:sbData,error:sbErr}] = await Promise.all([
+        supabase.from("files").select("*").eq("project_id",selectedProjectId),
+        supabase.from("storyboards").select("*").eq("project_id",selectedProjectId),
+      ]);
+      if(cancelled) return;
+      setDetailFetchedIds(ids=>new Set(ids).add(selectedProjectId));
+      if(filesErr || sbErr) return;
+      setProjects(ps=>ps.map(p=>p.id!==selectedProjectId?p:{
+        ...p,
+        livrables:(filesData||[]).map(f=>({id:f.id,name:f.name,url:f.url,category:f.category,note:f.note,date:f.created_at?.split("T")[0]})),
+        storyboards:(sbData||[]).map(s=>({id:s.id,title:s.title,frames:s.frames||[],validationStatus:s.validation_status||"pending",createdAt:s.created_at?.split("T")[0]})),
+      }));
+    })();
+    return ()=>{cancelled=true;};
+  },[wantsProjectDetail,selectedProjectId,detailFetchedIds]);
 
   // ── Supervision : un client "superviseur" voit les comptes de sa company ─────
   const [companyMembers,setCompanyMembers]=useState([]);
