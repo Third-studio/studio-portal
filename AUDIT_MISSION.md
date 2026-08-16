@@ -264,10 +264,27 @@ security definer (l'anon key est publique par design).
       `Map(project_id → factures[])` construit une seule fois via `useMemo` (dépendance
       `invoices` uniquement) — `inv4` est maintenant un lookup O(1). Même correctif appliqué à
       `ProjectsKanban` (`KanbanCard` faisait le même `invoices.filter` par carte à chaque
-      rendu). Restent non traités : memo() neutralisés par handlers inline (nécessite de
-      passer ~10 handlers de mutation, actuellement de simples fonctions redéfinies à chaque
-      rendu de `App`, sous `useCallback` avec les bonnes dépendances — refactor plus large,
-      risque de closures obsolètes si bâclé, volontairement laissé pour un run dédié) ;
+      rendu). « memo() neutralisés par handlers inline » — corrigé (2026-08-16) :
+      `ProjectsKanbanMemo`/`ProjectsListViewMemo` (les deux vues les plus coûteuses de
+      l'app) recevaient ~13 handlers de mutation (quickUpdateProject, createTeamMember,
+      copyMemberSpaceLink, assignMemberToProject, unassignMember, quickCreateProject,
+      markInvoicePaid, sendClientUpdate, toggleProjectAccess, sendClientInvite,
+      deleteProject, duplicateProject, notifyClient) redéfinis en simples fonctions à
+      chaque rendu de `App`, plus 3 handlers inline créés à la volée dans le JSX
+      (onOpenProject, onAddInvoice, onCreateForClient) — memo() était donc entièrement
+      neutralisé : ces deux composants se re-rendaient en entier à chaque frappe/état
+      modifié n'importe où ailleurs dans le composant, même à props strictement
+      identiques. Les 13 fonctions passées sous `useCallback` (deps = état réellement lu :
+      teamMembers/clients/assignments/selectedProjectId/showNotif/updProject/notifyClient
+      selon le cas) et les 3 handlers inline extraits en consts stables
+      (`openProjectDetail`, `openInvoiceModal`, `createForClient`). Ces définitions ont dû
+      être déplacées avant les `return` conditionnels du composant (écran de chargement,
+      pas de session, compte supprimé, rôle partenaire, compte suspendu) : `useCallback`
+      est un hook, alors qu'auparavant ces fonctions (simples consts) étaient définies
+      après ces retours anticipés — les y laisser aurait violé les règles des hooks (appel
+      conditionnel), détecté immédiatement par `react-hooks/rules-of-hooks` au build
+      (CI=true). Comportement fonctionnel inchangé (mêmes corps de fonction, mêmes
+      garde-fous erreur déjà en place) ; build vérifié, 0 erreur ESLint. Reste non traité :
       moodboard vignettes pleine résolution (nécessite soit l'API de transformation d'image
       Supabase Storage — indisponible selon le plan, impossible à confirmer sans accès au
       projet — soit un redimensionnement côté client à l'upload ; pas de fix sûr identifié

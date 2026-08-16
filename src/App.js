@@ -8120,6 +8120,209 @@ function AppMain() {
   const updProject = useCallback(p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x)),[]);
   const goToCalendarProd = useCallback(()=>setProdSection("calendrier"),[]);
   const openProjectFromCalendar = useCallback((id)=>{setSelectedProjectId(id);setProdSection("projets");},[]);
+  const openProjectDetail = useCallback((id)=>{setSelectedProjectId(id);setProjetsView("detail");},[]);
+  const openInvoiceModal = useCallback((p,c)=>setInvoiceModal({project:p,client:c}),[]);
+  const createForClient = useCallback((c)=>{setCreateForClientId(c?.id||null);setShowCreateModal(true);},[]);
+
+  // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
+  // kind ∈ "livrable" | "modif_done" | "delivered" | "invoice_sent" | "custom"
+  const notifyClient = useCallback(async({ project, client, kind="custom", subject, html, text, extra="" }) => {
+    try{
+      const to = client?.email; if(!to) return;
+      const pTitle = project?.title || "Votre projet";
+      const link = "https://thirdone.studio";
+      const greet = `Bonjour ${client?.name || ""},`.trim();
+      const presets = {
+        livrable:    { s:`Nouveau livrable – ${pTitle}`,            l:"Un nouveau livrable a été ajouté à votre projet." },
+        modif_done:  { s:`Modifications appliquées – ${pTitle}`,    l:"Les modifications demandées ont été appliquées. Vous pouvez les valider depuis votre espace." },
+        delivered:   { s:`Projet déposé – ${pTitle}`,               l:"Votre projet est livré et disponible dans votre espace client." },
+        invoice_sent:{ s:`Facture émise – ${pTitle}`,               l:"Votre facture est disponible dans votre espace client." },
+      };
+      const preset = presets[kind] || { s: subject || `Mise à jour – ${pTitle}`, l: extra || "Mise à jour disponible dans votre espace client." };
+      const finalSubject = subject || preset.s;
+      const lead = preset.l;
+      const finalText = text ||
+`${greet}
+
+${lead}
+${extra ? "\n" + extra + "\n" : ""}
+Accéder à votre espace : ${link}
+
+— Third-One Studio`;
+      // Le template de marque est appliqué côté serveur (send-email).
+      // greet/lead/extra peuvent contenir un nom client ou un nom de fichier fournis
+      // par un tiers (client, upload) : échappement avant interpolation HTML.
+      const fragment = html ||
+`<p style="margin:0 0 14px;">${escHtml(greet)}</p>
+<p style="margin:0 0 14px;">${escHtml(lead)}</p>
+${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""}`;
+      const{ error } = await supabase.functions.invoke("send-email", { body: {
+        to, subject: finalSubject, text: finalText, html: fragment,
+        kicker: "Suivi de projet", title: finalSubject,
+        cta: { label: "Ouvrir mon espace", url: link },
+      } });
+      if(error) console.warn("notifyClient",error);
+    }catch(e){ console.warn("notifyClient", e); }
+  },[]);
+
+  // Édition rapide depuis le kanban : patch partiel camelCase → colonnes snake_case
+  const quickUpdateProject=useCallback(async(project,f)=>{
+    const payload={};
+    if(f.title!==undefined) payload.title=f.title||project.title;
+    if(f.status!==undefined) payload.status=f.status;
+    if(f.progress!==undefined) payload.progress=Number(f.progress)||0;
+    if(f.deliveryDate!==undefined) payload.delivery_date=f.deliveryDate||null;
+    if(f.statusNote!==undefined) payload.status_note=f.statusNote||null;
+    if(f.clientId!==undefined) payload.client_id=f.clientId||null;
+    if(f.replayUrl!==undefined){
+      if(f.replayUrl && !isSafeUrl(f.replayUrl)){showNotif("Lien non autorisé — domaine refusé");return;}
+      payload.replay_url=f.replayUrl||null;
+    }
+    const{error}=await supabase.from("projects").update(payload).eq("id",project.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    updProject({...project,
+      ...(f.title!==undefined?{title:payload.title}:{}),
+      ...(f.status!==undefined?{status:f.status}:{}),
+      ...(f.progress!==undefined?{progress:payload.progress}:{}),
+      ...(f.deliveryDate!==undefined?{deliveryDate:f.deliveryDate||""}:{}),
+      ...(f.statusNote!==undefined?{statusNote:f.statusNote||""}:{}),
+      ...(f.clientId!==undefined?{clientId:f.clientId||null}:{}),
+      ...(f.replayUrl!==undefined?{replayUrl:f.replayUrl||""}:{}),
+    });
+    if(f.status!==undefined && f.status!==project.status){
+      supabase.from("project_events").insert({project_id:project.id,kind:"step",label:`Étape passée à « ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status} »`}).then(()=>{});
+      showNotif(`« ${project.title} » → ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status}`);
+    } else showNotif("Projet mis à jour");
+  },[showNotif,updProject]);
+
+  // Création d'un monteur (nom + email) directement depuis la liste projets.
+  const createTeamMember=useCallback(async({nom,email,role})=>{
+    const colors=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#7C3AED"];
+    const color=colors[teamMembers.length%colors.length];
+    const{data,error}=await supabase.from("team_members")
+      .insert({nom,email:email||null,role:role||"monteur",team:"A",color}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return null;}
+    const m={id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||color,accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null};
+    setTeamMembers(prev=>[...prev,m]);
+    showNotif(`${nom} ajouté à l'équipe`);
+    return m;
+  },[teamMembers,showNotif]);
+
+  // Lien de l'espace monteur (régénère le jeton s'il manque ou a été révoqué).
+  const copyMemberSpaceLink=useCallback(async(m)=>{
+    let token=m.accessToken;
+    if(!token||m.accessRevokedAt){
+      token=(crypto.randomUUID?crypto.randomUUID():String(Date.now())).replace(/-/g,"");
+      const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
+      if(error){showNotif("Erreur : "+error.message);return;}
+      setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
+    }
+    const url=`${window.location.origin}/?monteur=${token}`;
+    try{ await navigator.clipboard.writeText(url); showNotif(`Lien de l'espace de ${m.nom} copié`); }
+    catch{ window.prompt("Lien de l'espace monteur :",url); }
+  },[showNotif]);
+
+  // Attribution rapide depuis la liste : project_assignments ↔ team_members.
+  const assignMemberToProject=useCallback(async(project,memberId)=>{
+    const{data,error}=await supabase.from("project_assignments").insert({project_id:project.id,member_id:memberId,role_on_project:""}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setAssignments(prev=>[...prev,{id:data.id,projectId:data.project_id,memberId:data.member_id,roleOnProject:data.role_on_project||""}]);
+    const m=teamMembers.find(x=>x.id===memberId);
+    showNotif(`${m?.nom||"Membre"} attribué à « ${project.title} »`);
+  },[teamMembers,showNotif]);
+
+  const unassignMember=useCallback(async(assignment)=>{
+    const{error}=await supabase.from("project_assignments").delete().eq("id",assignment.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setAssignments(prev=>prev.filter(a=>a.id!==assignment.id));
+    showNotif("Membre retiré");
+  },[showNotif]);
+
+  const quickCreateProject=useCallback(async(title,status)=>{
+    const{data,error}=await supabase.from("projects").insert({title,client_id:null,status:status||"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setProjects(ps=>[{id:data.id,title:data.title,clientId:null,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]},...ps]);
+    showNotif(`Projet « ${title} » créé`);
+  },[showNotif]);
+
+  const markInvoicePaid=useCallback(async(inv,project,client)=>{
+    const{data,error}=await supabase.from("invoices").update({status:"paid",paid_at:new Date().toISOString().slice(0,10)}).eq("id",inv.id).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setInvoices(ivs=>ivs.map(i=>i.id===data.id?data:i));
+    showNotif(`Facture ${data.number||"#"+data.id.slice(0,6)} marquée payée`);
+  },[showNotif]);
+
+  // Actions projet accessibles depuis la liste (ProjectsListView)
+  const sendClientUpdate=useCallback(async(project)=>{
+    const client=clients.find(c=>c.id===project.clientId);
+    if(!client?.email){showNotif("Aucun email client sur ce projet");return;}
+    await notifyClient({ project, client, kind:"custom",
+      subject:`Mise à jour – ${project.title}`,
+      extra:"De nouveaux éléments sont disponibles dans votre espace : connectez-vous pour les consulter et valider les étapes en cours." });
+    showNotif("Notification envoyée au client ✉️");
+  },[clients,showNotif,notifyClient]);
+
+  const toggleProjectAccess=useCallback(async(project)=>{
+    const v=!project.brief?.clientStepsUnlocked;
+    const newBrief={...project.brief,clientStepsUnlocked:v};
+    const{error}=await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    updProject({...project,brief:newBrief});
+    showNotif(v?"Accès client ouvert":"Accès client restreint au brief");
+  },[showNotif,updProject]);
+
+  // Invite le client à créer son accès et compléter le brief. Renvoie true si envoyé.
+  const sendClientInvite=useCallback(async(project)=>{
+    const c=clients.find(cl=>cl.id===project.clientId);
+    const email=c?.email||project.brief?.pendingClientEmail;
+    const name=c?.name||project.brief?.pendingClientName||"";
+    if(!email){showNotif("Aucun email client à inviter");return false;}
+    const link=`https://thirdone.studio/?invite=${encodeURIComponent(email)}`;
+    const{error}=await supabase.functions.invoke("send-email",{body:{
+      to:email,subject:`Votre espace projet – ${project.title}`,
+      kicker:"Invitation",title:`Votre projet ${project.title}`,
+      html:`<p style="margin:0 0 14px;">Bonjour ${escHtml(name)},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${escHtml(project.title)}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
+      text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
+      cta:{label:"Créer mon accès",url:link},
+    }});
+    if(error){
+      // functions.invoke masque le corps de la réponse : on va le lire pour
+      // afficher la vraie cause (JWT, rôle, SMTP…) au lieu d'un "non-2xx".
+      let detail="";
+      try{ const body=await error.context?.json?.(); detail=body?.error||""; }catch{ /* corps illisible */ }
+      showNotif(`Envoi impossible${detail?` : ${detail}`:` : ${error.message}`} — lien copié, envoie-le à la main`);
+      try{ await navigator.clipboard.writeText(link); }catch{ window.prompt("Lien d'invitation :",link); }
+      return false;
+    }
+    showNotif("Invitation envoyée au client ✉️");
+    return true;
+  },[clients,showNotif]);
+
+  // Suppression d'un projet (depuis la liste) — irréversible, avec confirmation.
+  const deleteProject=useCallback(async(project)=>{
+    if(!window.confirm(`Supprimer définitivement le projet « ${project.title} » ?\n\nCette action est irréversible : brief, messages, livrables, storyboards et factures liés seront perdus.`))return;
+    const{error}=await supabase.from("projects").delete().eq("id",project.id);
+    if(error){showNotif("Erreur suppression : "+error.message);return;}
+    setProjects(ps=>ps.filter(p=>p.id!==project.id));
+    if(selectedProjectId===project.id){ setSelectedProjectId(null); setProjetsView("liste"); }
+    showNotif("Projet supprimé");
+  },[selectedProjectId,showNotif]);
+
+  // Duplique un projet : brief + client + équipe copiés ; validation vidéo, liens de visionnage et dates remis à zéro.
+  const duplicateProject=useCallback(async(project)=>{
+    const nb={...(project.brief||{})};
+    delete nb.videoStatus; delete nb.videoComment; delete nb.replayLinks; delete nb.complements; delete nb.stepDates;
+    const{data,error}=await supabase.from("projects").insert({title:`${project.title} (copie)`,client_id:project.clientId||null,status:project.status||"brief",progress:0,brief:nb,replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    if(error){showNotif("Erreur duplication : "+error.message);return;}
+    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:nb,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:nb.moodboard||[],storyboards:[],comments:[],livrables:[]};
+    const rows=assignments.filter(a=>a.projectId===project.id).map(a=>({project_id:data.id,member_id:a.memberId,role_on_project:a.roleOnProject||""}));
+    if(rows.length){
+      const{data:aData}=await supabase.from("project_assignments").insert(rows).select();
+      if(aData) setAssignments(pa=>[...pa,...aData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""}))]);
+    }
+    setProjects(ps=>[np,...ps]);
+    showNotif(`Projet dupliqué : « ${np.title} »`);
+  },[assignments,showNotif]);
 
   // ── Storyboards/livrables : chargés à l'ouverture d'un projet, pas pour tous
   // les projets au login (cf. plus haut, select initial allégé). Le dashboard prod
@@ -8209,46 +8412,6 @@ function AppMain() {
     </div>
   );
 
-  // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
-  // kind ∈ "livrable" | "modif_done" | "delivered" | "invoice_sent" | "custom"
-  const notifyClient = async({ project, client, kind="custom", subject, html, text, extra="" }) => {
-    try{
-      const to = client?.email; if(!to) return;
-      const pTitle = project?.title || "Votre projet";
-      const link = "https://thirdone.studio";
-      const greet = `Bonjour ${client?.name || ""},`.trim();
-      const presets = {
-        livrable:    { s:`Nouveau livrable – ${pTitle}`,            l:"Un nouveau livrable a été ajouté à votre projet." },
-        modif_done:  { s:`Modifications appliquées – ${pTitle}`,    l:"Les modifications demandées ont été appliquées. Vous pouvez les valider depuis votre espace." },
-        delivered:   { s:`Projet déposé – ${pTitle}`,               l:"Votre projet est livré et disponible dans votre espace client." },
-        invoice_sent:{ s:`Facture émise – ${pTitle}`,               l:"Votre facture est disponible dans votre espace client." },
-      };
-      const preset = presets[kind] || { s: subject || `Mise à jour – ${pTitle}`, l: extra || "Mise à jour disponible dans votre espace client." };
-      const finalSubject = subject || preset.s;
-      const lead = preset.l;
-      const finalText = text ||
-`${greet}
-
-${lead}
-${extra ? "\n" + extra + "\n" : ""}
-Accéder à votre espace : ${link}
-
-— Third-One Studio`;
-      // Le template de marque est appliqué côté serveur (send-email).
-      // greet/lead/extra peuvent contenir un nom client ou un nom de fichier fournis
-      // par un tiers (client, upload) : échappement avant interpolation HTML.
-      const fragment = html ||
-`<p style="margin:0 0 14px;">${escHtml(greet)}</p>
-<p style="margin:0 0 14px;">${escHtml(lead)}</p>
-${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""}`;
-      const{ error } = await supabase.functions.invoke("send-email", { body: {
-        to, subject: finalSubject, text: finalText, html: fragment,
-        kicker: "Suivi de projet", title: finalSubject,
-        cta: { label: "Ouvrir mon espace", url: link },
-      } });
-      if(error) console.warn("notifyClient",error);
-    }catch(e){ console.warn("notifyClient", e); }
-  };
   const createProject=async(title,clientId,team)=>{
     const newClientId = userRole==="client" ? user.id : (clientId||null);
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:newClientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
@@ -8269,81 +8432,6 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""
     setShowCreateModal(false);
     showNotif(team?`Projet créé — Équipe ${team} assignée`:"Projet créé !");
     return np;
-  };
-
-  // Édition rapide depuis le kanban : patch partiel camelCase → colonnes snake_case
-  const quickUpdateProject=async(project,f)=>{
-    const payload={};
-    if(f.title!==undefined) payload.title=f.title||project.title;
-    if(f.status!==undefined) payload.status=f.status;
-    if(f.progress!==undefined) payload.progress=Number(f.progress)||0;
-    if(f.deliveryDate!==undefined) payload.delivery_date=f.deliveryDate||null;
-    if(f.statusNote!==undefined) payload.status_note=f.statusNote||null;
-    if(f.clientId!==undefined) payload.client_id=f.clientId||null;
-    if(f.replayUrl!==undefined){
-      if(f.replayUrl && !isSafeUrl(f.replayUrl)){showNotif("Lien non autorisé — domaine refusé");return;}
-      payload.replay_url=f.replayUrl||null;
-    }
-    const{error}=await supabase.from("projects").update(payload).eq("id",project.id);
-    if(error){showNotif("Erreur : "+error.message);return;}
-    updProject({...project,
-      ...(f.title!==undefined?{title:payload.title}:{}),
-      ...(f.status!==undefined?{status:f.status}:{}),
-      ...(f.progress!==undefined?{progress:payload.progress}:{}),
-      ...(f.deliveryDate!==undefined?{deliveryDate:f.deliveryDate||""}:{}),
-      ...(f.statusNote!==undefined?{statusNote:f.statusNote||""}:{}),
-      ...(f.clientId!==undefined?{clientId:f.clientId||null}:{}),
-      ...(f.replayUrl!==undefined?{replayUrl:f.replayUrl||""}:{}),
-    });
-    if(f.status!==undefined && f.status!==project.status){
-      supabase.from("project_events").insert({project_id:project.id,kind:"step",label:`Étape passée à « ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status} »`}).then(()=>{});
-      showNotif(`« ${project.title} » → ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status}`);
-    } else showNotif("Projet mis à jour");
-  };
-  // Création d'un monteur (nom + email) directement depuis la liste projets.
-  const createTeamMember=async({nom,email,role})=>{
-    const colors=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#7C3AED"];
-    const color=colors[teamMembers.length%colors.length];
-    const{data,error}=await supabase.from("team_members")
-      .insert({nom,email:email||null,role:role||"monteur",team:"A",color}).select().single();
-    if(error){showNotif("Erreur : "+error.message);return null;}
-    const m={id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||color,accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null};
-    setTeamMembers(prev=>[...prev,m]);
-    showNotif(`${nom} ajouté à l'équipe`);
-    return m;
-  };
-  // Lien de l'espace monteur (régénère le jeton s'il manque ou a été révoqué).
-  const copyMemberSpaceLink=async(m)=>{
-    let token=m.accessToken;
-    if(!token||m.accessRevokedAt){
-      token=(crypto.randomUUID?crypto.randomUUID():String(Date.now())).replace(/-/g,"");
-      const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
-      if(error){showNotif("Erreur : "+error.message);return;}
-      setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
-    }
-    const url=`${window.location.origin}/?monteur=${token}`;
-    try{ await navigator.clipboard.writeText(url); showNotif(`Lien de l'espace de ${m.nom} copié`); }
-    catch{ window.prompt("Lien de l'espace monteur :",url); }
-  };
-  // Attribution rapide depuis la liste : project_assignments ↔ team_members.
-  const assignMemberToProject=async(project,memberId)=>{
-    const{data,error}=await supabase.from("project_assignments").insert({project_id:project.id,member_id:memberId,role_on_project:""}).select().single();
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setAssignments(prev=>[...prev,{id:data.id,projectId:data.project_id,memberId:data.member_id,roleOnProject:data.role_on_project||""}]);
-    const m=teamMembers.find(x=>x.id===memberId);
-    showNotif(`${m?.nom||"Membre"} attribué à « ${project.title} »`);
-  };
-  const unassignMember=async(assignment)=>{
-    const{error}=await supabase.from("project_assignments").delete().eq("id",assignment.id);
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setAssignments(prev=>prev.filter(a=>a.id!==assignment.id));
-    showNotif("Membre retiré");
-  };
-  const quickCreateProject=async(title,status)=>{
-    const{data,error}=await supabase.from("projects").insert({title,client_id:null,status:status||"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setProjects(ps=>[{id:data.id,title:data.title,clientId:null,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]},...ps]);
-    showNotif(`Projet « ${title} » créé`);
   };
 
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
@@ -8374,56 +8462,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""
       }
     }
   };
-  const markInvoicePaid=async(inv,project,client)=>{
-    const{data,error}=await supabase.from("invoices").update({status:"paid",paid_at:new Date().toISOString().slice(0,10)}).eq("id",inv.id).select().single();
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setInvoices(ivs=>ivs.map(i=>i.id===data.id?data:i));
-    showNotif(`Facture ${data.number||"#"+data.id.slice(0,6)} marquée payée`);
-  };
 
-  // Actions projet accessibles depuis la liste (ProjectsListView)
-  const sendClientUpdate=async(project)=>{
-    const client=clients.find(c=>c.id===project.clientId);
-    if(!client?.email){showNotif("Aucun email client sur ce projet");return;}
-    await notifyClient({ project, client, kind:"custom",
-      subject:`Mise à jour – ${project.title}`,
-      extra:"De nouveaux éléments sont disponibles dans votre espace : connectez-vous pour les consulter et valider les étapes en cours." });
-    showNotif("Notification envoyée au client ✉️");
-  };
-  const toggleProjectAccess=async(project)=>{
-    const v=!project.brief?.clientStepsUnlocked;
-    const newBrief={...project.brief,clientStepsUnlocked:v};
-    const{error}=await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
-    if(error){showNotif("Erreur : "+error.message);return;}
-    updProject({...project,brief:newBrief});
-    showNotif(v?"Accès client ouvert":"Accès client restreint au brief");
-  };
-  // Invite le client à créer son accès et compléter le brief. Renvoie true si envoyé.
-  const sendClientInvite=async(project)=>{
-    const c=clients.find(cl=>cl.id===project.clientId);
-    const email=c?.email||project.brief?.pendingClientEmail;
-    const name=c?.name||project.brief?.pendingClientName||"";
-    if(!email){showNotif("Aucun email client à inviter");return false;}
-    const link=`https://thirdone.studio/?invite=${encodeURIComponent(email)}`;
-    const{error}=await supabase.functions.invoke("send-email",{body:{
-      to:email,subject:`Votre espace projet – ${project.title}`,
-      kicker:"Invitation",title:`Votre projet ${project.title}`,
-      html:`<p style="margin:0 0 14px;">Bonjour ${escHtml(name)},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${escHtml(project.title)}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
-      text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
-      cta:{label:"Créer mon accès",url:link},
-    }});
-    if(error){
-      // functions.invoke masque le corps de la réponse : on va le lire pour
-      // afficher la vraie cause (JWT, rôle, SMTP…) au lieu d'un "non-2xx".
-      let detail="";
-      try{ const body=await error.context?.json?.(); detail=body?.error||""; }catch{ /* corps illisible */ }
-      showNotif(`Envoi impossible${detail?` : ${detail}`:` : ${error.message}`} — lien copié, envoie-le à la main`);
-      try{ await navigator.clipboard.writeText(link); }catch{ window.prompt("Lien d'invitation :",link); }
-      return false;
-    }
-    showNotif("Invitation envoyée au client ✉️");
-    return true;
-  };
   // Crée un projet depuis un brief extrait d'un email (Inbox → brief-from-email)
   // puis invite automatiquement le nouveau client dans la foulée.
   const createProjectFromEmail=async(extract,emailId)=>{
@@ -8446,31 +8485,6 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""
     if(existing){ showNotif(`Projet créé pour ${existing.name} — brief pré-rempli`); }
     else if(c.email){ const sent=await sendClientInvite(np); if(!sent) showNotif("Projet créé — pense à inviter le client"); }
     else { showNotif("Projet créé — brief pré-rempli"); }
-  };
-  // Suppression d'un projet (depuis la liste) — irréversible, avec confirmation.
-  const deleteProject=async(project)=>{
-    if(!window.confirm(`Supprimer définitivement le projet « ${project.title} » ?\n\nCette action est irréversible : brief, messages, livrables, storyboards et factures liés seront perdus.`))return;
-    const{error}=await supabase.from("projects").delete().eq("id",project.id);
-    if(error){showNotif("Erreur suppression : "+error.message);return;}
-    setProjects(ps=>ps.filter(p=>p.id!==project.id));
-    if(selectedProjectId===project.id){ setSelectedProjectId(null); setProjetsView("liste"); }
-    showNotif("Projet supprimé");
-  };
-
-  // Duplique un projet : brief + client + équipe copiés ; validation vidéo, liens de visionnage et dates remis à zéro.
-  const duplicateProject=async(project)=>{
-    const nb={...(project.brief||{})};
-    delete nb.videoStatus; delete nb.videoComment; delete nb.replayLinks; delete nb.complements; delete nb.stepDates;
-    const{data,error}=await supabase.from("projects").insert({title:`${project.title} (copie)`,client_id:project.clientId||null,status:project.status||"brief",progress:0,brief:nb,replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
-    if(error){showNotif("Erreur duplication : "+error.message);return;}
-    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:nb,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:nb.moodboard||[],storyboards:[],comments:[],livrables:[]};
-    const rows=assignments.filter(a=>a.projectId===project.id).map(a=>({project_id:data.id,member_id:a.memberId,role_on_project:a.roleOnProject||""}));
-    if(rows.length){
-      const{data:aData}=await supabase.from("project_assignments").insert(rows).select();
-      if(aData) setAssignments(pa=>[...pa,...aData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""}))]);
-    }
-    setProjects(ps=>[np,...ps]);
-    showNotif(`Projet dupliqué : « ${np.title} »`);
   };
 
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
@@ -8649,24 +8663,24 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""
                     projects={projects}
                     clients={clients}
                     invoices={invoices}
-                    onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}
+                    onOpenProject={openProjectDetail}
                     onQuickUpdate={quickUpdateProject}
                     onQuickCreate={quickCreateProject}
                     onNotif={showNotif}
                   />
                 )}
                 {projetsView==="liste" && (isAdmin||isCollab) && (
-                  <ProjectInviteLinksPanel onNotif={showNotif} onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}/>
+                  <ProjectInviteLinksPanel onNotif={showNotif} onOpenProject={openProjectDetail}/>
                 )}
                 {projetsView==="liste" && (
                   <ProjectsListViewMemo
                     projects={projects}
                     clients={clients}
                     invoices={invoices}
-                    onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}
-                    onAddInvoice={(p,c)=>setInvoiceModal({project:p,client:c})}
+                    onOpenProject={openProjectDetail}
+                    onAddInvoice={openInvoiceModal}
                     onMarkPaid={markInvoicePaid}
-                    onCreateForClient={(c)=>{setCreateForClientId(c?.id||null);setShowCreateModal(true);}}
+                    onCreateForClient={createForClient}
                     onNotif={showNotif}
                     onNotifyClient={sendClientUpdate}
                     onToggleAccess={toggleProjectAccess}
