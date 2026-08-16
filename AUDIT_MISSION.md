@@ -380,7 +380,31 @@ security definer (l'anon key est publique par design).
       `get_client_space`) : RAS, ces flux passent par des RPC security definer qui revalident
       le token côté serveur, pas de nouvelle faille trouvée.
 - [ ] Migrations SQL / RLS : reconstituer l'état final du schéma et vérifier les policies
-      (get_project_invite, chat anonyme, espace monteur, get_client_space…)
+      (get_project_invite, chat anonyme, espace monteur, get_client_space…) — PARTIEL
+      (2026-08-16) : les flux explicitement cités ont été relus en détail (toutes les
+      migrations `*_lien_public.sql`, `liens_creation_projet`, `suivi_lien_public`,
+      `dates_estimees_suivi`, `echanges_client`, `demandes_infos_journal`,
+      `espace_monteur`(+v2), `espace_client_lien`, `claim_projects`+correctif
+      `email_confirme`) — RAS sur toutes : chaque RPC anonyme (`get_project_invite`,
+      `create_project_from_invite`, `add_invite_project_note`,
+      `set_invite_video_status`, `answer_invite_info_request`, `get_member_workspace`,
+      `member_add_delivery`, `member_timer_start/stop`, `member_send_message`,
+      `get_client_space`) revalide elle-même côté serveur (security definer) la
+      validité du jeton (`revoked_at`, souvent `expires_at`/`single_use` aussi —
+      quand ce n'est pas le cas c'est documenté comme volontaire dans le commentaire
+      de migration : le suivi doit rester consultable après expiration) ET
+      l'appartenance de la ressource visée au jeton (`project_id`/`invite_id` ou
+      `member_id`/`project_assignments`) avant toute lecture ou écriture ; aucune
+      n'accepte de rôle/auteur fourni par l'appelant sans le déduire du jeton
+      lui-même. `chat_anonyme.sql` ne contient en réalité aucune policy — seulement
+      2 colonnes d'affichage (`alias`/`company`) sur `profiles`, sans rapport avec la
+      sécurité. Non couvert par ce passage (pas dans le périmètre des flux cités,
+      moins susceptible de contenir des failles de sécurité mais pas vérifié) :
+      migrations `sara_*`, `shortone_*`, `notifications_whatsapp`,
+      `monteur_avancement`, `fix_new_id_bigint`, `fix_call_edge_auth`,
+      `seed_projets_sara`. Item laissé non coché : « reconstituer l'état final du
+      schéma » reste hors de portée sans accès à la base réelle (schéma de base non
+      versionné, cf. limitation déjà documentée sur plusieurs items ci-dessus).
 - [x] api/nouveau-projet.js, src/Login.js, fichiers *.command, dépendances package.json —
       audités (2026-08-16). `api/nouveau-projet.js` : RAS, endpoint Vercel simple qui
       insère un projet + envoie une notif, pas de faille identifiée. `*.command` :
