@@ -716,7 +716,7 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
           {items.map(item=>(
             <div key={item.id} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"4/3",background:"#F5F5F7",border:"1px solid #E5E5EA",cursor:"pointer"}}
               onMouseEnter={()=>setHoverId(item.id)} onMouseLeave={()=>setHoverId(null)}>
-              {safePortfolioUrl(item.url)&&<img src={safePortfolioUrl(item.url)} alt={item.caption||"moodboard"} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+              {safePortfolioUrl(item.url)&&<img src={safePortfolioUrl(item.url)} alt={item.caption||"moodboard"} loading="lazy" decoding="async" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
                 onError={e=>{e.target.style.display="none";}}/>}
               {/* Overlay */}
               <div style={{position:"absolute",inset:0,background:"rgba(8,8,15,0.75)",opacity:hoverId===item.id?1:0,transition:"opacity .18s",display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"8px"}}>

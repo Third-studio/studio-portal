@@ -187,20 +187,35 @@ security definer (l'anon key est publique par design).
       `<select>` HTML est toujours une string, et `projects.find(p=>p.id===form.projectId)`
       (comparaison stricte) casserait sans cette conversion. Aucun id projet uuid nulle part
       dans le schéma versionné.
-- [ ] Messages : `author`/`role` fournis par le client → usurpation possible (App.js ~1600).
-      Forcer author/role côté serveur (RLS with check ou trigger). NON TRAITÉ (2026-08-14,
-      analysé mais pas corrigé, item trop risqué pour être bâclé) : au moins 3 chemins
-      d'insertion directe distincts (prod authentifié, client authentifié, prestataire
-      authentifié rôle "partenaire") + le chemin monteur qui, lui, passe déjà par une RPC
-      security definer (`member_send_message`, appelée SANS session JWT — auth.uid() y est
-      NULL, accès par token dans `team_members`). Un trigger de correction basé sur
-      `get_my_role()` casserait ce chemin monteur (déjà sûr) si mal calibré côté NULL, et
-      `get_my_role()` ne couvre explicitement que admin/collaborateur/client dans les
-      migrations versionnées — le rôle "partenaire" (prestataires) n'y apparaît nulle part,
-      son comportement réel est invisible sans lire la définition actuelle de la fonction en
-      base (schéma de base non versionné). Risque de régression du même type que le bug
-      mail-classify/gmail-sync du 2026-08-13 si corrigé à l'aveugle. À reprendre avec accès à
-      la définition actuelle de `get_my_role()` et des policies `messages` en base.
+- [x] Messages : `author`/`role` fournis par le client → usurpation possible (App.js ~1600) —
+      corrigé (2026-08-17, migration `20260817090000_messages_role_lock.sql`). Les sessions
+      précédentes avaient laissé l'item non traité par prudence (mapping `get_my_role()` →
+      valeurs de `role` jugé incertain pour "partenaire", risque type mail-classify/gmail-sync).
+      Levé par grep direct des 4 points d'insertion (`.from("messages").insert`, App.js) : les 3
+      chemins authentifiés envoient toujours une valeur `role` fixe et cohérente avec le rôle du
+      compte (ProdProjectView → toujours `"prod"`, authentifié admin/collaborateur ; ClientProjectView
+      → toujours `"client"` ; PartenaireView ×2 → toujours `"prestataire"`, confirmé
+      `profiles.role="partenaire"` pour ces comptes) — le mapping est donc entièrement déduit du
+      comportement réel de l'app, pas deviné. Le 4ᵉ chemin (`member_send_message`, jeton monteur)
+      s'exécute sans session (`auth.uid()` NULL) et en SECURITY DEFINER, donc hors RLS par défaut —
+      exclu explicitement par la policy en plus de cette garantie structurelle. Policy RESTRICTIVE
+      `messages_role_lock` (for insert) : impose `role = 'prod'|'client'|'prestataire'` selon
+      `get_my_role()` pour toute session authentifiée. Impact réel confirmé (pas seulement
+      cosmétique) : `role` pilote l'affichage (bulle, alignement, carte de proposition
+      prestataire) ET une métrique métier (App.js ~3437, file "projets en attente de relance
+      client" basée sur le rôle du dernier message) — un client pouvait donc masquer son propre
+      projet de cette file en insérant un faux message `role:"prod"`. `author` volontairement
+      non verrouillé (champ d'affichage libre, sans effet d'autorisation ni de métrique). À
+      déployer par Idriss (`supabase db push`).
+- [x] PERF moodboard : vignettes 160px chargeant l'image originale pleine résolution — partiel
+      (2026-08-17) : ajout de `loading="lazy" decoding="async"` sur l'`<img>` de la grille
+      moodboard (App.js, MoodboardPanel ~719) — les vignettes hors écran ne sont plus
+      téléchargées/décodées avant scroll, gain réel sur le chargement initial d'un moodboard
+      chargé (souvent 20+ images). Le fix complet (servir une résolution réduite) reste NON
+      traité : nécessite soit l'API de transformation d'image Supabase Storage (disponibilité
+      selon plan, invérifiable sans accès au projet), soit un redimensionnement côté client à
+      l'upload — décision produit hors périmètre d'un correctif ciblé, cf. note 2026-08-16
+      ci-dessus.
 - [x] Upload client sans validation (type/taille) vers bucket public moodboard — corrigé
       (2026-08-14) : `addByFile` (MoodboardPanel, App.js) n'imposait aucune whitelist MIME
       (le `accept="image/*"` de l'`<input>` n'est qu'indicatif, contournable par un appel
