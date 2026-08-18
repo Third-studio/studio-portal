@@ -242,7 +242,7 @@ security definer (l'anon key est publique par design).
       admin/collaborateur (429 au-delà) — avant, un compte client pouvait appeler
       Claude en boucle avec un `system` libre, sans aucune limite de coût. À déployer
       par Idriss (`supabase db push` + `supabase functions deploy ai-generate`).
-- [ ] PERF memo/refetch : wrappers memo() neutralisés par handlers inline (~8055/8168) ;
+- [x] PERF memo/refetch : wrappers memo() neutralisés par handlers inline (~8055/8168) ;
       ProjectsListView recalcule O(projets×factures) à chaque frappe (~7056) ;
       TasksReminders refetch 3 tables à chaque clic (TasksReminders.js:20) ; Inbox refetch
       200 emails + projets à chaque action (Inbox.js ~56/92) ; moodboard affiche les
@@ -300,10 +300,17 @@ security definer (l'anon key est publique par design).
       conditionnel), détecté immédiatement par `react-hooks/rules-of-hooks` au build
       (CI=true). Comportement fonctionnel inchangé (mêmes corps de fonction, mêmes
       garde-fous erreur déjà en place) ; build vérifié, 0 erreur ESLint. Reste non traité :
-      moodboard vignettes pleine résolution (nécessite soit l'API de transformation d'image
-      Supabase Storage — indisponible selon le plan, impossible à confirmer sans accès au
-      projet — soit un redimensionnement côté client à l'upload ; pas de fix sûr identifié
-      sans decision produit).
+      moodboard vignettes pleine résolution — doublon du sous-point équivalent déjà traité
+      (PARTIEL) dans l'item MOYENNE ci-dessus (« PERF moodboard : vignettes 160px… ») :
+      `loading="lazy" decoding="async"` déjà en place (App.js, MoodboardPanel ~719, commit
+      2026-08-18) ; le fix complet (servir une résolution réduite) reste hors périmètre pour
+      la même raison (décision produit). Vérifié (2026-08-18) que les 6 autres sous-points de
+      cet item sont bien tous en place dans le code actuel (useCallback sur les 13 handlers +
+      3 handlers inline extraits, `invoicesByProject` en `useMemo`/Map à deux endroits,
+      `useEffect(loadData,[])` unique dans TasksReminders, `loadData()` scindé côté Inbox,
+      filtre `project_id` dans ProjectAutoStatus/project-radar, fetch profil unique dans
+      `loadData`) — item complet dans la limite de ce qui est corrigeable sans decision
+      produit.
 
 ## À faire — BASSE
 
