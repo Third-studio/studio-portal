@@ -4660,7 +4660,7 @@ function GuestView(){
     const t=params.get("guest");
     if(!t||t.length<20){setState("invalid");return;}
     setToken(t);
-    supabase.rpc("get_project_by_guest_token",{guest_token:t}).then(({data,error})=>{
+    supabase.rpc("get_client_guest_project",{p_guest_token:t}).then(({data,error})=>{
       if(error||!data){setState("invalid");return;}
       const guest=(data.brief?.guests||[]).find(g=>g.token===t);
       if(guest?.expiresAt&&new Date(guest.expiresAt)<Date.now()){setState("expired");return;}

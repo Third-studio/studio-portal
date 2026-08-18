@@ -29,6 +29,20 @@ security definer (l'anon key est publique par design).
 
 ## À faire — CRITIQUE / HAUTE
 
+- [ ] `profiles` (table) : policy INSERT historique probablement permissive (auto-inscription
+      `Login.js` + création de comptes équipe/client par `AccessManager`/`ClientsManager`
+      fonctionnent toutes deux via `profiles.upsert({id,role,...})`, un premier upsert sur un id
+      neuf = INSERT). `profiles_role_lock` (migration `20260815090000`) ne verrouille `role` que
+      `for update`, PAS `for insert` : un compte auto-inscrit pourrait potentiellement s'attribuer
+      `role:"admin"` dès la création si une policy INSERT self-service existe déjà (très probable,
+      sinon l'auto-inscription actuelle ne fonctionnerait pas). Détail complet de l'analyse et de
+      la raison du blocage (risque de casser `AccessManager.createAccess`/
+      `ClientsManager.createAccount` à cause d'un possible remplacement de session après
+      `auth.signUp()`) : voir section « Zones non encore auditées » ci-dessous, dernier item.
+      BLOQUÉ : nécessite un accès à la définition actuelle de la policy INSERT sur `profiles` en
+      base (schéma non versionné) ET une confirmation du comportement de session Supabase après
+      `auth.signUp()` dans cette config — aucun des deux n'est vérifiable depuis ce dépôt seul.
+      Décision/vérification humaine requise avant tout correctif SQL.
 - [x] `supabase/functions/refresh-trends/index.ts` : AUCUN check d'auth — corrigé (2026-08-12) :
       ajout du check JWT + rôle admin/collaborateur (même pattern que `assistant`), 403 sinon.
       N'importe qui avec l'anon key pouvait déclencher des appels Claude payants et écraser les
@@ -227,14 +241,23 @@ security definer (l'anon key est publique par design).
       (`allowed_mime_types`/`file_size_limit`, migration
       `20260814100000_moodboard_bucket_limits.sql`) pour que la restriction tienne même en
       cas d'appel direct contournant l'UI. À déployer par Idriss (`supabase db push`).
-- [ ] Liens invités (`?guest=`) : vérifier expiration/révocation appliquées côté serveur
-      (App.js ~1501), pas seulement dans l'UI. NON TRAITÉ (2026-08-14, analysé) : l'expiration
-      (`guest.expiresAt`) n'est vérifiée que côté client (GuestView, App.js ~4654) après appel
-      à la RPC `get_project_by_guest_token` — si cette RPC ne revérifie pas elle-même
-      l'expiration avant de renvoyer les données du projet, un token expiré resterait
-      exploitable via un appel direct à l'API. RPC absente des migrations versionnées (schéma
-      de base) → impossible de confirmer si le check existe déjà côté serveur sans lire sa
-      définition réelle en base. À reprendre avec accès à la définition actuelle de la RPC.
+- [x] Liens invités (`?guest=`) : vérifier expiration/révocation appliquées côté serveur — corrigé
+      (2026-08-18, migration `20260818090000_guest_token_server_check.sql`). Plutôt que de
+      remplacer à l'aveugle la RPC `get_project_by_guest_token` (définition introuvable dans les
+      migrations versionnées, même prudence que pour mail-classify/gmail-sync et profiles_role_lock —
+      un `create or replace` sur une fonction dont on ne connaît pas la définition/signature exacte
+      risquerait de casser silencieusement le flux existant) : ajout d'une NOUVELLE fonction
+      `get_client_guest_project(p_guest_token)` (security definer) qui revalide elle-même, en SQL,
+      la présence du token dans `projects.brief->guests` ET `expiresAt > now()` avant de renvoyer
+      le projet (type de retour dédié à 4 colonnes seulement — pas `projects.*`, pour ne pas
+      exposer des colonnes internes à un visiteur anonyme) ; `GuestView` (App.js) appelle
+      désormais cette fonction. L'ancienne RPC est privée d'exécution pour anon/authenticated
+      (revoke silencieux si elle n'existe pas/plus, pour ne jamais faire échouer le script) —
+      ferme le contournement par appel direct à l'ancien nom avec un token expiré/révoqué. Avant :
+      l'expiration n'était vérifiée que côté client (App.js ~4666) après que la RPC ait déjà
+      renvoyé les données complètes du projet ; la révocation (suppression de l'entrée
+      `brief.guests`) n'était donc pas non plus garantie côté serveur si l'ancienne RPC ne la
+      revérifiait pas. À déployer par Idriss (`supabase db push`).
 - [x] ai-generate : rate limit simple — corrigé (2026-08-14) : nouvelle table générique
       `edge_function_calls` (migration `20260814110000_edge_function_rate_limit.sql`) +
       helper `_shared/rateLimit.ts` (compteur glissant 1h par fonction/utilisateur).
