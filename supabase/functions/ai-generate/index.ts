@@ -7,6 +7,11 @@
 
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkRateLimit } from "../_shared/rateLimit.ts";
+
+// Appels Claude/heure : plus permissif pour l'équipe (ClickUp sync, storyboards)
+// que pour un compte client (captions/brief) qui n'a pas de raison d'appeler en boucle.
+const RATE_LIMITS: Record<string, number> = { client: 15, admin: 60, collaborateur: 60 };
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +48,9 @@ serve(async (req) => {
   if (!["admin", "collaborateur", "client"].includes(role ?? "")) {
     return json({ error: "Forbidden" }, 403);
   }
+
+  const withinLimit = await checkRateLimit(supabase, "ai-generate", u.user.id, RATE_LIMITS[role as string], 60);
+  if (!withinLimit) return json({ error: "Trop de requêtes, réessaie plus tard" }, 429);
 
   const apiKey = Deno.env.get("ANTHROPIC_API_KEY");
   if (!apiKey) return json({ error: "ANTHROPIC_API_KEY missing" }, 500);

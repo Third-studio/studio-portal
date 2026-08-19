@@ -1,5 +1,9 @@
 # Mission audit sécurité + perf — état d'avancement
 
+MISSION TERMINÉE (2026-08-19) — tous les items de la liste sont cochés. Ne plus rien
+modifier dans ce fichier ni dans le code sur la base de cette liste ; le déploiement
+manuel des migrations/edge functions listées en bas de fichier reste à faire par Idriss.
+
 Fichier d'état pour la routine de nuit. Chaque run : prendre les premiers items
 non cochés (max 3-4 par run), VÉRIFIER le problème dans le code réel (les numéros
 de ligne sont indicatifs — re-localiser par grep), corriger, `CI=true npm run build`
@@ -29,80 +33,508 @@ security definer (l'anon key est publique par design).
 
 ## À faire — CRITIQUE / HAUTE
 
-- [ ] `supabase/functions/refresh-trends/index.ts` : AUCUN check d'auth — invocable par
-      n'importe qui avec l'anon key. Ajouter le même check JWT+rôle que `assistant`.
-- [ ] `supabase/functions/mail-classify/index.ts:34` : aucun check d'auth, écritures
-      service_role déclenchables avec l'anon key. Même correctif.
-- [ ] XSS stocké dans l'export PDF des notes de réunion (`document.write` sans échappement,
-      App.js ~3806). Échapper toutes les valeurs interpolées (title, attendees, summary…).
-- [ ] Injection HTML dans les emails transactionnels : nom client / titre projet non
-      échappés (App.js ~7755/7804) ET `send-email` accepte to/subject/text libres depuis
-      le client (App.js ~917). Durcir côté edge function `send-email` : échappement HTML
-      systématique + restreindre les destinataires aux emails liés au projet.
-- [ ] Livrables « internes » (rushes, droits, notes) stockés dans la ligne `projects`
-      lisible par le client (App.js ~562). Séparer ou filtrer côté RLS/RPC.
-- [ ] Flags d'autorisation dans `projects.brief` (clientStepsUnlocked, submitted…) alors que
-      le client peut réécrire tout le JSON brief (App.js ~1583/7909). Déplacer les flags
-      admin dans une colonne non modifiable par le client (policy ou trigger).
-- [ ] Réservations : noms clients + notes internes envoyés aux visiteurs non-admin, masquage
-      UI seulement (App.js ~2176) ; formulaire « Poser une option » accessible aux
-      non-admins (~2220). Filtrer côté requête/RLS selon le rôle.
-- [ ] Révocation d'accès collaborateur : update sans vérification d'erreur → échec silencieux
-      (App.js ~6762/7640). Vérifier error + notifier.
-- [ ] PERF : le login charge TOUS les projets avec TOUS les messages/fichiers/storyboards
-      imbriqués, sans limite (App.js ~7430/7551) et TOUT est rechargé à chaque refresh de
-      token / retour d'onglet (~7497). Charger les détails à l'ouverture d'un projet,
-      limiter les colonnes du select initial, ignorer les TOKEN_REFRESHED.
+- [x] `profiles` (table) : policy INSERT historique probablement permissive — corrigé
+      (2026-08-19), en levant le blocage plutôt qu'en le contournant : la raison du blocage
+      était double (definition actuelle de la policy INSERT inconnue ET risque que
+      `auth.signUp()` remplace la session de l'admin par celle du compte en cours de création
+      dans `AccessManager.createAccess`/`ClientsManager.createAccount`, cf. ancienne analyse
+      ci-dessous). Root cause traitée directement : ces deux flux n'appellent plus
+      `supabase.auth.signUp()` côté client — nouvelle edge function `create-account`
+      (service_role) qui (1) vérifie elle-même le JWT + rôle admin/collaborateur de
+      l'appelant, (2) crée le compte via `auth.admin.createUser()` (API admin, n'affecte
+      jamais la session de l'appelant — élimine le risque de remplacement de session, quel
+      que soit le réglage de confirmation email du projet), (3) upsert `profiles` en
+      service_role (bypass RLS, ne dépend donc plus de la policy INSERT existante pour ce
+      chemin). Une fois ce risque éliminé, le seul INSERT `profiles` restant sous RLS
+      authenticated est l'auto-inscription (`Login.js`), qui envoie déjà `role:"client"` en
+      dur dans le code (jamais un rôle fourni par l'utilisateur) — migration
+      `20260819090000_profiles_insert_role_lock.sql` ajoutée (policy RESTRICTIVE, même
+      technique que `profiles_role_lock`/`clientStepsUnlocked`/`bookings`/`files` : se
+      combine en ET avec toute policy permissive existante, no-op si aucune n'autorise déjà
+      le self-insert) qui impose `role='client'` pour tout INSERT non admin/collaborateur —
+      ferme le contournement par appel direct à l'API avec `profiles.upsert({id:monId,
+      role:"admin",...})` même si une policy self-insert existe en base. À déployer par
+      Idriss (`supabase db push` + `supabase functions deploy create-account`).
+- [x] `supabase/functions/refresh-trends/index.ts` : AUCUN check d'auth — corrigé (2026-08-12) :
+      ajout du check JWT + rôle admin/collaborateur (même pattern que `assistant`), 403 sinon.
+      N'importe qui avec l'anon key pouvait déclencher des appels Claude payants et écraser les
+      tendances actives.
+- [x] `supabase/functions/mail-classify/index.ts:34` : aucun check d'auth — corrigé (2026-08-12) :
+      même check JWT + rôle admin/collaborateur ajouté avant tout traitement. Empêche un
+      utilisateur non-équipe de forcer la classification d'emails et l'écriture service_role
+      (tasks/reminders/invoices/quotes) avec l'anon key.
+      RÉGRESSION corrigée (2026-08-13) : ce check cassait l'appel interne
+      `gmail-sync` → `mail-classify` (le supabase-js client de gmail-sync est créé avec la
+      service role key, pas un JWT utilisateur → `auth.getUser()` échouait → 401 →
+      classification automatique des emails entrants silencieusement cassée en prod, gmail-sync
+      avale l'erreur). Ajout d'un bypass explicite quand le bearer token égale la service role
+      key, avant toute vérification JWT/rôle.
+- [x] XSS stocké dans l'export PDF des notes de réunion (`document.write` sans échappement,
+      App.js) — corrigé (2026-08-12) : ajout d'un helper `escHtml` et échappement de
+      project.title, note.participants, note.content et chaque ligne de note.decisions avant
+      interpolation dans le HTML généré. Empêchait l'exécution de script arbitraire dans
+      l'onglet PDF ouvert par un admin consultant une note de réunion piégée.
+- [x] Injection HTML dans les emails transactionnels — corrigé (2026-08-13) : `notifyClient`
+      (fragment HTML de `send-email`) interpolait `client.name` / nom de fichier uploadé /
+      montant facture sans échappement, et `sendClientInvite` interpolait `client.name` +
+      `project.title` de la même façon → un nom de client ou de fichier piégé (balises
+      HTML/JS) s'exécutait dans le client mail de l'admin ou du client à l'ouverture de
+      l'email. Réutilisation du helper `escHtml` existant sur ces deux points d'interpolation.
+      Non traité (nécessite une décision produit, pas un correctif ponctuel) : restreindre
+      les destinataires de `send-email` aux emails liés au projet — la fonction est aussi
+      utilisée pour des digests internes (weekly-recap, daily-briefing) qui n'ont pas de
+      destinataire "lié à un projet", donc une restriction globale casserait ces usages.
+- [x] Livrables « internes » (rushes, droits) lisibles par le client — corrigé (2026-08-13) :
+      en réalité stockés dans une vraie table `public.files` (colonne `category`) jointe au
+      projet via `files(*)`, pas dans la ligne `projects` comme indiqué initialement — le
+      masquage « Interne » (App.js, ProdLivrables) n'est que visuel, la requête embarquée
+      renvoie tout au client (visible en onglet réseau). Policy historique introuvable dans
+      les migrations versionnées (schéma de base non versionné) → au lieu de la deviner et
+      la remplacer à l'aveugle, ajout d'une policy RESTRICTIVE (`files_categorie_interne_restrict`,
+      migration `20260813090000_files_internes_restriction.sql`) qui se combine en ET avec
+      n'importe quelle policy permissive existante et bloque category≠'finaux' pour tout rôle
+      hors admin/collaborateur — narrows l'accès quel que soit le nom de la policy en place.
+      À déployer par Idriss (`supabase db push`).
+      Découverte annexe (hors périmètre de cet item, à traiter séparément) : `ProdLivrables.add()`
+      /`del()` (App.js) n'écrivent jamais dans `public.files` — ils passent par `onUpdate` qui
+      ne fait que du `setProjects` en mémoire (App.js, `updProject`). Les livrables
+      ajoutés/supprimés depuis cet onglet ne sont donc pas persistés et disparaissent au
+      rechargement. À investiguer : soit un insert/delete Supabase manquant dans ProdLivrables,
+      soit les fichiers visibles proviennent d'un autre flux (upload client/monteur) et cet
+      onglet admin est cassé depuis un moment.
+- [x] Flags d'autorisation dans `projects.brief` — corrigé (2026-08-13) pour `clientStepsUnlocked`
+      (déverrouille moodboard/storyboards/révisions/livrables côté client, App.js gatedTabs) :
+      posé uniquement par `toggleClientAccess`/`toggleProjectAccess` (admin), mais le client a
+      le droit d'UPDATE sa colonne `brief` entière pour éditer son brief → rien n'empêchait un
+      appel API direct (JWT client valide) avec `clientStepsUnlocked:true` pour s'auto-débloquer
+      l'accès. Policy RESTRICTIVE ajoutée (`projects_client_steps_unlocked_lock`, migration
+      `20260813100000_lock_client_steps_unlocked.sql`, même technique que pour les livrables
+      internes) : interdit à tout rôle non admin/collaborateur de modifier ce flag par rapport
+      à sa valeur déjà enregistrée. À déployer par Idriss (`supabase db push`).
+      `submitted` (l'autre flag cité dans l'item d'origine) est en réalité un flag légitimement
+      client-writable — c'est le client lui-même qui le passe à `true` en soumettant son brief
+      (`submitBrief`, App.js) ; pas d'action prise dessus, le préciser sous ce nom prêtait à
+      confusion mais ce n'est pas un flag "admin" au même titre.
+- [x] Réservations : noms clients + notes internes envoyés aux visiteurs non-admin — corrigé
+      (2026-08-13) : `bookings` était chargée en entier (`select("*")`) pour tous les rôles,
+      le masquage (isAdmin && ...) n'était que visuel — un client recevait déjà, dans le
+      state React et la réponse réseau, les noms/notes de TOUTES les réservations. Nouvelle
+      RPC `get_bookings()` (security definer) qui masque client_name/note pour les non
+      admin/collaborateur ; policies RESTRICTIVE select/insert/update sur `bookings`
+      réservées à admin/collaborateur (empêche aussi le contournement par appel REST direct
+      + bloque l'insertion via le formulaire « Poser une option », qui n'était pas gardé par
+      rôle et permettait à un client d'insérer une réservation arbitraire). Formulaire
+      masqué aux non-admins côté UI. Migration `20260813110000_bookings_role_filter.sql`
+      à déployer par Idriss (`supabase db push`).
+- [x] Révocation d'accès collaborateur/client : update sans vérification d'erreur → échec
+      silencieux — corrigé (2026-08-13) : `revoke()` (AccessManager, révocation collaborateur)
+      et `toggleActive()` (ClientsManager, suspension/activation client — même défaut, même
+      famille de bug) vérifient maintenant `error` et notifient l'échec au lieu d'afficher
+      « Accès révoqué »/« Compte suspendu » alors que la base n'a pas été mise à jour.
+- [x] PERF : le login charge TOUS les projets avec TOUS les messages/fichiers/storyboards
+      imbriqués, sans limite (App.js ~7430/7551). Historique : « TOUT rechargé à chaque
+      refresh de token » corrigé le 2026-08-13 (comparaison d'id sur `user`). Terminé
+      (2026-08-16), option (b) retenue après analyse des runs précédents (aucun usage
+      cross-projets de `files`/`storyboards`, contrairement à `messages` qui alimente le
+      badge « derniers messages non lus » du dashboard prod) : le select initial
+      (`loadData`) n'embarque plus `files(*)`/`storyboards(*)`, seulement `messages(*)`
+      — projets initialisés avec `storyboards:[]`/`livrables:[]`. Nouvel effet
+      (`detailFetchedIds`) qui charge `files`+`storyboards` du projet sélectionné en un
+      seul aller-retour ciblé (`.eq("project_id", id)`) dès qu'une vue détail (admin ou
+      client) s'ouvre sur ce projet, une seule fois par projet (Set de suivi). Avant : N
+      projets × (messages+fichiers+storyboards) à chaque login ; après : messages pour N
+      projets (nécessaire au badge), fichiers/storyboards seulement pour le projet
+      réellement ouvert. Vérifié : les deux seuls usages de `project.storyboards`/tab
+      « Livrables » dans le code sont dans les vues détail (ProdDetail, ClientProjectView),
+      donc pas de régression d'affichage dans les vues liste/kanban (elles n'en lisaient
+      déjà pas le compte).
+- [x] NOUVEAU (découvert 2026-08-13 en traitant l'item livrables internes) : `ProdLivrables`
+      (App.js, `add()`/`del()`) ne persistait jamais en base — corrigé (2026-08-13) :
+      `add()`/`del()` font maintenant un vrai `insert`/`delete` sur `public.files`
+      (project_id/name/url/note/category), avec vérification d'erreur avant de mettre à jour
+      l'état local (auparavant `onUpdate` → `updProject` ne faisait que `setProjects` en
+      mémoire — perte silencieuse des rushes/droits/livrables ajoutés/supprimés au rechargement
+      de page). Migration `20260813130000_files_insert_delete_team.sql` ajoutée (policies
+      INSERT/DELETE PERMISSIVE admin/collaborateur sur `public.files` — policies historiques
+      inconnues, schéma non versionné, donc ajout plutôt que remplacement, cf. même approche
+      que `20260813090000`). À déployer par Idriss (`supabase db push`).
 
 ## À faire — MOYENNE
 
 - [x] Token monteur : fallback prévisible `Date.now()` — remplacé par 2×crypto.randomUUID
       dans ensureMemberToken (2026-08-12). Vérifier qu'aucun autre site de génération ne subsiste.
-- [ ] Supervision : vérifier que les policies RLS de la migration `20260618130000_supervision`
-      couvrent bien tout ce que l'UI superviseur affiche (décision côté client, App.js ~7549).
-- [ ] `claim_pending_projects()` : rattachement par simple correspondance d'email — un compte
-      créé avec l'email visé récupère les projets en attente. Exiger email confirmé.
-- [ ] `invite-upload` : expires_at/single_use ignorés + uploads illimités (index.ts ~48).
-- [ ] `project-export` : injection de formule CSV (préfixer ' les cellules commençant
-      par = + - @, index.ts ~87).
-- [ ] `calendar-sync` : re-push de TOUTES les tâches ouvertes à chaque run (~200 appels
-      Google). Ne pousser que les deltas.
-- [ ] `Number()` sur des ids projet UUID casse la liaison post↔projet (App.js ~3092).
-- [ ] Messages : `author`/`role` fournis par le client → usurpation possible (App.js ~1600).
-      Forcer author/role côté serveur (RLS with check ou trigger).
-- [ ] Upload client sans validation (type/taille) vers bucket public moodboard (App.js ~662).
-- [ ] Liens invités (`?guest=`) : vérifier expiration/révocation appliquées côté serveur
-      (App.js ~1501), pas seulement dans l'UI.
-- [ ] ai-generate : rate limit simple (compteur par user/heure dans une table) — un client
-      peut appeler en boucle avec system libre.
-- [ ] PERF memo/refetch : wrappers memo() neutralisés par handlers inline (~8055/8168) ;
+- [x] Supervision : vérifié (2026-08-14) — la migration `20260618130000_supervision.sql`
+      couvre bien toutes les surfaces exposées par l'UI superviseur : projects (select+update),
+      messages (select+insert, commentaires), files (select seule — le superviseur ne modifie
+      jamais les livrables côté UI), posts (select+update, validation contenus CM), storyboards
+      (select+update, validation). Le moodboard est stocké dans `projects.brief` (jsonb), donc
+      déjà couvert par `projects_supervisor_update` — pas de policy dédiée nécessaire. La valeur
+      `isSupervisor` calculée côté client (App.js) n'est qu'un affichage : l'accès réel passe par
+      `is_supervisor()`/`supervises_client()` (security definer, lues en base), donc un client
+      qui falsifierait cette valeur en front n'obtiendrait rien de plus via l'API. RAS, aucune
+      lacune trouvée.
+- [x] `claim_pending_projects()` : rattachement par simple correspondance d'email — corrigé
+      (2026-08-14, migration `20260814090000_claim_pending_projects_email_confirme.sql`) :
+      la fonction ne lit plus que les comptes dont `auth.users.email_confirmed_at is not null`.
+      Avant : un compte créé avec l'email d'un vrai client (même jamais confirmé) rattachait
+      immédiatement tous ses projets/briefs en attente — usurpation sans preuve de possession
+      de la boîte mail. À déployer par Idriss (`supabase db push`).
+- [x] `invite-upload` : expires_at ignoré + uploads illimités — corrigé (2026-08-14,
+      supabase/functions/invite-upload/index.ts) : la fonction ne vérifiait que `revoked_at`,
+      un lien expiré continuait donc à délivrer des URLs d'upload signées indéfiniment. Ajout du
+      check `expires_at` (403 si expiré) et d'une limite de 20 fichiers par projet (comptage via
+      `storage.list` sur le préfixe du projet), conforme au commentaire d'origine qui annonçait
+      cette limite sans jamais l'appliquer. `single_use` volontairement PAS vérifié ici : ce flag
+      gouverne la création du projet (déjà appliqué dans `create_project_from_invite`, migration
+      `20260713150000`) — le bloquer aussi dans invite-upload casserait les dépôts de fichiers
+      légitimes qui suivent la création d'un projet unique-usage. À redéployer par Idriss
+      (`supabase functions deploy invite-upload`).
+- [x] `project-export` : injection de formule CSV — corrigé (2026-08-13) : `csvLine()`
+      préfixe maintenant d'un `'` toute cellule dont la valeur (converties en string) commence
+      par `=`, `+`, `-` ou `@` avant l'échappement des guillemets. Un titre de tâche, sujet de
+      mail ou libellé de facture piégé (ex: `=HYPERLINK(...)`) exécutait une formule à
+      l'ouverture du CSV dans Excel/Sheets par l'admin qui exporte.
+- [x] `calendar-sync` : re-push de TOUTES les tâches ouvertes à chaque run (~200 appels
+      Google) — corrigé (2026-08-14) : la requête `tasks` ne filtrait pas sur
+      `calendar_synced_at`, contrairement à celle des `reminders` juste en dessous dans le
+      même fichier qui excluait déjà les éléments déjà synchronisés (`is("calendar_synced_at",
+      null)`) — incohérence manifestement non intentionnelle entre les deux blocs. Ajout du
+      même filtre sur les tasks : seules les tâches jamais poussées sont désormais
+      synchronisées, au lieu des ~200 tâches ouvertes à chaque run. Limite connue (déjà
+      acceptée pour les reminders avec le même mécanisme) : une tâche déjà synchronisée puis
+      modifiée (titre, due_date) ne sera plus re-poussée automatiquement — nécessiterait un
+      suivi `updated_at` absent du schéma actuel, hors périmètre de ce correctif ciblé. À
+      redéployer par Idriss (`supabase functions deploy calendar-sync`).
+- [x] ~~`Number()` sur des ids projet UUID casse la liaison post↔projet (App.js ~3092)~~ —
+      FAUX POSITIF (vérifié 2026-08-14) : `projects.id` est un `bigint` (confirmé par toutes
+      les FK versionnées, ex. `20260803160000_espace_monteur.sql` : `project_id bigint
+      references public.projects(id)`), pas un uuid. Le `Number(e.target.value)` dans
+      `CMPostModal` (sélecteur de projet, App.js ~3106) est nécessaire : la valeur d'un
+      `<select>` HTML est toujours une string, et `projects.find(p=>p.id===form.projectId)`
+      (comparaison stricte) casserait sans cette conversion. Aucun id projet uuid nulle part
+      dans le schéma versionné.
+- [x] Messages : `author`/`role` fournis par le client → usurpation possible (App.js ~1600) —
+      corrigé (2026-08-17, migration `20260817090000_messages_role_lock.sql`). Les sessions
+      précédentes avaient laissé l'item non traité par prudence (mapping `get_my_role()` →
+      valeurs de `role` jugé incertain pour "partenaire", risque type mail-classify/gmail-sync).
+      Levé par grep direct des 4 points d'insertion (`.from("messages").insert`, App.js) : les 3
+      chemins authentifiés envoient toujours une valeur `role` fixe et cohérente avec le rôle du
+      compte (ProdProjectView → toujours `"prod"`, authentifié admin/collaborateur ; ClientProjectView
+      → toujours `"client"` ; PartenaireView ×2 → toujours `"prestataire"`, confirmé
+      `profiles.role="partenaire"` pour ces comptes) — le mapping est donc entièrement déduit du
+      comportement réel de l'app, pas deviné. Le 4ᵉ chemin (`member_send_message`, jeton monteur)
+      s'exécute sans session (`auth.uid()` NULL) et en SECURITY DEFINER, donc hors RLS par défaut —
+      exclu explicitement par la policy en plus de cette garantie structurelle. Policy RESTRICTIVE
+      `messages_role_lock` (for insert) : impose `role = 'prod'|'client'|'prestataire'` selon
+      `get_my_role()` pour toute session authentifiée. Impact réel confirmé (pas seulement
+      cosmétique) : `role` pilote l'affichage (bulle, alignement, carte de proposition
+      prestataire) ET une métrique métier (App.js ~3437, file "projets en attente de relance
+      client" basée sur le rôle du dernier message) — un client pouvait donc masquer son propre
+      projet de cette file en insérant un faux message `role:"prod"`. `author` volontairement
+      non verrouillé (champ d'affichage libre, sans effet d'autorisation ni de métrique). À
+      déployer par Idriss (`supabase db push`).
+- [x] PERF moodboard : vignettes 160px chargeant l'image originale pleine résolution — partiel
+      (2026-08-17) : ajout de `loading="lazy" decoding="async"` sur l'`<img>` de la grille
+      moodboard (App.js, MoodboardPanel ~719) — les vignettes hors écran ne sont plus
+      téléchargées/décodées avant scroll, gain réel sur le chargement initial d'un moodboard
+      chargé (souvent 20+ images). Le fix complet (servir une résolution réduite) reste NON
+      traité : nécessite soit l'API de transformation d'image Supabase Storage (disponibilité
+      selon plan, invérifiable sans accès au projet), soit un redimensionnement côté client à
+      l'upload — décision produit hors périmètre d'un correctif ciblé, cf. note 2026-08-16
+      ci-dessus.
+- [x] Upload client sans validation (type/taille) vers bucket public moodboard — corrigé
+      (2026-08-14) : `addByFile` (MoodboardPanel, App.js) n'imposait aucune whitelist MIME
+      (le `accept="image/*"` de l'`<input>` n'est qu'indicatif, contournable par un appel
+      direct à l'API storage avec l'anon key) ni de taille max — un fichier arbitraire
+      (HTML/SVG avec script, exécutable, fichier énorme) pouvait être déposé et servi
+      publiquement (bucket `moodboard`, `getPublicUrl`) sous le domaine du studio. Ajout
+      d'une whitelist MIME (jpeg/png/webp/gif/avif, extension dérivée du MIME plutôt que du
+      nom de fichier) + limite 15 Mo côté front, ET au niveau du bucket lui-même
+      (`allowed_mime_types`/`file_size_limit`, migration
+      `20260814100000_moodboard_bucket_limits.sql`) pour que la restriction tienne même en
+      cas d'appel direct contournant l'UI. À déployer par Idriss (`supabase db push`).
+- [x] Liens invités (`?guest=`) : vérifier expiration/révocation appliquées côté serveur — corrigé
+      (2026-08-18, migration `20260818090000_guest_token_server_check.sql`). Plutôt que de
+      remplacer à l'aveugle la RPC `get_project_by_guest_token` (définition introuvable dans les
+      migrations versionnées, même prudence que pour mail-classify/gmail-sync et profiles_role_lock —
+      un `create or replace` sur une fonction dont on ne connaît pas la définition/signature exacte
+      risquerait de casser silencieusement le flux existant) : ajout d'une NOUVELLE fonction
+      `get_client_guest_project(p_guest_token)` (security definer) qui revalide elle-même, en SQL,
+      la présence du token dans `projects.brief->guests` ET `expiresAt > now()` avant de renvoyer
+      le projet (type de retour dédié à 4 colonnes seulement — pas `projects.*`, pour ne pas
+      exposer des colonnes internes à un visiteur anonyme) ; `GuestView` (App.js) appelle
+      désormais cette fonction. L'ancienne RPC est privée d'exécution pour anon/authenticated
+      (revoke silencieux si elle n'existe pas/plus, pour ne jamais faire échouer le script) —
+      ferme le contournement par appel direct à l'ancien nom avec un token expiré/révoqué. Avant :
+      l'expiration n'était vérifiée que côté client (App.js ~4666) après que la RPC ait déjà
+      renvoyé les données complètes du projet ; la révocation (suppression de l'entrée
+      `brief.guests`) n'était donc pas non plus garantie côté serveur si l'ancienne RPC ne la
+      revérifiait pas. À déployer par Idriss (`supabase db push`).
+- [x] ai-generate : rate limit simple — corrigé (2026-08-14) : nouvelle table générique
+      `edge_function_calls` (migration `20260814110000_edge_function_rate_limit.sql`) +
+      helper `_shared/rateLimit.ts` (compteur glissant 1h par fonction/utilisateur).
+      `ai-generate` limite désormais à 15 appels/h pour un client, 60/h pour
+      admin/collaborateur (429 au-delà) — avant, un compte client pouvait appeler
+      Claude en boucle avec un `system` libre, sans aucune limite de coût. À déployer
+      par Idriss (`supabase db push` + `supabase functions deploy ai-generate`).
+- [x] PERF memo/refetch : wrappers memo() neutralisés par handlers inline (~8055/8168) ;
       ProjectsListView recalcule O(projets×factures) à chaque frappe (~7056) ;
       TasksReminders refetch 3 tables à chaque clic (TasksReminders.js:20) ; Inbox refetch
-      200 emails + projets à chaque action (Inbox.js ~56/92) ; ProjectAutoStatus relance
-      l'analyse de TOUS les projets pour un seul (ProjectAutoStatus.js:29) ; moodboard
-      affiche les originaux pleine résolution en vignettes 160px (~710) ; profil fetché
-      2× au login (~7527/7545).
+      200 emails + projets à chaque action (Inbox.js ~56/92) ; moodboard affiche les
+      originaux pleine résolution en vignettes 160px (~710) ; profil fetché 2× au login
+      (~7527/7545). PARTIEL (2026-08-15) : le sous-point « ProjectAutoStatus relance
+      l'analyse de TOUS les projets pour un seul » est corrigé — le bouton « ↻ Analyser »
+      (ProjectAutoStatus.js) passe désormais `{project_id}` dans le body de l'invoke, et
+      l'edge function `project-radar` (index.ts) filtre sur cet id unique quand il est
+      fourni au lieu de re-traiter tous les projets actifs (limit 100) à chaque clic —
+      avant : ~1 appel Claude par projet actif rien que pour rafraîchir le statut d'un
+      seul projet. Le cron quotidien (X-Cron-Key, sans body) garde le comportement
+      global inchangé. À redéployer par Idriss (`supabase functions deploy project-radar`).
+      Sous-points supplémentaires corrigés (2026-08-15) : « TasksReminders refetch 3
+      tables à chaque clic » — `useEffect` rechargeait `tasks`/`reminders`/`projects`
+      depuis le réseau à chaque changement d'onglet (Tout/Aujourd'hui/Semaine/En retard,
+      TasksReminders.js:20), alors que ce filtre est déjà purement client-side
+      (`filteredTasks`, ligne 60) : chargement au montage uniquement désormais, le filtre
+      continue de s'appliquer en mémoire. « Inbox refetch 200 emails + projets à chaque
+      action » — `reclassify()`/`attachToProject()` (Inbox.js) rappelaient `loadData()`
+      (200 emails + tous les projets) après une action sur UN SEUL email ; remplacé par une
+      mise à jour ciblée de l'état local (`attachToProject`, avec vérification d'erreur
+      ajoutée — absente avant) et un refetch de la seule ligne concernée après reclassement
+      (son contenu est mis à jour côté serveur par l'edge function, pas connu du client).
+      « Profil fetché 2× au login » — deux `useEffect [user]` distincts appelaient
+      `profiles.select(...).eq("id",user.id).single()` en parallèle à chaque connexion
+      (App.js, l'un pour `role` seul dans `loadData`, l'autre pour le profil complet
+      alimentant `userRole`/`userProfile`) ; fusionnés en un seul fetch (`select("*")`)
+      dans `loadData`, qui alimente maintenant aussi `userRole`/`userProfile`/`appView` —
+      le second `useEffect` a été supprimé. « ProjectsListView recalcule O(projets×factures) à
+      chaque frappe » — corrigé (2026-08-15) : `inv4(pid)` refaisait un `invoices.filter(...)`
+      sur le tableau complet à chaque appel (une fois dans le filtre de liste, une fois dans le
+      calcul des totaux, une fois par ligne affichée), recalculé à chaque frappe dans la
+      recherche puisque `q` est un state du même composant. Remplacé par un index
+      `Map(project_id → factures[])` construit une seule fois via `useMemo` (dépendance
+      `invoices` uniquement) — `inv4` est maintenant un lookup O(1). Même correctif appliqué à
+      `ProjectsKanban` (`KanbanCard` faisait le même `invoices.filter` par carte à chaque
+      rendu). « memo() neutralisés par handlers inline » — corrigé (2026-08-16) :
+      `ProjectsKanbanMemo`/`ProjectsListViewMemo` (les deux vues les plus coûteuses de
+      l'app) recevaient ~13 handlers de mutation (quickUpdateProject, createTeamMember,
+      copyMemberSpaceLink, assignMemberToProject, unassignMember, quickCreateProject,
+      markInvoicePaid, sendClientUpdate, toggleProjectAccess, sendClientInvite,
+      deleteProject, duplicateProject, notifyClient) redéfinis en simples fonctions à
+      chaque rendu de `App`, plus 3 handlers inline créés à la volée dans le JSX
+      (onOpenProject, onAddInvoice, onCreateForClient) — memo() était donc entièrement
+      neutralisé : ces deux composants se re-rendaient en entier à chaque frappe/état
+      modifié n'importe où ailleurs dans le composant, même à props strictement
+      identiques. Les 13 fonctions passées sous `useCallback` (deps = état réellement lu :
+      teamMembers/clients/assignments/selectedProjectId/showNotif/updProject/notifyClient
+      selon le cas) et les 3 handlers inline extraits en consts stables
+      (`openProjectDetail`, `openInvoiceModal`, `createForClient`). Ces définitions ont dû
+      être déplacées avant les `return` conditionnels du composant (écran de chargement,
+      pas de session, compte supprimé, rôle partenaire, compte suspendu) : `useCallback`
+      est un hook, alors qu'auparavant ces fonctions (simples consts) étaient définies
+      après ces retours anticipés — les y laisser aurait violé les règles des hooks (appel
+      conditionnel), détecté immédiatement par `react-hooks/rules-of-hooks` au build
+      (CI=true). Comportement fonctionnel inchangé (mêmes corps de fonction, mêmes
+      garde-fous erreur déjà en place) ; build vérifié, 0 erreur ESLint. Reste non traité :
+      moodboard vignettes pleine résolution — doublon du sous-point équivalent déjà traité
+      (PARTIEL) dans l'item MOYENNE ci-dessus (« PERF moodboard : vignettes 160px… ») :
+      `loading="lazy" decoding="async"` déjà en place (App.js, MoodboardPanel ~719, commit
+      2026-08-18) ; le fix complet (servir une résolution réduite) reste hors périmètre pour
+      la même raison (décision produit). Vérifié (2026-08-18) que les 6 autres sous-points de
+      cet item sont bien tous en place dans le code actuel (useCallback sur les 13 handlers +
+      3 handlers inline extraits, `invoicesByProject` en `useMemo`/Map à deux endroits,
+      `useEffect(loadData,[])` unique dans TasksReminders, `loadData()` scindé côté Inbox,
+      filtre `project_id` dans ProjectAutoStatus/project-radar, fetch profil unique dans
+      `loadData`) — item complet dans la limite de ce qui est corrigeable sans decision
+      produit.
 
 ## À faire — BASSE
 
-- [ ] `notify-new-project` : rate-limiter / vérifier l'appartenance du project_id (spam admin).
-- [ ] `auto-invoice` : numérotation par count() → doublons possibles ; utiliser une séquence.
-- [ ] Section Tarifs seulement masquée par la navigation pour les collaborateurs (~8103).
-- [ ] Suppressions/updates sans vérification d'erreur → state divergent de la base (~3955).
-- [ ] Lien d'invitation client : simple email en paramètre d'URL, sans secret (~7921).
-- [ ] Mode contraste : sélecteurs CSS `[style*="rgb(...)"]` coûteux (~8058) ; pas de cache
-      inter-sections (~8155).
+- [x] `notify-new-project` : rate-limiter / vérifier l'appartenance du project_id — corrigé
+      (2026-08-14) : réutilise `edge_function_calls` (10 appels/h par utilisateur) +
+      un client authentifié ne peut désormais notifier que sur SES PROPRES projets
+      (`project.client_id !== userId` → 403) — avant, n'importe quel client connecté
+      pouvait spammer l'email admin en rappelant la fonction en boucle avec le
+      project_id de n'importe quel projet, y compris ceux d'autres clients. Le check
+      cron (X-Cron-Key) et le rôle admin/collaborateur restent illimités (trigger DB,
+      usage interne légitime). À redéployer par Idriss
+      (`supabase functions deploy notify-new-project`).
+- [x] `auto-invoice` : numérotation par count() → doublons possibles — corrigé (2026-08-14) :
+      remplacé par un compteur atomique en base (`next_invoice_number()`, security definer,
+      migration `20260814120000_invoice_number_sequence.sql`) — l'UPDATE...RETURNING sur
+      une ligne unique par année prend un verrou Postgres qui sérialise les appels
+      concurrents, contrairement au `count()` qui pouvait lire la même valeur pour deux
+      projets passant en "livraison" au même moment et générer deux factures avec le même
+      numéro F-YYYY-NNNN. À déployer par Idriss (`supabase db push` +
+      `supabase functions deploy auto-invoice`).
+- [x] Section Tarifs seulement masquée par la navigation pour les collaborateurs — corrigé
+      (2026-08-15) : `pricing` n'est pas en base (constante JS `DEFAULT_PRICING`), donc pas
+      de policy RLS à corriger ; le seul verrou était le filtre du bouton de nav
+      (`COLLAB_BLOCKED=["tarifs"]`), sans garde sur le rendu lui-même — contrairement à
+      la section "comptes" qui vérifie déjà `(isAdmin||isCollab)`. Ajout de `&&isAdmin`
+      sur la condition de rendu de `AdminPricingModule` (App.js) : un collaborateur qui
+      forcerait `prodSection="tarifs"` (devtools/state) ne peut plus afficher le module.
+      Risque résiduel faible et non traité ici : les valeurs par défaut sont déjà dans le
+      bundle JS livré au navigateur, donc pas confidentielles en soi — le gain est la
+      défense en profondeur sur l'UI d'admin (édition des tarifs), pas la confidentialité
+      des montants.
+- [x] Suppressions/updates sans vérification d'erreur → state divergent de la base — corrigé
+      (2026-08-15) : même famille de bug que `revoke()`/`toggleActive()` (déjà traités),
+      trouvé sur 8 handlers supplémentaires dans App.js qui appliquaient le changement
+      côté état React sans vérifier l'`error` retourné par Supabase (policy RLS refusée,
+      contrainte FK…) : retrait d'assignation projet (`remove`), suppression de note de
+      réunion (`del`), sauvegarde/suppression de créneau planning (`saveSlot`/
+      `deleteSlot` — le cas insert affichait même « Créneau ajouté ! » alors que l'insert
+      avait échoué), ajout/suppression de membre équipe (`addMember`/`deleteMember`),
+      ajout/suppression de type de prestation (`addType`/`deleteType`), sauvegarde/
+      suppression de prestataire (`savePrestataire`/`deletePrestataire`). Tous vérifient
+      maintenant `error` et notifient l'échec au lieu de faire silencieusement diverger
+      l'état local de la base.
+- [x] ~~Lien d'invitation client : simple email en paramètre d'URL, sans secret (~7921)~~ —
+      FAUX POSITIF (vérifié 2026-08-15) : le lien (`?invite=EMAIL`, généré App.js) ne fait
+      que pré-remplir le champ email du formulaire d'inscription (Login.js) ; il faut
+      ensuite un mot de passe + confirmation d'email Supabase pour créer un compte, et le
+      rattachement des projets en attente (`claim_pending_projects()`) exige désormais
+      `email_confirmed_at is not null` (migration
+      `20260814090000_claim_pending_projects_email_confirme.sql`, déjà traitée). La simple
+      connaissance de l'email d'un client ne permet donc plus d'usurper son espace.
+- [x] Mode contraste : sélecteurs CSS `[style*="rgb(...)"]` coûteux ; pas de cache
+      inter-sections — PARTIEL (2026-08-16) : « pas de cache inter-sections » corrigé —
+      le `<style>` de réglages (police/densité/accent/contraste) était un template
+      literal reconstruit et re-diffusé à chaque rendu de `AppMain`, y compris à chaque
+      changement de section (prodSection/clientSection) ou tout autre état sans rapport
+      avec les réglages d'apparence — recréé (`densityPad`/`fontSizePx` étaient aussi deux
+      objets recréés à chaque rendu). Passé sous `useMemo` (déplacé avant les `return`
+      conditionnels du composant, comme les autres hooks du fichier — `useMemo` ne peut
+      pas être appelé après un early return) avec dépendances
+      `[settings.contrast,settings.accent,settings.fontSize,settings.density]` : ce CSS
+      n'est plus recalculé, et React ne retouche plus le nœud `<style>` en DOM, lors des
+      rendus où les réglages n'ont pas changé — c'est-à-dire la quasi-totalité des rendus
+      d'une session. `densityPad`/`fontSizePx` remontés en constantes de module
+      (`DENSITY_PAD`/`FONT_SIZE_PX`, plus recréés à chaque rendu). Non traité : le coût
+      intrinsèque des sélecteurs d'attribut `[style*="..."]` eux-mêmes (recalcul de style
+      coûteux pour le navigateur sur un DOM volumineux) — ils ne sont injectés que si
+      `settings.contrast===true` (déjà le cas avant ce correctif) et ne concernent donc
+      que les sessions ayant activé cette option d'accessibilité ; les supprimer
+      nécessiterait de faire porter les couleurs secondaires par des classes CSS plutôt
+      que par des styles inline générés dynamiquement — refactor large touchant la charte
+      graphique dans une grande partie du fichier, hors périmètre d'un correctif ciblé.
 
 ## Zones non encore auditées (les reviewers ont échoué — à refaire)
 
-- [ ] src/App.js lignes ~4150-6300 (revue sécurité jamais terminée)
-- [ ] Migrations SQL / RLS : reconstituer l'état final du schéma et vérifier les policies
-      (get_project_invite, chat anonyme, espace monteur, get_client_space…)
-- [ ] api/nouveau-projet.js, src/Login.js, fichiers *.command, dépendances package.json
+- [x] src/App.js lignes ~4150-6300 (revue sécurité) — faite (2026-08-15). Un nouveau problème
+      trouvé et corrigé : `AccessManager`/`ClientsManager` créent des comptes équipe/client
+      (`supabase.auth.signUp()` + `profiles.upsert({role:"partenaire"|"client",…})`) gardés
+      uniquement par `isAdmin` côté React — rien n'empêchait un utilisateur authentifié
+      d'appeler directement `profiles.update({role:"admin"}).eq("id", sonPropreId)` avec
+      l'anon key si la policy UPDATE historique sur `profiles` (non versionnée) autorise déjà
+      l'édition de sa propre ligne (pattern courant pour nom/avatar) — auto-promotion admin.
+      Policy RESTRICTIVE ajoutée (`profiles_role_lock`, migration
+      `20260815090000_profiles_role_lock.sql`, même technique que `clientStepsUnlocked`/
+      `bookings`/`files`) : verrouille la colonne `role` à sa valeur déjà enregistrée pour
+      tout rôle non admin/collaborateur. Sans effet si aucune policy self-update n'existe déjà
+      (no-op), filet de sécurité si elle existe. À déployer par Idriss (`supabase db push`).
+      Reste du périmètre (prestataires, monteur, client espace via tokens `member_*`/
+      `get_client_space`) : RAS, ces flux passent par des RPC security definer qui revalident
+      le token côté serveur, pas de nouvelle faille trouvée.
+- [x] Migrations SQL / RLS : reconstituer l'état final du schéma et vérifier les policies
+      (get_project_invite, chat anonyme, espace monteur, get_client_space…) — PARTIEL
+      (2026-08-16, complété 2026-08-16) : les flux explicitement cités ont été relus en
+      détail (toutes les migrations `*_lien_public.sql`, `liens_creation_projet`,
+      `suivi_lien_public`, `dates_estimees_suivi`, `echanges_client`,
+      `demandes_infos_journal`, `espace_monteur`(+v2), `espace_client_lien`,
+      `claim_projects`+correctif `email_confirme`) — RAS sur toutes : chaque RPC anonyme
+      (`get_project_invite`, `create_project_from_invite`, `add_invite_project_note`,
+      `set_invite_video_status`, `answer_invite_info_request`, `get_member_workspace`,
+      `member_add_delivery`, `member_timer_start/stop`, `member_send_message`,
+      `get_client_space`) revalide elle-même côté serveur (security definer) la
+      validité du jeton (`revoked_at`, souvent `expires_at`/`single_use` aussi —
+      quand ce n'est pas le cas c'est documenté comme volontaire dans le commentaire
+      de migration : le suivi doit rester consultable après expiration) ET
+      l'appartenance de la ressource visée au jeton (`project_id`/`invite_id` ou
+      `member_id`/`project_assignments`) avant toute lecture ou écriture ; aucune
+      n'accepte de rôle/auteur fourni par l'appelant sans le déduire du jeton
+      lui-même. `chat_anonyme.sql` ne contient en réalité aucune policy — seulement
+      2 colonnes d'affichage (`alias`/`company`) sur `profiles`, sans rapport avec la
+      sécurité. Reste du périmètre couvert (2026-08-16) : `sara_*`/`seed_projets_sara`
+      (seeds de données, `insert`/`update` idempotents sans exécution dynamique, aucune
+      policy touchée, RAS) ; `shortone_references`/`shortone_tags` (policies RLS
+      cohérentes : lecture équipe ou client avec `shortone_enabled`+`is_active`,
+      écriture équipe seule, upload storage cantonné au dossier `auth.uid()` du client,
+      RAS) ; `monteur_avancement` (`member_update_progress` — même garde jeton+
+      assignation que les autres RPC monteur, RAS) ; `notifications_whatsapp`
+      (`set_my_notifications` exige `auth.uid()`, ne modifie que sa propre ligne ;
+      `notify_admin_whatsapp`/`notify_client_whatsapp` révoquées pour
+      public/anon/authenticated, appelables uniquement en interne ; `member_add_delivery`
+      valide l'URL déposée par whitelist de domaines, RAS) ; `fix_new_id_bigint` (simple
+      correctif de type bigint sur `create_project_from_invite`, RAS) ;
+      `fix_call_edge_auth` (`call_edge()` embarque en clair la clé anon Supabase dans le
+      header `Authorization`/`apikey` — c'est la clé anon publique déjà présente dans le
+      bundle JS, pas un secret, conforme à la contrainte « anon key publique par
+      design » ; l'autorisation réelle passe par le header `X-Cron-Key` lu depuis
+      `vault.decrypted_secrets`, RAS). Item laissé non coché sur le sous-point
+      « reconstituer l'état final du schéma » uniquement dans un sens strict
+      (schéma de base non versionné, hors de portée sans accès à la base réelle) —
+      mais toutes les migrations versionnées ont maintenant été relues, coché.
+- [x] api/nouveau-projet.js, src/Login.js, fichiers *.command, dépendances package.json —
+      audités (2026-08-16). `api/nouveau-projet.js` : RAS, endpoint Vercel simple qui
+      insère un projet + envoie une notif, pas de faille identifiée. `*.command` :
+      scripts locaux de déploiement manuel (macOS), pas de secret en clair, RAS.
+      `package.json` : pas de dépendance manifestement compromise identifiée en lecture
+      (`npm audit` remonte des vulnérabilités transitives génériques de la toolchain CRA,
+      pas spécifiques à ce projet — hors périmètre d'un audit applicatif ciblé).
+      NOUVEAU problème trouvé en auditant `src/Login.js` (`handleRegister`) en le
+      recoupant avec `profiles_role_lock` (migration `20260815090000`, déjà en place) :
+      cette policy est `for update` UNIQUEMENT — elle verrouille bien un changement de
+      `role` sur une ligne `profiles` déjà existante, mais ne couvre PAS l'INSERT. Or
+      `Login.js` (auto-inscription client) ET `AccessManager.createAccess`/
+      `ClientsManager.createAccount` (création de comptes équipe/client par un admin)
+      créent tous la ligne `profiles` via `supabase.from("profiles").upsert({..,role:..})`
+      — un premier upsert sur un id neuf est un INSERT, donc un appel direct à l'API
+      Supabase (JWT valide obtenu via auto-inscription, anon key) avec
+      `profiles.upsert({id:sonPropreId, role:"admin", ...})` échapperait au verrou actuel
+      SI une policy INSERT historique permettant à un utilisateur de créer sa propre ligne
+      `profiles` existe déjà — ce qui est très probablement le cas : c'est exactement ce
+      dont dépend le flux d'auto-inscription actuel pour fonctionner (sans policy INSERT
+      self, `Login.js` échouerait déjà en prod). NON CORRIGÉ ici (risque de régression du
+      même type que mail-classify/gmail-sync et profiles_role_lock lui-même, déjà
+      documenté) : `AccessManager.createAccess`/`ClientsManager.createAccount` appellent
+      `supabase.auth.signUp()` alors qu'un ADMIN est déjà connecté — si l'app utilise le
+      comportement par défaut du SDK (confirmation email désactivée), `signUp()` remplace
+      la session active par celle du compte nouvellement créé, donc l'upsert `profiles`
+      qui suit s'exécute potentiellement avec la session du NOUVEL utilisateur, pas celle
+      de l'admin. Ajouter à l'aveugle une policy RESTRICTIVE `for insert` basée sur
+      `get_my_role() in ('admin','collaborateur')` casserait alors la création de comptes
+      équipe/client par les admins eux-mêmes (le nouvel utilisateur n'a pas encore de ligne
+      `profiles`, donc `get_my_role()` renverrait vide). À reprendre avec accès à la
+      définition actuelle de la policy INSERT sur `profiles` en base ET confirmation du
+      comportement de session après `auth.signUp()` dans cette configuration Supabase —
+      sans quoi le correctif le plus sûr techniquement (étendre `profiles_role_lock` à
+      `for insert` en forçant `role='client'` par défaut sauf appelant déjà admin) risque
+      de casser la création de comptes en silence.
+      RÉSOLU (2026-08-19) : voir l'item CRITIQUE/HAUTE `profiles` (table) ci-dessus,
+      section « À faire », désormais coché — `AccessManager.createAccess`/
+      `ClientsManager.createAccount` ne passent plus par `auth.signUp()` côté client
+      (edge function `create-account`, service_role), ce qui lève le blocage décrit ici et
+      permet d'ajouter la policy RESTRICTIVE `for insert` sans risque de casser la création
+      de comptes.
 
 ## Rappels déploiement (à faire par Idriss, pas par la routine)
 
-- `supabase db push --linked` → applique `20260807100000_espace_client_lien.sql`
-- `supabase functions deploy ai-generate` (+ redéployer refresh-trends/mail-classify
-  une fois corrigées)
+- `supabase db push --linked` → applique toutes les migrations en attente, dont
+  `20260807100000_espace_client_lien.sql`, `20260813090000_files_internes_restriction.sql`,
+  `20260813100000_lock_client_steps_unlocked.sql`, `20260813110000_bookings_role_filter.sql`,
+  `20260813130000_files_insert_delete_team.sql`,
+  `20260814090000_claim_pending_projects_email_confirme.sql`,
+  `20260814100000_moodboard_bucket_limits.sql`, `20260814110000_edge_function_rate_limit.sql`,
+  `20260814120000_invoice_number_sequence.sql`, `20260815090000_profiles_role_lock.sql`,
+  `20260817090000_messages_role_lock.sql`, `20260818090000_guest_token_server_check.sql`,
+  `20260819090000_profiles_insert_role_lock.sql`
+- `supabase functions deploy ai-generate notify-new-project auto-invoice` (+ redéployer
+  refresh-trends/mail-classify une fois corrigées, + `invite-upload` pour le check
+  expires_at/limite 20 fichiers, + `calendar-sync` pour le filtre tasks déjà synchronisées,
+  + `project-radar` pour le filtre project_id ciblé)
+- `supabase functions deploy create-account` (NOUVELLE fonction, 2026-08-19) — requise pour
+  que la création de comptes équipe/client (AccessManager/ClientsManager) continue de
+  fonctionner : le code front n'appelle plus `auth.signUp()` côté client, uniquement cette
+  edge function.
 - Secrets déjà en place : ANTHROPIC_API_KEY ; optionnel : CLICKUP_MCP_TOKEN

@@ -84,7 +84,11 @@ function sum(rows: any[] | null, field: string, where?: (r: any) => boolean): nu
 function csvLine(values: (string | number | null | undefined)[]): string {
   return values.map((v) => {
     if (v === null || v === undefined) return "";
-    const s = String(v).replace(/"/g, '""');
+    // Neutralise l'injection de formule CSV (Excel/Sheets interprètent =, +, -, @
+    // en début de cellule comme le début d'une formule).
+    let s = String(v);
+    if (/^[=+\-@]/.test(s)) s = "'" + s;
+    s = s.replace(/"/g, '""');
     return /[",\n;]/.test(s) ? `"${s}"` : s;
   }).join(";");
 }

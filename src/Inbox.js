@@ -86,13 +86,22 @@ export default function Inbox({ onOpenProject, onCreateFromEmail }) {
 
   async function reclassify(id) {
     await supabase.functions.invoke("mail-classify", { body: { email_id: id } });
-    await loadData();
+    const { data } = await supabase
+      .from("emails")
+      .select("id, gmail_id, received_at, from_addr, from_name, subject, snippet, kind, urgence, summary_fr, project_id, detected_amount, detected_date, has_attachments, classified")
+      .eq("id", id)
+      .single();
+    if (data) {
+      setEmails((es) => es.map((e) => (e.id === id ? data : e)));
+      setSelected((s) => (s && s.id === id ? data : s));
+    }
   }
 
   async function attachToProject(emailId, projectId) {
-    await supabase.from("emails").update({ project_id: projectId }).eq("id", emailId);
+    const { error } = await supabase.from("emails").update({ project_id: projectId }).eq("id", emailId);
+    if (error) { alert("Erreur : " + error.message); return; }
+    setEmails((es) => es.map((e) => (e.id === emailId ? { ...e, project_id: projectId } : e)));
     setSelected((s) => (s && s.id === emailId ? { ...s, project_id: projectId } : s));
-    await loadData();
   }
 
   const counts = emails.reduce((acc, e) => {

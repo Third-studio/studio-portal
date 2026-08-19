@@ -17,7 +17,8 @@ export default function TasksReminders({ onOpenProject }) {
   const [syncing, setSyncing] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
-  useEffect(() => { loadData(); }, [view]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     setLoading(true);

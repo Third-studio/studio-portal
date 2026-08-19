@@ -3,7 +3,11 @@
 // Envoi via SMTP Hostinger (mêmes secrets que send-email).
 //
 // Auth : appel interne via X-Cron-Key (trigger DB) OU JWT d'un utilisateur connecté
-//        (client ou admin). Le destinataire est figé → pas d'abus possible.
+//        (client ou admin). Le destinataire est figé → pas d'abus possible pour lire
+//        des données, mais un client authentifié pouvait spammer l'email admin en
+//        rappelant la fonction en boucle avec n'importe quel project_id (y compris
+//        des projets d'autres clients). Un client ne peut désormais notifier que sur
+//        SES PROPRES projets, avec un rate limit par utilisateur.
 //
 // Appel côté front :
 //   supabase.functions.invoke("notify-new-project", { body: { project_id } })
@@ -12,6 +16,7 @@ import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendMail } from "../_shared/mailer.ts";
 import { renderEmail, escapeHtml } from "../_shared/template.ts";
+import { checkRateLimit } from "../_shared/rateLimit.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -41,12 +46,20 @@ serve(async (req) => {
     // ── Auth : cron interne OU session utilisateur valide ──
     const cronKey = req.headers.get("X-Cron-Key");
     const isCron = cronKey && cronKey === Deno.env.get("CRON_SHARED_SECRET");
+    let userId: string | null = null;
+    let userRole: string | null = null;
     if (!isCron) {
       const auth = req.headers.get("Authorization") || "";
       const jwt = auth.replace("Bearer ", "");
       if (!jwt) return json({ error: "Missing JWT" }, 401);
       const { data: u, error: ue } = await admin.auth.getUser(jwt);
       if (ue || !u?.user) return json({ error: "Invalid session" }, 401);
+      userId = u.user.id;
+      const { data: profile } = await admin.from("profiles").select("role").eq("id", userId).single();
+      userRole = profile?.role ?? null;
+
+      const withinLimit = await checkRateLimit(admin, "notify-new-project", userId, 10, 60);
+      if (!withinLimit) return json({ error: "Trop de requêtes, réessaie plus tard" }, 429);
     }
 
     const body = await req.json().catch(() => null) as { project_id?: string } | null;
@@ -59,6 +72,11 @@ serve(async (req) => {
       .eq("id", projectId)
       .single();
     if (!project) return json({ error: "Project not found" }, 404);
+
+    // Un client ne peut notifier que sur son propre projet.
+    if (!isCron && userRole !== "admin" && userRole !== "collaborateur" && project.client_id !== userId) {
+      return json({ error: "Forbidden" }, 403);
+    }
 
     // Infos client (si rattaché)
     let clientName = "—", clientEmail = "—", clientType = "";

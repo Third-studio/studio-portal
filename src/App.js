@@ -568,14 +568,20 @@ function ProdLivrables({project,onUpdate,onNotif,notifyClient,client}){
     if(!form.name.trim())return;
     if(form.url&&!safePortfolioUrl(form.url)){onNotif("URL invalide — utilisez un lien https://");return;}
     const cat=showAdd;
-    onUpdate({...project,livrables:[...(project.livrables||[]),{id:Date.now(),...form,category:cat,date:new Date().toISOString().split("T")[0]}]});
+    const{data,error}=await supabase.from("files").insert({project_id:project.id,name:form.name,url:form.url,note:form.note,category:cat}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,livrables:[...(project.livrables||[]),{id:data.id,name:data.name,url:data.url,note:data.note,category:data.category,date:data.created_at?.split("T")[0]}]});
     onNotif("Fichier ajouté !");
     if(cat==="finaux"&&notify&&notifyClient&&client?.email){
       await notifyClient({ project, client, kind:"livrable", extra:`Fichier : ${form.name}` });
     }
     setForm({name:"",url:"",note:""});setShowAdd(null);
   };
-  const del=id=>onUpdate({...project,livrables:(project.livrables||[]).filter(l=>l.id!==id)});
+  const del=async(id)=>{
+    const{error}=await supabase.from("files").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
+    onUpdate({...project,livrables:(project.livrables||[]).filter(l=>l.id!==id)});
+  };
   return(
     <div style={{display:"flex",flexDirection:"column",gap:12}}>
       {sections.map(sec=>{
@@ -654,10 +660,13 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
     onNotif("Image ajoutée au moodboard !");
   };
 
+  const MOODBOARD_MIME_EXT={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif","image/avif":"avif"};
   const addByFile=async(file)=>{
     if(!file)return;
+    const ext=MOODBOARD_MIME_EXT[file.type];
+    if(!ext){onNotif("Format non supporté (JPEG, PNG, WEBP, GIF ou AVIF uniquement).");return;}
+    if(file.size>15*1024*1024){onNotif("Image trop lourde (15 Mo max).");return;}
     setUploading(true);
-    const ext=file.name.split(".").pop();
     const path=`${project.id}/${Date.now()}.${ext}`;
     const{error}=await supabase.storage.from("moodboard").upload(path,file,{upsert:true});
     if(error){onNotif("Erreur upload : "+error.message);setUploading(false);return;}
@@ -707,7 +716,7 @@ function MoodboardPanel({project,onUpdate,onNotif,authorName,isAdmin}){
           {items.map(item=>(
             <div key={item.id} style={{position:"relative",borderRadius:8,overflow:"hidden",aspectRatio:"4/3",background:"#F5F5F7",border:"1px solid #E5E5EA",cursor:"pointer"}}
               onMouseEnter={()=>setHoverId(item.id)} onMouseLeave={()=>setHoverId(null)}>
-              {safePortfolioUrl(item.url)&&<img src={safePortfolioUrl(item.url)} alt={item.caption||"moodboard"} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
+              {safePortfolioUrl(item.url)&&<img src={safePortfolioUrl(item.url)} alt={item.caption||"moodboard"} loading="lazy" decoding="async" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}
                 onError={e=>{e.target.style.display="none";}}/>}
               {/* Overlay */}
               <div style={{position:"absolute",inset:0,background:"rgba(8,8,15,0.75)",opacity:hoverId===item.id?1:0,transition:"opacity .18s",display:"flex",flexDirection:"column",justifyContent:"space-between",padding:"8px"}}>
@@ -1932,7 +1941,7 @@ function CalendarModule({bookings,setBookings,isAdmin,onNotif,projects=[],onGoTo
   useEffect(()=>{
     const expired=bookings.filter(b=>b.status==="option"&&b.expiresAt&&new Date(b.expiresAt)<Date.now());
     if(expired.length===0)return;
-    expired.forEach(b=>supabase.from("bookings").update({status:"expired"}).eq("id",b.id));
+    if(isAdmin)expired.forEach(b=>supabase.from("bookings").update({status:"expired"}).eq("id",b.id));
     setBookings(bs=>bs.map(b=>expired.some(e=>e.id===b.id)?{...b,status:"expired"}:b));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[]);
@@ -2221,8 +2230,10 @@ function DayModal({modal,bookings,setBookings,isAdmin,onClose,onNotif,projects=[
           );
         })}
 
-        {/* Add option form */}
-        {teamsWithSlots.length>0&&(
+        {/* Add option form — admin/collaborateur uniquement : la table bookings refuse
+            désormais les insert/update hors admin (policy RESTRICTIVE), ce gate évite
+            juste d'afficher un formulaire qui échouerait silencieusement pour un client. */}
+        {isAdmin&&teamsWithSlots.length>0&&(
           <div style={{paddingTop:14,borderTop:"1px solid #E5E5EA"}}>
             <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",marginBottom:10}}>Poser une option :</p>
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
@@ -3733,7 +3744,8 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
     onNotif("Membre assigné !");setShowAdd(false);setSelMember("");setRoleOnProject("");setSaving(false);
   };
   const remove=async(a)=>{
-    await supabase.from("project_assignments").delete().eq("id",a.id);
+    const{error}=await supabase.from("project_assignments").delete().eq("id",a.id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     onUpdateAssignments(prev=>prev.filter(x=>x.id!==a.id));
     onNotif("Membre retiré");
   };
@@ -3785,6 +3797,9 @@ function TeamSection({project,teamMembers,assignments,onUpdateAssignments,onNoti
 // ─────────────────────────────────────────────────────────────────────────────
 // MEETING NOTES SECTION (fiche projet — admin)
 // ─────────────────────────────────────────────────────────────────────────────
+function escHtml(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
 function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}){
   const notes=meetingNotes.filter(n=>n.projectId===project.id);
   const[showAdd,setShowAdd]=useState(false);
@@ -3802,14 +3817,15 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
   };
 
   const del=async(id)=>{
-    await supabase.from("meeting_notes").delete().eq("id",id);
+    const{error}=await supabase.from("meeting_notes").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     onUpdateMeetingNotes(prev=>prev.filter(n=>n.id!==id));
     onNotif("Note supprimée");
   };
 
   const exportPDF=(note)=>{
     const win=window.open("","_blank");
-    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Note de réunion — ${project.title}</title><style>
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Note de réunion — ${escHtml(project.title)}</title><style>
       body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:40px;max-width:720px;margin:0 auto}
       h1{font-size:22px;font-weight:800;margin-bottom:4px}
       .sub{color:#666;font-size:13px;margin-bottom:24px}
@@ -3821,10 +3837,10 @@ function MeetingNotesSection({project,meetingNotes,onUpdateMeetingNotes,onNotif}
       @media print{body{padding:20px}button{display:none}}
     </style></head><body>
       <h1>Note de réunion</h1>
-      <p class="sub">Projet : ${project.title} — ${new Date(note.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
-      ${note.participants?`<p class="label">Participants</p><p class="box">${note.participants}</p>`:""}
-      <p class="label">Notes</p><div class="box">${note.content.replace(/\n/g,"<br>")}</div>
-      ${note.decisions?`<p class="label">Décisions prises</p><div class="box decisions">${note.decisions.split("\n").filter(Boolean).map(d=>`<div class="decision-item">${d}</div>`).join("")}</div>`:""}
+      <p class="sub">Projet : ${escHtml(project.title)} — ${new Date(note.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}</p>
+      ${note.participants?`<p class="label">Participants</p><p class="box">${escHtml(note.participants)}</p>`:""}
+      <p class="label">Notes</p><div class="box">${escHtml(note.content).replace(/\n/g,"<br>")}</div>
+      ${note.decisions?`<p class="label">Décisions prises</p><div class="box decisions">${note.decisions.split("\n").filter(Boolean).map(d=>`<div class="decision-item">${escHtml(d)}</div>`).join("")}</div>`:""}
       <p style="color:#aaa;font-size:11px;margin-top:32px">Généré par Third-One Studio — ${new Date().toLocaleDateString("fr-FR")}</p>
       <script>window.onload=()=>window.print()</script>
     </body></html>`);
@@ -3947,32 +3963,37 @@ function PlanningModule({teamMembers,setTeamMembers,planningSlots,setPlanningSlo
     if(!slotModal)return;
     const base={memberId:slotModal.memberId,date:slotModal.date,type:slotForm.type,projectId:slotForm.projectId?Number(slotForm.projectId):null,startTime:slotForm.startTime,endTime:slotForm.endTime,note:slotForm.note};
     if(editSlot){
-      await supabase.from("planning_slots").update({type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).eq("id",editSlot.id);
+      const{error}=await supabase.from("planning_slots").update({type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).eq("id",editSlot.id);
+      if(error){onNotif("Erreur : "+error.message);return;}
       setPlanningSlots(prev=>prev.map(s=>s.id===editSlot.id?{...base,id:editSlot.id}:s));
       onNotif("Créneau modifié !");
     }else{
-      const{data}=await supabase.from("planning_slots").insert({member_id:base.memberId,date:base.date,type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).select().single();
-      if(data)setPlanningSlots(prev=>[...prev,{id:data.id,memberId:data.member_id,date:data.date,type:data.type,projectId:data.project_id,startTime:data.start_time||"",endTime:data.end_time||"",note:data.note||""}]);
+      const{data,error}=await supabase.from("planning_slots").insert({member_id:base.memberId,date:base.date,type:base.type,project_id:base.projectId,start_time:base.startTime,end_time:base.endTime,note:base.note}).select().single();
+      if(error){onNotif("Erreur : "+error.message);return;}
+      setPlanningSlots(prev=>[...prev,{id:data.id,memberId:data.member_id,date:data.date,type:data.type,projectId:data.project_id,startTime:data.start_time||"",endTime:data.end_time||"",note:data.note||""}]);
       onNotif("Créneau ajouté !");
     }
     setSlotModal(null);setEditSlot(null);
   };
   const deleteSlot=async(id)=>{
-    await supabase.from("planning_slots").delete().eq("id",id);
+    const{error}=await supabase.from("planning_slots").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setPlanningSlots(prev=>prev.filter(s=>s.id!==id));
     onNotif("Créneau supprimé");setSlotModal(null);setEditSlot(null);
   };
 
   const addMember=async()=>{
     if(!memberForm.nom.trim())return;
-    const{data}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
-    if(data)setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8",accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null}]);
+    const{data,error}=await supabase.from("team_members").insert({nom:memberForm.nom,role:memberForm.role,email:memberForm.email,team:memberForm.team,color:memberForm.color}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setTeamMembers(prev=>[...prev,{id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||"#00B4D8",accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null}]);
     onNotif("Membre ajouté !");
     setMemberForm({nom:"",role:"cadreur",email:"",team:"A",color:"#0077B6"});
     setShowAddMember(false);
   };
   const deleteMember=async(id)=>{
-    await supabase.from("team_members").delete().eq("id",id);
+    const{error}=await supabase.from("team_members").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setTeamMembers(prev=>prev.filter(m=>m.id!==id));
     onNotif("Membre supprimé");
   };
@@ -4304,11 +4325,10 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
   const createAccount=async()=>{
     if(!form.email||!form.password){onNotif("Email et mot de passe requis");return;}
     setSaving(true);
-    const{data,error}=await supabase.auth.signUp({email:form.email,password:form.password,options:{data:{nom:form.nom,role:"client"}}});
+    const{data,error}=await supabase.functions.invoke("create-account",{body:{email:form.email,password:form.password,nom:form.nom,role:"client",company:form.company,client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_supervisor:form.is_supervisor}});
     if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
-    const uid=data.user?.id;
+    const uid=data?.id;
     if(!uid){onNotif("Erreur création compte");setSaving(false);return;}
-    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",company:form.company||null,client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_supervisor:form.is_supervisor,is_active:true});
     const nc={id:uid,name:form.nom||form.email,email:form.email,company:form.company||"",type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isSupervisor:form.is_supervisor,isActive:true};
     setClients(cs=>[...cs,nc]);
     setCreatedPass(form.password);
@@ -4331,7 +4351,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 
   const toggleActive=async(c)=>{
     const v=!c.isActive;
-    await supabase.from("profiles").update({is_active:v}).eq("id",c.id);
+    const{error}=await supabase.from("profiles").update({is_active:v}).eq("id",c.id);
+    if(error){onNotif("Erreur : "+(v?"activation":"suspension")+" non enregistrée — "+error.message);return;}
     setClients(cs=>cs.map(x=>x.id===c.id?{...x,isActive:v}:x));
     onNotif(v?"Compte activé":"Compte suspendu");
   };
@@ -4509,6 +4530,8 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
 // SETTINGS PANEL
 const ACCENT_COLORS={or:"#0077B6",cyan:"#0F766E",bleu:"#4F46E5",violet:"#7C3AED",rouge:"#D70015"};
 const DEFAULT_SETTINGS={fontSize:"normale",density:"normale",accent:"or",contrast:false};
+const DENSITY_PAD={"compact":"14px 14px 110px","normale":"22px 24px 120px","spacieux":"32px 36px 130px"};
+const FONT_SIZE_PX={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
 
 function SettingsPanel({settings,onChange,onClose,user,onLogout,clientNotif,onSaveNotif}){
   const S=(k,v)=>onChange({...settings,[k]:v});
@@ -4636,7 +4659,7 @@ function GuestView(){
     const t=params.get("guest");
     if(!t||t.length<20){setState("invalid");return;}
     setToken(t);
-    supabase.rpc("get_project_by_guest_token",{guest_token:t}).then(({data,error})=>{
+    supabase.rpc("get_client_guest_project",{p_guest_token:t}).then(({data,error})=>{
       if(error||!data){setState("invalid");return;}
       const guest=(data.brief?.guests||[]).find(g=>g.token===t);
       if(guest?.expiresAt&&new Date(guest.expiresAt)<Date.now()){setState("expired");return;}
@@ -5362,13 +5385,15 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
 
   const addType=async()=>{
     if(!newTypeLabel.trim())return;
-    const{data}=await supabase.from("service_types").insert({label:newTypeLabel.trim(),icone:newTypeIcon,actif:true}).select().single();
-    if(data)setServiceTypes(prev=>[...prev,{id:data.id,label:data.label,icone:data.icone,actif:data.actif}]);
+    const{data,error}=await supabase.from("service_types").insert({label:newTypeLabel.trim(),icone:newTypeIcon,actif:true}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    setServiceTypes(prev=>[...prev,{id:data.id,label:data.label,icone:data.icone,actif:data.actif}]);
     setNewTypeLabel("");setNewTypeIcon("🔧");
     onNotif("Type ajouté !");
   };
   const deleteType=async(id)=>{
-    await supabase.from("service_types").delete().eq("id",id);
+    const{error}=await supabase.from("service_types").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setServiceTypes(prev=>prev.filter(t=>t.id!==id));
     onNotif("Type supprimé");
   };
@@ -5385,10 +5410,8 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
   const createAccess=async()=>{
     if(!accessPass||accessPass.length<6){onNotif("Mot de passe requis (6 caractères min)");return;}
     setCreatingAccess(true);
-    const{data,error}=await supabase.auth.signUp({email:accessModal.email,password:accessPass,options:{data:{nom:accessModal.nom,role:"partenaire"}}});
+    const{error}=await supabase.functions.invoke("create-account",{body:{email:accessModal.email,password:accessPass,nom:accessModal.nom,role:"partenaire"}});
     if(error){onNotif("Erreur : "+error.message);setCreatingAccess(false);return;}
-    const uid=data.user?.id;
-    if(uid)await supabase.from("profiles").upsert({id:uid,email:accessModal.email,nom:accessModal.nom,role:"partenaire",is_active:true});
     setCreatingAccess(false);setAccessModal(null);setAccessPass("");
     onNotif(`✓ Accès partenaire créé pour ${accessModal.nom}`);
   };
@@ -5399,12 +5422,14 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
     const urls=pForm.portfolio_urls.split("\n").map(u=>u.trim()).filter(Boolean);
     const payload={nom:pForm.nom,email:pForm.email,telephone:pForm.telephone,description:pForm.description,portfolio_urls:urls,service_type_id:pForm.service_type_id,actif:true};
     if(editId){
-      await supabase.from("prestataires").update(payload).eq("id",editId);
+      const{error}=await supabase.from("prestataires").update(payload).eq("id",editId);
+      if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
       setPrestataires(prev=>prev.map(p=>p.id===editId?{...p,...payload}:p));
       onNotif("Prestataire mis à jour");
     }else{
-      const{data}=await supabase.from("prestataires").insert(payload).select().single();
-      if(data)setPrestataires(prev=>[...prev,data]);
+      const{data,error}=await supabase.from("prestataires").insert(payload).select().single();
+      if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
+      setPrestataires(prev=>[...prev,data]);
       onNotif("Prestataire ajouté !");
     }
     setPForm(emptyP);setEditId(null);setSaving(false);
@@ -5414,7 +5439,8 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
     setPForm({nom:p.nom,email:p.email,telephone:p.telephone||"",description:p.description||"",portfolio_urls:(p.portfolio_urls||[]).join("\n"),service_type_id:p.service_type_id||""});
   };
   const deletePrestataire=async(id)=>{
-    await supabase.from("prestataires").delete().eq("id",id);
+    const{error}=await supabase.from("prestataires").delete().eq("id",id);
+    if(error){onNotif("Erreur : "+error.message);return;}
     setPrestataires(prev=>prev.filter(p=>p.id!==id));
     onNotif("Prestataire supprimé");
   };
@@ -7188,7 +7214,8 @@ function AccessManager({onNotif}){
 
   const revoke=async(c)=>{
     await supabase.rpc("promote_to_collaborateur",{target_email:"__revoke__"});
-    await supabase.from("profiles").update({role:"client",is_active:false}).eq("id",c.id);
+    const{error}=await supabase.from("profiles").update({role:"client",is_active:false}).eq("id",c.id);
+    if(error){onNotif("Erreur : révocation non enregistrée — "+error.message);return;}
     setCollabs(prev=>prev.filter(x=>x.id!==c.id));
     onNotif("Accès révoqué");
   };
@@ -7474,7 +7501,15 @@ function ProjectsListView({ projects, clients, invoices, onOpenProject, onAddInv
   const[fInvoice,setFInvoice]=useState("all"); // none|draft|sent|paid|overdue
   const[groupBy,setGroupBy]=useState("none");  // none|monteur|chef de projet|membre|statut
   const clientById = id => clients.find(c=>c.id===id);
-  const inv4 = pid => invoices.filter(i=>i.project_id===pid);
+  const invoicesByProject = useMemo(()=>{
+    const m=new Map();
+    invoices.forEach(i=>{
+      const arr=m.get(i.project_id);
+      if(arr) arr.push(i); else m.set(i.project_id,[i]);
+    });
+    return m;
+  },[invoices]);
+  const inv4 = pid => invoicesByProject.get(pid) || [];
   const list = projects.filter(p=>{
     if(fStatus!=="all" && (p.status||"brief")!==fStatus) return false;
     const ivs = inv4(p.id);
@@ -7711,7 +7746,15 @@ function ProjectsKanban({ projects, clients, invoices, onOpenProject, onQuickUpd
   const[newTitle,setNewTitle]=useState("");
   const[editProject,setEditProject]=useState(null);
   const clientById=id=>clients.find(c=>c.id===id);
-  const inv4=pid=>invoices.filter(i=>i.project_id===pid);
+  const invoicesByProject=useMemo(()=>{
+    const m=new Map();
+    invoices.forEach(i=>{
+      const arr=m.get(i.project_id);
+      if(arr) arr.push(i); else m.set(i.project_id,[i]);
+    });
+    return m;
+  },[invoices]);
+  const inv4=pid=>invoicesByProject.get(pid) || [];
   const drop=async(colKey)=>{
     setOverCol(null);
     const p=projects.find(x=>x.id===dragId);
@@ -7923,7 +7966,13 @@ function AppMain() {
       .catch(() => { setUser(null); setAuthLoading(false); })
       .finally(() => clearTimeout(timeout));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
+      // TOKEN_REFRESHED (rafraîchi périodiquement, y compris au retour d'onglet) renvoie le
+      // même utilisateur : garder la même référence évite de redéclencher le useEffect [user]
+      // qui recharge TOUS les projets/messages/fichiers/storyboards depuis zéro.
+      setUser(prev => {
+        const next = session?.user || null;
+        return prev?.id === next?.id ? prev : next;
+      });
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -7969,16 +8018,20 @@ function AppMain() {
     const loadData = async () => {
       setDataLoading(true);
       try{
-      // Récupère le rôle d'abord pour adapter les requêtes
-      const { data: myProfile } = await supabase.from("profiles").select("role").eq("id",user.id).single();
-      const isAdminUser = myProfile?.role === "admin" || myProfile?.role === "collaborateur";
+      // Récupère le profil d'abord (rôle pour adapter les requêtes + alimente userRole/userProfile)
+      const { data: myProfile } = await supabase.from("profiles").select("*").eq("id",user.id).single();
+      const myRole = myProfile?.role || "client";
+      setUserRole(myRole);
+      setUserProfile(myProfile || null);
+      if(myRole === "collaborateur" || myRole === "admin") setAppView("prod");
+      const isAdminUser = myRole === "admin" || myRole === "collaborateur";
       // Client : rattache les projets pré-créés depuis un email (brief.pendingClientEmail) avant de charger.
       if(!isAdminUser){ try{ await supabase.rpc("claim_pending_projects"); }catch(_){ /* SQL non déployé */ } }
 
       const queries = [
-        supabase.from("projects").select("*, messages(*), files(*), storyboards(*)").order("created_at",{ascending:false}),
+        supabase.from("projects").select("*, messages(*)").order("created_at",{ascending:false}),
         supabase.from("posts").select("*").order("scheduled_at",{ascending:true}),
-        supabase.from("bookings").select("*").order("date",{ascending:true}),
+        supabase.rpc("get_bookings"),
         supabase.from("service_types").select("*").order("label"),
         supabase.from("invoices").select("*").order("issued_at",{ascending:false}),
       ];
@@ -8025,13 +8078,9 @@ function AppMain() {
           videoStatus: p.brief?.videoStatus || null,
           videoComment: p.brief?.videoComment || "",
           moodboard: p.brief?.moodboard || [],
-          storyboards: (p.storyboards || []).map(s => ({
-            id: s.id,
-            title: s.title,
-            frames: s.frames || [],
-            validationStatus: s.validation_status || "pending",
-            createdAt: s.created_at?.split("T")[0],
-          })),
+          // storyboards/livrables chargés à la demande à l'ouverture du projet (cf. effet
+          // de détail ci-dessous) : ne plus les embarquer pour TOUS les projets au login.
+          storyboards: [],
           comments: (p.messages || []).map(m => ({
             id: m.id,
             author: m.author,
@@ -8039,14 +8088,7 @@ function AppMain() {
             date: m.created_at?.split("T")[0],
             role: m.role,
           })),
-          livrables: (p.files || []).map(f => ({
-            id: f.id,
-            name: f.name,
-            url: f.url,
-            category: f.category,
-            note: f.note,
-            date: f.created_at?.split("T")[0],
-          })),
+          livrables: [],
         }));
         setProjects(formatted);
         setSelectedProjectId(formatted[0]?.id || null);
@@ -8071,24 +8113,259 @@ function AppMain() {
   const [userRole, setUserRole] = useState(null);
   const [userProfile, setUserProfile] = useState(null);
 
-  useEffect(() => {
-    if (user) {
-      supabase.from("profiles").select("*").eq("id", user.id).single()
-        .then(({ data }) => {
-          const role = data?.role || "client";
-          setUserRole(role);
-          setUserProfile(data || null);
-          if(role === "collaborateur" || role === "admin") setAppView("prod");
-        });
-    }
-  }, [user]);
-
   // ── Handlers & valeurs dérivées mémoïsés ────────────────────────────────────
   // (placés AVANT les return conditionnels ci-dessous → règle des hooks respectée)
   const showNotif = useCallback(msg=>{ setNotif(msg); setTimeout(()=>setNotif(null),3100); },[]);
   const updProject = useCallback(p=>setProjects(ps=>ps.map(x=>x.id===p.id?p:x)),[]);
   const goToCalendarProd = useCallback(()=>setProdSection("calendrier"),[]);
   const openProjectFromCalendar = useCallback((id)=>{setSelectedProjectId(id);setProdSection("projets");},[]);
+  const openProjectDetail = useCallback((id)=>{setSelectedProjectId(id);setProjetsView("detail");},[]);
+  const openInvoiceModal = useCallback((p,c)=>setInvoiceModal({project:p,client:c}),[]);
+  // CSS des réglages d'apparence (police/densité/accent/contraste) : mémoïsé sur les
+  // seuls réglages, pas recalculé à chaque rendu (navigation entre sections, frappe...).
+  const settingsStyle = useMemo(()=>{
+    const ac=ACCENT_COLORS[settings.accent]||ACCENT_COLORS.or;
+    return `
+        :root { --accent:${ac}; --fs:${FONT_SIZE_PX[settings.fontSize]}; }
+        .app-main { padding:${DENSITY_PAD[settings.density]||DENSITY_PAD.normale} !important; }
+        body { font-size:${FONT_SIZE_PX[settings.fontSize]}; }
+        ${settings.contrast?`
+          /* Contraste élevé : assombrit les gris secondaires (React sérialise les couleurs inline en rgb()) */
+          [style*="rgb(110, 110, 115)"]{color:#3F3F46 !important}
+          [style*="rgb(142, 142, 147)"]{color:#4A4A52 !important}
+          [style*="rgb(199, 199, 204)"]{color:#5A5A62 !important}
+          [style*="rgb(229, 229, 234)"]{border-color:#9A9AA2 !important}
+          .input::placeholder,input::placeholder,textarea::placeholder{color:#55555C !important}
+          .card,.input{border-color:#9A9AA2 !important}
+        `:""}
+      `;
+  },[settings.contrast,settings.accent,settings.fontSize,settings.density]);
+  const createForClient = useCallback((c)=>{setCreateForClientId(c?.id||null);setShowCreateModal(true);},[]);
+
+  // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
+  // kind ∈ "livrable" | "modif_done" | "delivered" | "invoice_sent" | "custom"
+  const notifyClient = useCallback(async({ project, client, kind="custom", subject, html, text, extra="" }) => {
+    try{
+      const to = client?.email; if(!to) return;
+      const pTitle = project?.title || "Votre projet";
+      const link = "https://thirdone.studio";
+      const greet = `Bonjour ${client?.name || ""},`.trim();
+      const presets = {
+        livrable:    { s:`Nouveau livrable – ${pTitle}`,            l:"Un nouveau livrable a été ajouté à votre projet." },
+        modif_done:  { s:`Modifications appliquées – ${pTitle}`,    l:"Les modifications demandées ont été appliquées. Vous pouvez les valider depuis votre espace." },
+        delivered:   { s:`Projet déposé – ${pTitle}`,               l:"Votre projet est livré et disponible dans votre espace client." },
+        invoice_sent:{ s:`Facture émise – ${pTitle}`,               l:"Votre facture est disponible dans votre espace client." },
+      };
+      const preset = presets[kind] || { s: subject || `Mise à jour – ${pTitle}`, l: extra || "Mise à jour disponible dans votre espace client." };
+      const finalSubject = subject || preset.s;
+      const lead = preset.l;
+      const finalText = text ||
+`${greet}
+
+${lead}
+${extra ? "\n" + extra + "\n" : ""}
+Accéder à votre espace : ${link}
+
+— Third-One Studio`;
+      // Le template de marque est appliqué côté serveur (send-email).
+      // greet/lead/extra peuvent contenir un nom client ou un nom de fichier fournis
+      // par un tiers (client, upload) : échappement avant interpolation HTML.
+      const fragment = html ||
+`<p style="margin:0 0 14px;">${escHtml(greet)}</p>
+<p style="margin:0 0 14px;">${escHtml(lead)}</p>
+${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${escHtml(extra)}</p>` : ""}`;
+      const{ error } = await supabase.functions.invoke("send-email", { body: {
+        to, subject: finalSubject, text: finalText, html: fragment,
+        kicker: "Suivi de projet", title: finalSubject,
+        cta: { label: "Ouvrir mon espace", url: link },
+      } });
+      if(error) console.warn("notifyClient",error);
+    }catch(e){ console.warn("notifyClient", e); }
+  },[]);
+
+  // Édition rapide depuis le kanban : patch partiel camelCase → colonnes snake_case
+  const quickUpdateProject=useCallback(async(project,f)=>{
+    const payload={};
+    if(f.title!==undefined) payload.title=f.title||project.title;
+    if(f.status!==undefined) payload.status=f.status;
+    if(f.progress!==undefined) payload.progress=Number(f.progress)||0;
+    if(f.deliveryDate!==undefined) payload.delivery_date=f.deliveryDate||null;
+    if(f.statusNote!==undefined) payload.status_note=f.statusNote||null;
+    if(f.clientId!==undefined) payload.client_id=f.clientId||null;
+    if(f.replayUrl!==undefined){
+      if(f.replayUrl && !isSafeUrl(f.replayUrl)){showNotif("Lien non autorisé — domaine refusé");return;}
+      payload.replay_url=f.replayUrl||null;
+    }
+    const{error}=await supabase.from("projects").update(payload).eq("id",project.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    updProject({...project,
+      ...(f.title!==undefined?{title:payload.title}:{}),
+      ...(f.status!==undefined?{status:f.status}:{}),
+      ...(f.progress!==undefined?{progress:payload.progress}:{}),
+      ...(f.deliveryDate!==undefined?{deliveryDate:f.deliveryDate||""}:{}),
+      ...(f.statusNote!==undefined?{statusNote:f.statusNote||""}:{}),
+      ...(f.clientId!==undefined?{clientId:f.clientId||null}:{}),
+      ...(f.replayUrl!==undefined?{replayUrl:f.replayUrl||""}:{}),
+    });
+    if(f.status!==undefined && f.status!==project.status){
+      supabase.from("project_events").insert({project_id:project.id,kind:"step",label:`Étape passée à « ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status} »`}).then(()=>{});
+      showNotif(`« ${project.title} » → ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status}`);
+    } else showNotif("Projet mis à jour");
+  },[showNotif,updProject]);
+
+  // Création d'un monteur (nom + email) directement depuis la liste projets.
+  const createTeamMember=useCallback(async({nom,email,role})=>{
+    const colors=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#7C3AED"];
+    const color=colors[teamMembers.length%colors.length];
+    const{data,error}=await supabase.from("team_members")
+      .insert({nom,email:email||null,role:role||"monteur",team:"A",color}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return null;}
+    const m={id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||color,accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null};
+    setTeamMembers(prev=>[...prev,m]);
+    showNotif(`${nom} ajouté à l'équipe`);
+    return m;
+  },[teamMembers,showNotif]);
+
+  // Lien de l'espace monteur (régénère le jeton s'il manque ou a été révoqué).
+  const copyMemberSpaceLink=useCallback(async(m)=>{
+    let token=m.accessToken;
+    if(!token||m.accessRevokedAt){
+      token=(crypto.randomUUID?crypto.randomUUID():String(Date.now())).replace(/-/g,"");
+      const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
+      if(error){showNotif("Erreur : "+error.message);return;}
+      setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
+    }
+    const url=`${window.location.origin}/?monteur=${token}`;
+    try{ await navigator.clipboard.writeText(url); showNotif(`Lien de l'espace de ${m.nom} copié`); }
+    catch{ window.prompt("Lien de l'espace monteur :",url); }
+  },[showNotif]);
+
+  // Attribution rapide depuis la liste : project_assignments ↔ team_members.
+  const assignMemberToProject=useCallback(async(project,memberId)=>{
+    const{data,error}=await supabase.from("project_assignments").insert({project_id:project.id,member_id:memberId,role_on_project:""}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setAssignments(prev=>[...prev,{id:data.id,projectId:data.project_id,memberId:data.member_id,roleOnProject:data.role_on_project||""}]);
+    const m=teamMembers.find(x=>x.id===memberId);
+    showNotif(`${m?.nom||"Membre"} attribué à « ${project.title} »`);
+  },[teamMembers,showNotif]);
+
+  const unassignMember=useCallback(async(assignment)=>{
+    const{error}=await supabase.from("project_assignments").delete().eq("id",assignment.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setAssignments(prev=>prev.filter(a=>a.id!==assignment.id));
+    showNotif("Membre retiré");
+  },[showNotif]);
+
+  const quickCreateProject=useCallback(async(title,status)=>{
+    const{data,error}=await supabase.from("projects").insert({title,client_id:null,status:status||"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setProjects(ps=>[{id:data.id,title:data.title,clientId:null,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]},...ps]);
+    showNotif(`Projet « ${title} » créé`);
+  },[showNotif]);
+
+  const markInvoicePaid=useCallback(async(inv,project,client)=>{
+    const{data,error}=await supabase.from("invoices").update({status:"paid",paid_at:new Date().toISOString().slice(0,10)}).eq("id",inv.id).select().single();
+    if(error){showNotif("Erreur : "+error.message);return;}
+    setInvoices(ivs=>ivs.map(i=>i.id===data.id?data:i));
+    showNotif(`Facture ${data.number||"#"+data.id.slice(0,6)} marquée payée`);
+  },[showNotif]);
+
+  // Actions projet accessibles depuis la liste (ProjectsListView)
+  const sendClientUpdate=useCallback(async(project)=>{
+    const client=clients.find(c=>c.id===project.clientId);
+    if(!client?.email){showNotif("Aucun email client sur ce projet");return;}
+    await notifyClient({ project, client, kind:"custom",
+      subject:`Mise à jour – ${project.title}`,
+      extra:"De nouveaux éléments sont disponibles dans votre espace : connectez-vous pour les consulter et valider les étapes en cours." });
+    showNotif("Notification envoyée au client ✉️");
+  },[clients,showNotif,notifyClient]);
+
+  const toggleProjectAccess=useCallback(async(project)=>{
+    const v=!project.brief?.clientStepsUnlocked;
+    const newBrief={...project.brief,clientStepsUnlocked:v};
+    const{error}=await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
+    if(error){showNotif("Erreur : "+error.message);return;}
+    updProject({...project,brief:newBrief});
+    showNotif(v?"Accès client ouvert":"Accès client restreint au brief");
+  },[showNotif,updProject]);
+
+  // Invite le client à créer son accès et compléter le brief. Renvoie true si envoyé.
+  const sendClientInvite=useCallback(async(project)=>{
+    const c=clients.find(cl=>cl.id===project.clientId);
+    const email=c?.email||project.brief?.pendingClientEmail;
+    const name=c?.name||project.brief?.pendingClientName||"";
+    if(!email){showNotif("Aucun email client à inviter");return false;}
+    const link=`https://thirdone.studio/?invite=${encodeURIComponent(email)}`;
+    const{error}=await supabase.functions.invoke("send-email",{body:{
+      to:email,subject:`Votre espace projet – ${project.title}`,
+      kicker:"Invitation",title:`Votre projet ${project.title}`,
+      html:`<p style="margin:0 0 14px;">Bonjour ${escHtml(name)},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${escHtml(project.title)}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
+      text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
+      cta:{label:"Créer mon accès",url:link},
+    }});
+    if(error){
+      // functions.invoke masque le corps de la réponse : on va le lire pour
+      // afficher la vraie cause (JWT, rôle, SMTP…) au lieu d'un "non-2xx".
+      let detail="";
+      try{ const body=await error.context?.json?.(); detail=body?.error||""; }catch{ /* corps illisible */ }
+      showNotif(`Envoi impossible${detail?` : ${detail}`:` : ${error.message}`} — lien copié, envoie-le à la main`);
+      try{ await navigator.clipboard.writeText(link); }catch{ window.prompt("Lien d'invitation :",link); }
+      return false;
+    }
+    showNotif("Invitation envoyée au client ✉️");
+    return true;
+  },[clients,showNotif]);
+
+  // Suppression d'un projet (depuis la liste) — irréversible, avec confirmation.
+  const deleteProject=useCallback(async(project)=>{
+    if(!window.confirm(`Supprimer définitivement le projet « ${project.title} » ?\n\nCette action est irréversible : brief, messages, livrables, storyboards et factures liés seront perdus.`))return;
+    const{error}=await supabase.from("projects").delete().eq("id",project.id);
+    if(error){showNotif("Erreur suppression : "+error.message);return;}
+    setProjects(ps=>ps.filter(p=>p.id!==project.id));
+    if(selectedProjectId===project.id){ setSelectedProjectId(null); setProjetsView("liste"); }
+    showNotif("Projet supprimé");
+  },[selectedProjectId,showNotif]);
+
+  // Duplique un projet : brief + client + équipe copiés ; validation vidéo, liens de visionnage et dates remis à zéro.
+  const duplicateProject=useCallback(async(project)=>{
+    const nb={...(project.brief||{})};
+    delete nb.videoStatus; delete nb.videoComment; delete nb.replayLinks; delete nb.complements; delete nb.stepDates;
+    const{data,error}=await supabase.from("projects").insert({title:`${project.title} (copie)`,client_id:project.clientId||null,status:project.status||"brief",progress:0,brief:nb,replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
+    if(error){showNotif("Erreur duplication : "+error.message);return;}
+    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:nb,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:nb.moodboard||[],storyboards:[],comments:[],livrables:[]};
+    const rows=assignments.filter(a=>a.projectId===project.id).map(a=>({project_id:data.id,member_id:a.memberId,role_on_project:a.roleOnProject||""}));
+    if(rows.length){
+      const{data:aData}=await supabase.from("project_assignments").insert(rows).select();
+      if(aData) setAssignments(pa=>[...pa,...aData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""}))]);
+    }
+    setProjects(ps=>[np,...ps]);
+    showNotif(`Projet dupliqué : « ${np.title} »`);
+  },[assignments,showNotif]);
+
+  // ── Storyboards/livrables : chargés à l'ouverture d'un projet, pas pour tous
+  // les projets au login (cf. plus haut, select initial allégé). Le dashboard prod
+  // (badge derniers messages) ne lit que `comments`, resté eager, donc pas d'impact.
+  const [detailFetchedIds,setDetailFetchedIds]=useState(()=>new Set());
+  const wantsProjectDetail = projetsView==="detail" || clientProjectsView==="detail";
+  useEffect(()=>{
+    if(!wantsProjectDetail || !selectedProjectId || detailFetchedIds.has(selectedProjectId)) return;
+    let cancelled=false;
+    (async()=>{
+      const [{data:filesData,error:filesErr},{data:sbData,error:sbErr}] = await Promise.all([
+        supabase.from("files").select("*").eq("project_id",selectedProjectId),
+        supabase.from("storyboards").select("*").eq("project_id",selectedProjectId),
+      ]);
+      if(cancelled) return;
+      setDetailFetchedIds(ids=>new Set(ids).add(selectedProjectId));
+      if(filesErr || sbErr) return;
+      setProjects(ps=>ps.map(p=>p.id!==selectedProjectId?p:{
+        ...p,
+        livrables:(filesData||[]).map(f=>({id:f.id,name:f.name,url:f.url,category:f.category,note:f.note,date:f.created_at?.split("T")[0]})),
+        storyboards:(sbData||[]).map(s=>({id:s.id,title:s.title,frames:s.frames||[],validationStatus:s.validation_status||"pending",createdAt:s.created_at?.split("T")[0]})),
+      }));
+    })();
+    return ()=>{cancelled=true;};
+  },[wantsProjectDetail,selectedProjectId,detailFetchedIds]);
 
   // ── Supervision : un client "superviseur" voit les comptes de sa company ─────
   const [companyMembers,setCompanyMembers]=useState([]);
@@ -8153,44 +8430,6 @@ function AppMain() {
     </div>
   );
 
-  // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
-  // kind ∈ "livrable" | "modif_done" | "delivered" | "invoice_sent" | "custom"
-  const notifyClient = async({ project, client, kind="custom", subject, html, text, extra="" }) => {
-    try{
-      const to = client?.email; if(!to) return;
-      const pTitle = project?.title || "Votre projet";
-      const link = "https://thirdone.studio";
-      const greet = `Bonjour ${client?.name || ""},`.trim();
-      const presets = {
-        livrable:    { s:`Nouveau livrable – ${pTitle}`,            l:"Un nouveau livrable a été ajouté à votre projet." },
-        modif_done:  { s:`Modifications appliquées – ${pTitle}`,    l:"Les modifications demandées ont été appliquées. Vous pouvez les valider depuis votre espace." },
-        delivered:   { s:`Projet déposé – ${pTitle}`,               l:"Votre projet est livré et disponible dans votre espace client." },
-        invoice_sent:{ s:`Facture émise – ${pTitle}`,               l:"Votre facture est disponible dans votre espace client." },
-      };
-      const preset = presets[kind] || { s: subject || `Mise à jour – ${pTitle}`, l: extra || "Mise à jour disponible dans votre espace client." };
-      const finalSubject = subject || preset.s;
-      const lead = preset.l;
-      const finalText = text ||
-`${greet}
-
-${lead}
-${extra ? "\n" + extra + "\n" : ""}
-Accéder à votre espace : ${link}
-
-— Third-One Studio`;
-      // Le template de marque est appliqué côté serveur (send-email).
-      const fragment = html ||
-`<p style="margin:0 0 14px;">${greet}</p>
-<p style="margin:0 0 14px;">${lead}</p>
-${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
-      const{ error } = await supabase.functions.invoke("send-email", { body: {
-        to, subject: finalSubject, text: finalText, html: fragment,
-        kicker: "Suivi de projet", title: finalSubject,
-        cta: { label: "Ouvrir mon espace", url: link },
-      } });
-      if(error) console.warn("notifyClient",error);
-    }catch(e){ console.warn("notifyClient", e); }
-  };
   const createProject=async(title,clientId,team)=>{
     const newClientId = userRole==="client" ? user.id : (clientId||null);
     const{data,error}=await supabase.from("projects").insert({title:title||"Nouveau projet",client_id:newClientId,status:"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
@@ -8211,81 +8450,6 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     setShowCreateModal(false);
     showNotif(team?`Projet créé — Équipe ${team} assignée`:"Projet créé !");
     return np;
-  };
-
-  // Édition rapide depuis le kanban : patch partiel camelCase → colonnes snake_case
-  const quickUpdateProject=async(project,f)=>{
-    const payload={};
-    if(f.title!==undefined) payload.title=f.title||project.title;
-    if(f.status!==undefined) payload.status=f.status;
-    if(f.progress!==undefined) payload.progress=Number(f.progress)||0;
-    if(f.deliveryDate!==undefined) payload.delivery_date=f.deliveryDate||null;
-    if(f.statusNote!==undefined) payload.status_note=f.statusNote||null;
-    if(f.clientId!==undefined) payload.client_id=f.clientId||null;
-    if(f.replayUrl!==undefined){
-      if(f.replayUrl && !isSafeUrl(f.replayUrl)){showNotif("Lien non autorisé — domaine refusé");return;}
-      payload.replay_url=f.replayUrl||null;
-    }
-    const{error}=await supabase.from("projects").update(payload).eq("id",project.id);
-    if(error){showNotif("Erreur : "+error.message);return;}
-    updProject({...project,
-      ...(f.title!==undefined?{title:payload.title}:{}),
-      ...(f.status!==undefined?{status:f.status}:{}),
-      ...(f.progress!==undefined?{progress:payload.progress}:{}),
-      ...(f.deliveryDate!==undefined?{deliveryDate:f.deliveryDate||""}:{}),
-      ...(f.statusNote!==undefined?{statusNote:f.statusNote||""}:{}),
-      ...(f.clientId!==undefined?{clientId:f.clientId||null}:{}),
-      ...(f.replayUrl!==undefined?{replayUrl:f.replayUrl||""}:{}),
-    });
-    if(f.status!==undefined && f.status!==project.status){
-      supabase.from("project_events").insert({project_id:project.id,kind:"step",label:`Étape passée à « ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status} »`}).then(()=>{});
-      showNotif(`« ${project.title} » → ${STATUS_STEPS[STATUS_INDEX[f.status]]||f.status}`);
-    } else showNotif("Projet mis à jour");
-  };
-  // Création d'un monteur (nom + email) directement depuis la liste projets.
-  const createTeamMember=async({nom,email,role})=>{
-    const colors=["#00B4D8","#4ECDC4","#7B9CFF","#FF9F43","#B47FFF","#7C3AED"];
-    const color=colors[teamMembers.length%colors.length];
-    const{data,error}=await supabase.from("team_members")
-      .insert({nom,email:email||null,role:role||"monteur",team:"A",color}).select().single();
-    if(error){showNotif("Erreur : "+error.message);return null;}
-    const m={id:data.id,nom:data.nom,role:data.role||"",email:data.email||"",team:data.team||"A",color:data.color||color,accessToken:data.access_token||"",accessRevokedAt:data.access_revoked_at||null};
-    setTeamMembers(prev=>[...prev,m]);
-    showNotif(`${nom} ajouté à l'équipe`);
-    return m;
-  };
-  // Lien de l'espace monteur (régénère le jeton s'il manque ou a été révoqué).
-  const copyMemberSpaceLink=async(m)=>{
-    let token=m.accessToken;
-    if(!token||m.accessRevokedAt){
-      token=(crypto.randomUUID?crypto.randomUUID():String(Date.now())).replace(/-/g,"");
-      const{error}=await supabase.from("team_members").update({access_token:token,access_revoked_at:null}).eq("id",m.id);
-      if(error){showNotif("Erreur : "+error.message);return;}
-      setTeamMembers(prev=>prev.map(x=>x.id===m.id?{...x,accessToken:token,accessRevokedAt:null}:x));
-    }
-    const url=`${window.location.origin}/?monteur=${token}`;
-    try{ await navigator.clipboard.writeText(url); showNotif(`Lien de l'espace de ${m.nom} copié`); }
-    catch{ window.prompt("Lien de l'espace monteur :",url); }
-  };
-  // Attribution rapide depuis la liste : project_assignments ↔ team_members.
-  const assignMemberToProject=async(project,memberId)=>{
-    const{data,error}=await supabase.from("project_assignments").insert({project_id:project.id,member_id:memberId,role_on_project:""}).select().single();
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setAssignments(prev=>[...prev,{id:data.id,projectId:data.project_id,memberId:data.member_id,roleOnProject:data.role_on_project||""}]);
-    const m=teamMembers.find(x=>x.id===memberId);
-    showNotif(`${m?.nom||"Membre"} attribué à « ${project.title} »`);
-  };
-  const unassignMember=async(assignment)=>{
-    const{error}=await supabase.from("project_assignments").delete().eq("id",assignment.id);
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setAssignments(prev=>prev.filter(a=>a.id!==assignment.id));
-    showNotif("Membre retiré");
-  };
-  const quickCreateProject=async(title,status)=>{
-    const{data,error}=await supabase.from("projects").insert({title,client_id:null,status:status||"brief",progress:0,brief:{},replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setProjects(ps=>[{id:data.id,title:data.title,clientId:null,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:{},replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:[],storyboards:[],comments:[],livrables:[]},...ps]);
-    showNotif(`Projet « ${title} » créé`);
   };
 
   const handlePreviewClient=(c)=>{setPreviewClientId(c.id);setAppView("client");setClientSection("projets");showNotif(`Aperçu : ${c.name}`);};
@@ -8316,56 +8480,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
       }
     }
   };
-  const markInvoicePaid=async(inv,project,client)=>{
-    const{data,error}=await supabase.from("invoices").update({status:"paid",paid_at:new Date().toISOString().slice(0,10)}).eq("id",inv.id).select().single();
-    if(error){showNotif("Erreur : "+error.message);return;}
-    setInvoices(ivs=>ivs.map(i=>i.id===data.id?data:i));
-    showNotif(`Facture ${data.number||"#"+data.id.slice(0,6)} marquée payée`);
-  };
 
-  // Actions projet accessibles depuis la liste (ProjectsListView)
-  const sendClientUpdate=async(project)=>{
-    const client=clients.find(c=>c.id===project.clientId);
-    if(!client?.email){showNotif("Aucun email client sur ce projet");return;}
-    await notifyClient({ project, client, kind:"custom",
-      subject:`Mise à jour – ${project.title}`,
-      extra:"De nouveaux éléments sont disponibles dans votre espace : connectez-vous pour les consulter et valider les étapes en cours." });
-    showNotif("Notification envoyée au client ✉️");
-  };
-  const toggleProjectAccess=async(project)=>{
-    const v=!project.brief?.clientStepsUnlocked;
-    const newBrief={...project.brief,clientStepsUnlocked:v};
-    const{error}=await supabase.from("projects").update({brief:newBrief}).eq("id",project.id);
-    if(error){showNotif("Erreur : "+error.message);return;}
-    updProject({...project,brief:newBrief});
-    showNotif(v?"Accès client ouvert":"Accès client restreint au brief");
-  };
-  // Invite le client à créer son accès et compléter le brief. Renvoie true si envoyé.
-  const sendClientInvite=async(project)=>{
-    const c=clients.find(cl=>cl.id===project.clientId);
-    const email=c?.email||project.brief?.pendingClientEmail;
-    const name=c?.name||project.brief?.pendingClientName||"";
-    if(!email){showNotif("Aucun email client à inviter");return false;}
-    const link=`https://thirdone.studio/?invite=${encodeURIComponent(email)}`;
-    const{error}=await supabase.functions.invoke("send-email",{body:{
-      to:email,subject:`Votre espace projet – ${project.title}`,
-      kicker:"Invitation",title:`Votre projet ${project.title}`,
-      html:`<p style="margin:0 0 14px;">Bonjour ${name||""},</p><p style="margin:0 0 14px;">Nous avons préparé votre projet <strong>${project.title}</strong>. Créez votre accès en quelques secondes pour consulter et compléter votre brief.</p>`,
-      text:`Bonjour ${name||""},\n\nNous avons préparé votre projet "${project.title}". Créez votre accès pour consulter et compléter votre brief : ${link}\n\n— Third-One Studio`,
-      cta:{label:"Créer mon accès",url:link},
-    }});
-    if(error){
-      // functions.invoke masque le corps de la réponse : on va le lire pour
-      // afficher la vraie cause (JWT, rôle, SMTP…) au lieu d'un "non-2xx".
-      let detail="";
-      try{ const body=await error.context?.json?.(); detail=body?.error||""; }catch{ /* corps illisible */ }
-      showNotif(`Envoi impossible${detail?` : ${detail}`:` : ${error.message}`} — lien copié, envoie-le à la main`);
-      try{ await navigator.clipboard.writeText(link); }catch{ window.prompt("Lien d'invitation :",link); }
-      return false;
-    }
-    showNotif("Invitation envoyée au client ✉️");
-    return true;
-  };
   // Crée un projet depuis un brief extrait d'un email (Inbox → brief-from-email)
   // puis invite automatiquement le nouveau client dans la foulée.
   const createProjectFromEmail=async(extract,emailId)=>{
@@ -8388,31 +8503,6 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     if(existing){ showNotif(`Projet créé pour ${existing.name} — brief pré-rempli`); }
     else if(c.email){ const sent=await sendClientInvite(np); if(!sent) showNotif("Projet créé — pense à inviter le client"); }
     else { showNotif("Projet créé — brief pré-rempli"); }
-  };
-  // Suppression d'un projet (depuis la liste) — irréversible, avec confirmation.
-  const deleteProject=async(project)=>{
-    if(!window.confirm(`Supprimer définitivement le projet « ${project.title} » ?\n\nCette action est irréversible : brief, messages, livrables, storyboards et factures liés seront perdus.`))return;
-    const{error}=await supabase.from("projects").delete().eq("id",project.id);
-    if(error){showNotif("Erreur suppression : "+error.message);return;}
-    setProjects(ps=>ps.filter(p=>p.id!==project.id));
-    if(selectedProjectId===project.id){ setSelectedProjectId(null); setProjetsView("liste"); }
-    showNotif("Projet supprimé");
-  };
-
-  // Duplique un projet : brief + client + équipe copiés ; validation vidéo, liens de visionnage et dates remis à zéro.
-  const duplicateProject=async(project)=>{
-    const nb={...(project.brief||{})};
-    delete nb.videoStatus; delete nb.videoComment; delete nb.replayLinks; delete nb.complements; delete nb.stepDates;
-    const{data,error}=await supabase.from("projects").insert({title:`${project.title} (copie)`,client_id:project.clientId||null,status:project.status||"brief",progress:0,brief:nb,replay_url:"",delivery_date:null,shoot_date:null,status_note:null}).select().single();
-    if(error){showNotif("Erreur duplication : "+error.message);return;}
-    const np={id:data.id,title:data.title,clientId:data.client_id,status:data.status,progress:0,createdAt:data.created_at?.split("T")[0],brief:nb,replayUrl:"",deliveryDate:"",shootDate:"",statusNote:"",videoStatus:null,videoComment:"",moodboard:nb.moodboard||[],storyboards:[],comments:[],livrables:[]};
-    const rows=assignments.filter(a=>a.projectId===project.id).map(a=>({project_id:data.id,member_id:a.memberId,role_on_project:a.roleOnProject||""}));
-    if(rows.length){
-      const{data:aData}=await supabase.from("project_assignments").insert(rows).select();
-      if(aData) setAssignments(pa=>[...pa,...aData.map(a=>({id:a.id,projectId:a.project_id,memberId:a.member_id,roleOnProject:a.role_on_project||""}))]);
-    }
-    setProjects(ps=>[np,...ps]);
-    showNotif(`Projet dupliqué : « ${np.title} »`);
   };
 
   const statusColor=s=>({brief:"#4F46E5",storyboard:"#0077B6",review:"#B45309",livraison:"#0F766E"}[s]||"#6E6E73");
@@ -8465,27 +8555,12 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     ...(activeClient?.shortoneEnabled?[{k:"shortone",l:"Shortone",icon:"◆"}]:[]),
   ];
 
-  const densityPad={"compact":"14px 14px 110px","normale":"22px 24px 120px","spacieux":"32px 36px 130px"};
-  const fontSizePx={"petite":"13px","normale":"14px","grande":"16px","tres-grande":"18px"};
   const accentColor=ACCENT_COLORS[settings.accent]||ACCENT_COLORS.or;
 
   return(
     <>
       <FontLoader/>
-      <style>{`
-        :root { --accent:${accentColor}; --fs:${fontSizePx[settings.fontSize]}; }
-        .app-main { padding:${densityPad[settings.density]||densityPad.normale} !important; }
-        body { font-size:${fontSizePx[settings.fontSize]}; }
-        ${settings.contrast?`
-          /* Contraste élevé : assombrit les gris secondaires (React sérialise les couleurs inline en rgb()) */
-          [style*="rgb(110, 110, 115)"]{color:#3F3F46 !important}
-          [style*="rgb(142, 142, 147)"]{color:#4A4A52 !important}
-          [style*="rgb(199, 199, 204)"]{color:#5A5A62 !important}
-          [style*="rgb(229, 229, 234)"]{border-color:#9A9AA2 !important}
-          .input::placeholder,input::placeholder,textarea::placeholder{color:#55555C !important}
-          .card,.input{border-color:#9A9AA2 !important}
-        `:""}
-      `}</style>
+      <style>{settingsStyle}</style>
       <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",display:"flex",flexDirection:"column"}}>
 
         {/* ── TOP BAR ── */}
@@ -8591,24 +8666,24 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
                     projects={projects}
                     clients={clients}
                     invoices={invoices}
-                    onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}
+                    onOpenProject={openProjectDetail}
                     onQuickUpdate={quickUpdateProject}
                     onQuickCreate={quickCreateProject}
                     onNotif={showNotif}
                   />
                 )}
                 {projetsView==="liste" && (isAdmin||isCollab) && (
-                  <ProjectInviteLinksPanel onNotif={showNotif} onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}/>
+                  <ProjectInviteLinksPanel onNotif={showNotif} onOpenProject={openProjectDetail}/>
                 )}
                 {projetsView==="liste" && (
                   <ProjectsListViewMemo
                     projects={projects}
                     clients={clients}
                     invoices={invoices}
-                    onOpenProject={(id)=>{setSelectedProjectId(id);setProjetsView("detail");}}
-                    onAddInvoice={(p,c)=>setInvoiceModal({project:p,client:c})}
+                    onOpenProject={openProjectDetail}
+                    onAddInvoice={openInvoiceModal}
                     onMarkPaid={markInvoicePaid}
-                    onCreateForClient={(c)=>{setCreateForClientId(c?.id||null);setShowCreateModal(true);}}
+                    onCreateForClient={createForClient}
                     onNotif={showNotif}
                     onNotifyClient={sendClientUpdate}
                     onToggleAccess={toggleProjectAccess}
@@ -8649,7 +8724,7 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             {appView==="prod"&&prodSection==="organisation"&&(
               <OrgModule sheets={sheets} setSheets={setSheets} onNotif={showNotif}/>
             )}
-            {appView==="prod"&&prodSection==="tarifs"&&(
+            {appView==="prod"&&prodSection==="tarifs"&&isAdmin&&(
               <AdminPricingModule pricing={pricing} setPricing={setPricing} clients={clients} setClients={setClients} estimates={estimates} setEstimates={setEstimates}/>
             )}
             {appView==="prod"&&prodSection==="planning"&&(

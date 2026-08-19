@@ -24,9 +24,9 @@ export default function ProjectAutoStatus({ project, onRefreshed }) {
   async function refresh() {
     setRefreshing(true);
     try {
-      // project-radar prend tous les projets ; on accepte de payer ~1 appel.
-      // Si la fonction est étendue pour accepter project_id, le filtrage se fera côté Edge.
-      const { error } = await supabase.functions.invoke("project-radar");
+      const { error } = await supabase.functions.invoke("project-radar", {
+        body: { project_id: project.id },
+      });
       if (error) throw error;
       // Recharge le projet
       const { data } = await supabase.from("projects")

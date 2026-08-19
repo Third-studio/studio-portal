@@ -45,12 +45,20 @@ serve(async (req) => {
     if (size <= 0 || size > 52428800) return json({ ok: false, error: "Fichier trop volumineux (max 50 Mo)" }, 400);
 
     const { data: inv } = await admin.from("project_invites")
-      .select("id,revoked_at").eq("token", token).single();
+      .select("id,revoked_at,expires_at").eq("token", token).single();
     if (!inv || inv.revoked_at) return json({ ok: false, error: "Lien invalide" }, 403);
+    if (inv.expires_at && new Date(inv.expires_at).getTime() < Date.now()) {
+      return json({ ok: false, error: "Lien expiré" }, 403);
+    }
 
     const { data: project } = await admin.from("projects")
       .select("id").eq("id", projectId).eq("invite_id", inv.id).single();
     if (!project) return json({ ok: false, error: "Projet introuvable" }, 403);
+
+    const { data: existing } = await admin.storage.from("client-uploads").list(String(projectId));
+    if ((existing?.length || 0) >= 20) {
+      return json({ ok: false, error: "Nombre maximum de fichiers atteint (20)" }, 403);
+    }
 
     const path = `${projectId}/${crypto.randomUUID()}-${filename}`;
     const { data, error } = await admin.storage.from("client-uploads").createSignedUploadUrl(path);

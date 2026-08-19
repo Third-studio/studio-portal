@@ -26,10 +26,25 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "POST only" }, 405);
 
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, serviceRoleKey);
+
+  // ── Auth : session valide + rôle équipe (admin/collaborateur). L'appel interne
+  //    gmail-sync → mail-classify s'authentifie avec la service role key (pas un JWT
+  //    utilisateur) : on l'accepte directement, sinon gmail-sync ne peut plus jamais
+  //    déclencher la classification automatique.
+  const auth = req.headers.get("Authorization") || "";
+  const jwt = auth.replace("Bearer ", "");
+  if (!jwt) return json({ error: "Missing auth" }, 401);
+  if (jwt !== serviceRoleKey) {
+    const { data: u } = await supabase.auth.getUser(jwt);
+    if (!u?.user) return json({ error: "Invalid session" }, 401);
+    const { data: profile } = await supabase.from("profiles")
+      .select("role").eq("id", u.user.id).single();
+    if (!["admin", "collaborateur"].includes(profile?.role ?? "")) {
+      return json({ error: "Forbidden" }, 403);
+    }
+  }
 
   try {
     const { email_id } = (await req.json()) as { email_id: string };
