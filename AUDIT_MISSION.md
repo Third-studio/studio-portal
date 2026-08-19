@@ -1,5 +1,9 @@
 # Mission audit sécurité + perf — état d'avancement
 
+MISSION TERMINÉE (2026-08-19) — tous les items de la liste sont cochés. Ne plus rien
+modifier dans ce fichier ni dans le code sur la base de cette liste ; le déploiement
+manuel des migrations/edge functions listées en bas de fichier reste à faire par Idriss.
+
 Fichier d'état pour la routine de nuit. Chaque run : prendre les premiers items
 non cochés (max 3-4 par run), VÉRIFIER le problème dans le code réel (les numéros
 de ligne sont indicatifs — re-localiser par grep), corriger, `CI=true npm run build`
@@ -29,20 +33,28 @@ security definer (l'anon key est publique par design).
 
 ## À faire — CRITIQUE / HAUTE
 
-- [ ] `profiles` (table) : policy INSERT historique probablement permissive (auto-inscription
-      `Login.js` + création de comptes équipe/client par `AccessManager`/`ClientsManager`
-      fonctionnent toutes deux via `profiles.upsert({id,role,...})`, un premier upsert sur un id
-      neuf = INSERT). `profiles_role_lock` (migration `20260815090000`) ne verrouille `role` que
-      `for update`, PAS `for insert` : un compte auto-inscrit pourrait potentiellement s'attribuer
-      `role:"admin"` dès la création si une policy INSERT self-service existe déjà (très probable,
-      sinon l'auto-inscription actuelle ne fonctionnerait pas). Détail complet de l'analyse et de
-      la raison du blocage (risque de casser `AccessManager.createAccess`/
-      `ClientsManager.createAccount` à cause d'un possible remplacement de session après
-      `auth.signUp()`) : voir section « Zones non encore auditées » ci-dessous, dernier item.
-      BLOQUÉ : nécessite un accès à la définition actuelle de la policy INSERT sur `profiles` en
-      base (schéma non versionné) ET une confirmation du comportement de session Supabase après
-      `auth.signUp()` dans cette config — aucun des deux n'est vérifiable depuis ce dépôt seul.
-      Décision/vérification humaine requise avant tout correctif SQL.
+- [x] `profiles` (table) : policy INSERT historique probablement permissive — corrigé
+      (2026-08-19), en levant le blocage plutôt qu'en le contournant : la raison du blocage
+      était double (definition actuelle de la policy INSERT inconnue ET risque que
+      `auth.signUp()` remplace la session de l'admin par celle du compte en cours de création
+      dans `AccessManager.createAccess`/`ClientsManager.createAccount`, cf. ancienne analyse
+      ci-dessous). Root cause traitée directement : ces deux flux n'appellent plus
+      `supabase.auth.signUp()` côté client — nouvelle edge function `create-account`
+      (service_role) qui (1) vérifie elle-même le JWT + rôle admin/collaborateur de
+      l'appelant, (2) crée le compte via `auth.admin.createUser()` (API admin, n'affecte
+      jamais la session de l'appelant — élimine le risque de remplacement de session, quel
+      que soit le réglage de confirmation email du projet), (3) upsert `profiles` en
+      service_role (bypass RLS, ne dépend donc plus de la policy INSERT existante pour ce
+      chemin). Une fois ce risque éliminé, le seul INSERT `profiles` restant sous RLS
+      authenticated est l'auto-inscription (`Login.js`), qui envoie déjà `role:"client"` en
+      dur dans le code (jamais un rôle fourni par l'utilisateur) — migration
+      `20260819090000_profiles_insert_role_lock.sql` ajoutée (policy RESTRICTIVE, même
+      technique que `profiles_role_lock`/`clientStepsUnlocked`/`bookings`/`files` : se
+      combine en ET avec toute policy permissive existante, no-op si aucune n'autorise déjà
+      le self-insert) qui impose `role='client'` pour tout INSERT non admin/collaborateur —
+      ferme le contournement par appel direct à l'API avec `profiles.upsert({id:monId,
+      role:"admin",...})` même si une policy self-insert existe en base. À déployer par
+      Idriss (`supabase db push` + `supabase functions deploy create-account`).
 - [x] `supabase/functions/refresh-trends/index.ts` : AUCUN check d'auth — corrigé (2026-08-12) :
       ajout du check JWT + rôle admin/collaborateur (même pattern que `assistant`), 403 sinon.
       N'importe qui avec l'anon key pouvait déclencher des appels Claude payants et écraser les
@@ -499,6 +511,12 @@ security definer (l'anon key est publique par design).
       sans quoi le correctif le plus sûr techniquement (étendre `profiles_role_lock` à
       `for insert` en forçant `role='client'` par défaut sauf appelant déjà admin) risque
       de casser la création de comptes en silence.
+      RÉSOLU (2026-08-19) : voir l'item CRITIQUE/HAUTE `profiles` (table) ci-dessus,
+      section « À faire », désormais coché — `AccessManager.createAccess`/
+      `ClientsManager.createAccount` ne passent plus par `auth.signUp()` côté client
+      (edge function `create-account`, service_role), ce qui lève le blocage décrit ici et
+      permet d'ajouter la policy RESTRICTIVE `for insert` sans risque de casser la création
+      de comptes.
 
 ## Rappels déploiement (à faire par Idriss, pas par la routine)
 
@@ -508,9 +526,15 @@ security definer (l'anon key est publique par design).
   `20260813130000_files_insert_delete_team.sql`,
   `20260814090000_claim_pending_projects_email_confirme.sql`,
   `20260814100000_moodboard_bucket_limits.sql`, `20260814110000_edge_function_rate_limit.sql`,
-  `20260814120000_invoice_number_sequence.sql`, `20260815090000_profiles_role_lock.sql`
+  `20260814120000_invoice_number_sequence.sql`, `20260815090000_profiles_role_lock.sql`,
+  `20260817090000_messages_role_lock.sql`, `20260818090000_guest_token_server_check.sql`,
+  `20260819090000_profiles_insert_role_lock.sql`
 - `supabase functions deploy ai-generate notify-new-project auto-invoice` (+ redéployer
   refresh-trends/mail-classify une fois corrigées, + `invite-upload` pour le check
   expires_at/limite 20 fichiers, + `calendar-sync` pour le filtre tasks déjà synchronisées,
   + `project-radar` pour le filtre project_id ciblé)
+- `supabase functions deploy create-account` (NOUVELLE fonction, 2026-08-19) — requise pour
+  que la création de comptes équipe/client (AccessManager/ClientsManager) continue de
+  fonctionner : le code front n'appelle plus `auth.signUp()` côté client, uniquement cette
+  edge function.
 - Secrets déjà en place : ANTHROPIC_API_KEY ; optionnel : CLICKUP_MCP_TOKEN

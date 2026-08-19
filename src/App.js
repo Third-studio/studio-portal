@@ -4325,11 +4325,10 @@ function ClientsManager({clients,setClients,onNotif,onPreviewClient,onCreateProj
   const createAccount=async()=>{
     if(!form.email||!form.password){onNotif("Email et mot de passe requis");return;}
     setSaving(true);
-    const{data,error}=await supabase.auth.signUp({email:form.email,password:form.password,options:{data:{nom:form.nom,role:"client"}}});
+    const{data,error}=await supabase.functions.invoke("create-account",{body:{email:form.email,password:form.password,nom:form.nom,role:"client",company:form.company,client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_supervisor:form.is_supervisor}});
     if(error){onNotif("Erreur : "+error.message);setSaving(false);return;}
-    const uid=data.user?.id;
+    const uid=data?.id;
     if(!uid){onNotif("Erreur création compte");setSaving(false);return;}
-    await supabase.from("profiles").upsert({id:uid,email:form.email,nom:form.nom,role:"client",company:form.company||null,client_type:form.client_type,discount:form.discount,simulator_enabled:form.simulator_enabled,shortone_enabled:form.shortone_enabled,is_supervisor:form.is_supervisor,is_active:true});
     const nc={id:uid,name:form.nom||form.email,email:form.email,company:form.company||"",type:form.client_type,discount:form.discount,simulatorEnabled:form.simulator_enabled,shortoneEnabled:form.shortone_enabled,isSupervisor:form.is_supervisor,isActive:true};
     setClients(cs=>[...cs,nc]);
     setCreatedPass(form.password);
@@ -5411,10 +5410,8 @@ function PrestatairesModule({serviceTypes,setServiceTypes,prestataires,setPresta
   const createAccess=async()=>{
     if(!accessPass||accessPass.length<6){onNotif("Mot de passe requis (6 caractères min)");return;}
     setCreatingAccess(true);
-    const{data,error}=await supabase.auth.signUp({email:accessModal.email,password:accessPass,options:{data:{nom:accessModal.nom,role:"partenaire"}}});
+    const{error}=await supabase.functions.invoke("create-account",{body:{email:accessModal.email,password:accessPass,nom:accessModal.nom,role:"partenaire"}});
     if(error){onNotif("Erreur : "+error.message);setCreatingAccess(false);return;}
-    const uid=data.user?.id;
-    if(uid)await supabase.from("profiles").upsert({id:uid,email:accessModal.email,nom:accessModal.nom,role:"partenaire",is_active:true});
     setCreatingAccess(false);setAccessModal(null);setAccessPass("");
     onNotif(`✓ Accès partenaire créé pour ${accessModal.nom}`);
   };
