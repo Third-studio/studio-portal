@@ -221,8 +221,8 @@ const FontLoader = () => (
       .input { padding:10px 12px; min-height:44px; }
       /* grilles inline à colonnes fixes → 1 ou 2 colonnes */
       [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns:1fr !important; }
-      [style*="grid-template-columns: repeat(3, 1fr)"], [style*="grid-template-columns: repeat(3,1fr)"] { grid-template-columns:1fr !important; }
-      [style*="grid-template-columns: repeat(4, 1fr)"], [style*="grid-template-columns: repeat(4,1fr)"], [style*="grid-template-columns: repeat(5, 1fr)"], [style*="grid-template-columns: repeat(5,1fr)"] { grid-template-columns:1fr 1fr !important; }
+      .app-main [style*="grid-template-columns: repeat(3, 1fr)"], .modal [style*="grid-template-columns: repeat(3, 1fr)"] { grid-template-columns:1fr !important; }
+      .app-main [style*="grid-template-columns: repeat(4, 1fr)"], .app-main [style*="grid-template-columns: repeat(5, 1fr)"], .modal [style*="grid-template-columns: repeat(4, 1fr)"] { grid-template-columns:1fr 1fr !important; }
       .card { border-radius:14px; }
       /* calendrier : 7 colonnes qui tiennent dans 375px */
       [style*="grid-template-columns: repeat(7, 1fr)"], [style*="grid-template-columns: repeat(7,1fr)"] { gap:4px !important; }
