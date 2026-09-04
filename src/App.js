@@ -224,6 +224,9 @@ const FontLoader = () => (
       [style*="grid-template-columns: repeat(3, 1fr)"], [style*="grid-template-columns: repeat(3,1fr)"] { grid-template-columns:1fr !important; }
       [style*="grid-template-columns: repeat(4, 1fr)"], [style*="grid-template-columns: repeat(4,1fr)"], [style*="grid-template-columns: repeat(5, 1fr)"], [style*="grid-template-columns: repeat(5,1fr)"] { grid-template-columns:1fr 1fr !important; }
       .card { border-radius:14px; }
+      /* calendrier : 7 colonnes qui tiennent dans 375px */
+      [style*="grid-template-columns: repeat(7, 1fr)"], [style*="grid-template-columns: repeat(7,1fr)"] { gap:4px !important; }
+      .cal-day { min-height:36px; border-radius:7px; font-size:12px; }
     }
     @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
   `}</style>
@@ -7954,6 +7957,40 @@ const CMModuleMemo          = memo(CMModule);
 const ProjectsListViewMemo  = memo(ProjectsListView);
 const ProjectsKanbanMemo    = memo(ProjectsKanban);
 
+// ── Écran d'accès (compte en attente / introuvable) ─────────────────────────
+function AccessScreen({tone="pending",title,text,email,onLogout,userId,onActivated}){
+  const pending=tone==="pending";
+  // Re-vérifie le profil régulièrement : couvre le délai d'écriture juste après l'inscription
+  // et l'activation par l'admin (l'écran bascule sans rechargement).
+  useEffect(()=>{
+    if(!pending||!userId||!onActivated)return;
+    let stop=false;
+    const check=async()=>{const{data}=await supabase.from("profiles").select("*").eq("id",userId).single();if(!stop&&data&&data.is_active!==false)onActivated(data);};
+    const t0=setTimeout(check,1500);
+    const t=setInterval(check,5000);
+    return()=>{stop=true;clearTimeout(t0);clearInterval(t);};
+  },[pending,userId,onActivated]);
+  return(
+    <>
+      <FontLoader/>
+      <div className="app-loader" style={{gap:0,padding:"24px 20px"}}>
+        <div className="app-loader-mark" style={pending?{}:{background:"linear-gradient(135deg,#FF6B6B,#D70015)",boxShadow:"0 12px 32px rgba(215,0,21,0.25)"}}>
+          {pending
+            ? <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            : <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>}
+        </div>
+        <h1 style={{fontFamily:"'Urbanist',sans-serif",fontWeight:800,fontSize:26,letterSpacing:"-0.025em",color:"#162040",marginTop:22,textAlign:"center"}}>{title}</h1>
+        <p style={{color:"#6E6E73",fontSize:14,lineHeight:1.65,textAlign:"center",maxWidth:420,marginTop:10}}>{text}</p>
+        {email&&<span style={{marginTop:14,display:"inline-flex",alignItems:"center",gap:8,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:20,padding:"6px 14px",fontSize:12,color:"#3F3F46",fontFamily:"'JetBrains Mono',monospace"}}>{email}</span>}
+        <div style={{display:"flex",gap:10,marginTop:26,flexWrap:"wrap",justifyContent:"center"}}>
+          <a className="btn btn-primary" href="mailto:contact@thirdone.studio" style={{textDecoration:"none"}}>Contacter le studio</a>
+          <button className="btn btn-ghost" onClick={onLogout}>Se déconnecter</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -8186,20 +8223,13 @@ function AppMain() {
   if (!user) return <Login onLogin={setUser} />;
   if (recovery) return <Login recovery onLogin={setUser} onRecoveryDone={()=>setRecovery(false)} />;
   if (user && userProfile === null && userRole !== null) return (
-    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-      <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>COMPTE SUPPRIMÉ</p>
-      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Ce compte n'existe plus. Contactez Third-One Studio.</p>
-      <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
-    </div>
+    <AccessScreen tone="error" title="Compte introuvable" text="Ce compte n'existe plus sur la plateforme. Contactez Third-One Studio si vous pensez qu'il s'agit d'une erreur." email={user?.email} onLogout={()=>supabase.auth.signOut()}/>
   );
   if (userProfile && userProfile.role === "partenaire") return <PartenaireView user={user} userProfile={userProfile} onLogout={()=>supabase.auth.signOut()}/>;
   if (userProfile && userProfile.role === "client" && userProfile.is_active === false) return (
-    <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-      <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.6}}/>
-      <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>ACCÈS SUSPENDU</p>
-      <p style={{color:"#6E6E73",fontFamily:"'Inter'",fontSize:13,textAlign:"center",maxWidth:320}}>Votre accès a été suspendu. Contactez Third-One Studio pour plus d'informations.</p>
-      <button className="btn btn-ghost" style={{marginTop:8}} onClick={()=>supabase.auth.signOut()}>Se déconnecter</button>
-    </div>
+    <AccessScreen tone="pending" title="Compte en attente d'activation"
+      text="Votre compte a bien été créé. L'équipe Third-One Studio l'active manuellement avant votre première connexion — vous serez prévenu par email. Si votre accès a été suspendu, contactez-nous."
+      email={user?.email} userId={user?.id} onActivated={setUserProfile} onLogout={()=>supabase.auth.signOut()}/>
   );
 
   // Envoi email transactionnel via Edge Function send-email (admin/collab uniquement).
