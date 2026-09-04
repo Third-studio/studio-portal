@@ -50,6 +50,7 @@ export default function Assistant({ isTeam = false, currentProjectId = null }) {
       {/* Bouton flottant */}
       {!open && (
         <button
+          className="ai-fab"
           onClick={() => setOpen(true)}
           title="Assistant ThirdOne"
           style={{
@@ -67,7 +68,7 @@ export default function Assistant({ isTeam = false, currentProjectId = null }) {
 
       {/* Panneau de chat */}
       {open && (
-        <div style={{
+        <div className="ai-panel" style={{
           position: "fixed", bottom: 24, right: 24, zIndex: 150,
           width: "min(380px, calc(100vw - 32px))", height: "min(540px, calc(100vh - 100px))",
           background: "rgba(255,255,255,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",

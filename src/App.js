@@ -34,7 +34,7 @@ const FontLoader = () => (
     .section-fade { animation:sectionIn .2s cubic-bezier(.16,1,.3,1) both; }
     .countUp { animation:countUp .4s cubic-bezier(.34,1.56,.64,1) both; }
 
-    .btn { display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);white-space:nowrap; }
+    .btn { display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:10px;border:none;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .22s cubic-bezier(.4,0,.2,1);white-space:nowrap; }
     .btn:active { transform:scale(.97); }
     .btn:disabled { opacity:.4;cursor:not-allowed; }
     .btn-primary { background:linear-gradient(180deg,#0096C7,#0077B6);color:#FFFFFF;box-shadow:0 1px 2px rgba(0,144,179,0.4), 0 4px 14px rgba(0,180,216,0.25), inset 0 1px 0 rgba(255,255,255,0.25); }
@@ -52,10 +52,10 @@ const FontLoader = () => (
     .btn-purple { background:#AF52DE18;color:#7C3AED;border:1px solid #AF52DE40; }
     .btn-purple:hover:not(:disabled) { background:#AF52DE28; }
 
-    .card { background:#FFFFFF;border:1px solid #E8E8ED;border-radius:14px;overflow:hidden;transition:border-color .25s cubic-bezier(.4,0,.2,1),box-shadow .25s cubic-bezier(.4,0,.2,1),transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 2px rgba(16,24,40,0.04), 0 2px 8px rgba(16,24,40,0.04); }
+    .card { background:#FFFFFF;border:1px solid #ECECF1;border-radius:16px;overflow:hidden;transition:border-color .25s cubic-bezier(.4,0,.2,1),box-shadow .25s cubic-bezier(.4,0,.2,1),transform .25s cubic-bezier(.4,0,.2,1);box-shadow:0 1px 2px rgba(16,24,40,0.04), 0 2px 8px rgba(16,24,40,0.04); }
     .card:hover { border-color:#D8D8DE;transform:translateY(-1px);box-shadow:0 2px 4px rgba(16,24,40,0.05), 0 10px 28px rgba(16,24,40,0.09); }
 
-    .input { width:100%;background:#F5F5F7;border:1.5px solid #E5E5EA;border-radius:9px;padding:10px 14px;color:#1D1D1F;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;resize:none; }
+    .input { width:100%;background:#F7F7F9;border:1.5px solid #E5E5EA;border-radius:10px;padding:10px 14px;color:#1D1D1F;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s;resize:none; }
     .input:focus { border-color:#0077B6;background:#FFFFFF;box-shadow:0 0 0 4px rgba(0,180,216,0.10); }
     .input::placeholder { color:#C7C7CC; }
     select.input { appearance:none;cursor:pointer; }
@@ -65,11 +65,14 @@ const FontLoader = () => (
     .tab:not(.active) { background:transparent;color:#6E6E73; }
     .tab:not(.active):hover { color:#1D1D1F;background:#F5F5F7; }
 
-    .nav-item { display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;font-size:13px;color:#6E6E73;border:1px solid transparent; }
-    .nav-item:hover { background:#F2F2F7;color:#1D1D1F; }
-    .nav-item.active { background:rgba(0,180,216,0.08);color:#0077B6;border-color:rgba(0,180,216,0.2); }
+    .nav-item { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;transition:background .15s,color .15s,box-shadow .15s;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#5C5C63;border:1px solid transparent;user-select:none; }
+    .nav-item svg { color:#8E8E93;transition:color .15s; }
+    .nav-item:hover { background:#F0F0F4;color:#1D1D1F; }
+    .nav-item:hover svg { color:#1D1D1F; }
+    .nav-item.active { background:#FFFFFF;color:#0077B6;border-color:#E8E8ED;box-shadow:0 1px 2px rgba(16,24,40,0.05), 0 2px 8px rgba(16,24,40,0.05);font-weight:600; }
+    .nav-item.active svg { color:#0077B6; }
 
-    .sidebar-proj { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;font-size:12px;color:#6E6E73;border:1px solid transparent; }
+    .sidebar-proj { display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:10px;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;font-size:12px;color:#6E6E73;border:1px solid transparent; }
     .sidebar-proj:hover { background:#F2F2F7;color:#1D1D1F; }
     .sidebar-proj.active { background:rgba(0,180,216,0.08);color:#0077B6;border-color:rgba(0,180,216,0.2); }
 
@@ -115,7 +118,7 @@ const FontLoader = () => (
     .toggle.off::after { left:2px; }
 
     .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px; }
-    .modal { background:#FFFFFF;border:1px solid #E8E8ED;border-radius:18px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:fadeUp .28s cubic-bezier(.16,1,.3,1);box-shadow:0 1px 2px rgba(16,24,40,0.06), 0 32px 80px rgba(16,24,40,0.18); }
+    .modal { background:#FFFFFF;border:1px solid #E8E8ED;border-radius:20px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;animation:fadeUp .28s cubic-bezier(.16,1,.3,1);box-shadow:0 1px 2px rgba(16,24,40,0.06), 0 32px 80px rgba(16,24,40,0.18); }
 
     .notif { position:fixed;bottom:24px;right:24px;z-index:200;background:rgba(255,255,255,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid #E8E8ED;border-radius:14px;padding:12px 18px;font-family:'Inter',sans-serif;font-size:13px;color:#1D1D1F;display:flex;align-items:center;gap:8px;animation:fadeUp .3s cubic-bezier(.16,1,.3,1);box-shadow:0 2px 6px rgba(16,24,40,0.06), 0 12px 40px rgba(16,24,40,0.14); }
 
@@ -159,30 +162,70 @@ const FontLoader = () => (
     .type-pill.selected { background:rgba(0,180,216,0.08);border-color:#0077B6;color:#0077B6; }
     .type-pill:hover:not(.selected) { border-color:#D1D1D6;color:#1D1D1F; }
 
-    /* ── RESPONSIVE ── */
-    .app-body { display:flex;flex:1;overflow:hidden; }
-    .app-sidebar { width:200px;border-right:1px solid #E5E5EA;background:rgba(247,247,247,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:14px 10px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;flex-shrink:0;transition:transform .25s ease; }
-    .app-main { flex:1;overflow-y:auto;padding:22px 24px 120px; }
+    /* ── LAYOUT & RESPONSIVE ── */
+    :root { --topbar:56px; --mobnav:64px; --sidebar:228px; --safe-b:env(safe-area-inset-bottom,0px); }
+    html, body { -webkit-tap-highlight-color:transparent; }
+    .app-topbar { height:var(--topbar); padding:0 18px; display:flex; align-items:center; justify-content:space-between; gap:12px; position:sticky; top:0; z-index:50; flex-shrink:0; background:rgba(255,255,255,0.84); backdrop-filter:saturate(180%) blur(18px); -webkit-backdrop-filter:saturate(180%) blur(18px); border-bottom:1px solid rgba(17,24,39,0.07); }
+    .app-burger { display:none; width:38px; height:38px; border-radius:10px; border:none; background:transparent; color:#1D1D1F; cursor:pointer; align-items:center; justify-content:center; flex-shrink:0; transition:background .15s; }
+    .app-burger:hover { background:#F2F2F7; }
+    .app-body { display:flex; flex:1; overflow:hidden; min-height:0; }
+    .app-sidebar { width:var(--sidebar); border-right:1px solid #ECECF1; background:#FAFAFC; padding:16px 12px; display:flex; flex-direction:column; gap:3px; overflow-y:auto; flex-shrink:0; transition:transform .28s cubic-bezier(.16,1,.3,1); }
+    .app-main { flex:1; overflow-y:auto; padding:26px 30px 120px; min-width:0; scroll-behavior:smooth; }
     .hscroll { -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 28px),transparent); }
     .mob-only { display:none !important; }
     .desk-only { display:flex; }
     .sidebar-backdrop { display:none; }
+    .mob-nav { display:none; }
 
+    .app-loader { min-height:100vh; min-height:100dvh; background:#FFFFFF; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:18px; font-family:'Inter',sans-serif;
+      background-image:radial-gradient(ellipse at 30% 0%, rgba(0,180,216,0.07) 0%, transparent 55%), radial-gradient(ellipse at 80% 100%, rgba(61,208,237,0.06) 0%, transparent 50%); }
+    .app-loader-mark { width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg,#3DD0ED,#0096BC); color:#FFFFFF; display:flex; align-items:center; justify-content:center; font-family:'Urbanist',sans-serif; font-weight:800; font-size:24px; box-shadow:0 12px 32px rgba(0,180,216,0.35), inset 0 1px 0 rgba(255,255,255,0.35); animation:loaderPop .5s cubic-bezier(.34,1.56,.64,1) both; }
+    .app-loader-bar { width:140px; height:3px; border-radius:2px; background:#EDEDF2; overflow:hidden; }
+    .app-loader-bar i { display:block; width:40%; height:100%; border-radius:2px; background:linear-gradient(90deg,#0090B3,#3DD0ED); animation:loaderSlide 1.1s cubic-bezier(.4,0,.2,1) infinite; }
+    .app-loader p { font-size:13px; color:#8E8E93; letter-spacing:.01em; }
+    @keyframes loaderPop { from{opacity:0;transform:scale(.8)} to{opacity:1;transform:scale(1)} }
+    @keyframes loaderSlide { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
+    @keyframes sheetUp { from{transform:translateY(28px);opacity:0} to{transform:translateY(0);opacity:1} }
+
+    @media (max-width:1024px) {
+      .app-main { padding:22px 22px 120px; }
+    }
     @media (max-width:768px) {
-      .app-sidebar { position:fixed;left:0;top:54px;height:calc(100vh - 54px);z-index:40;transform:translateX(-100%);box-shadow:none;width:220px; }
-      .app-sidebar.open { transform:translateX(0);box-shadow:4px 0 30px rgba(0,0,0,0.12); }
-      .app-main { padding:14px 14px 110px; }
+      .app-topbar { padding:0 10px 0 8px; }
+      .app-burger { display:inline-flex; }
+      .app-sidebar { position:fixed; left:0; top:var(--topbar); height:calc(100vh - var(--topbar) - var(--mobnav) - var(--safe-b)); height:calc(100dvh - var(--topbar) - var(--mobnav) - var(--safe-b)); z-index:40; transform:translateX(-100%); width:min(84vw,320px); box-shadow:none; background:#FFFFFF; padding:16px 14px 24px; border-right:none; }
+      .app-sidebar.open { transform:translateX(0); box-shadow:16px 0 48px rgba(16,24,40,0.18); }
+      .app-body .app-main { padding:16px 16px calc(var(--mobnav) + var(--safe-b) + 36px) !important; }
       .mob-only { display:flex !important; }
       .desk-only { display:none !important; }
-      .sidebar-backdrop { display:block;position:fixed;inset:0;top:54px;background:rgba(0,0,0,0.3);z-index:39;backdrop-filter:blur(2px); }
-      .notif { bottom:80px;right:12px;left:12px;font-size:12px; }
-      .modal { max-width:100% !important;border-radius:12px; }
+      .sidebar-backdrop { display:block; position:fixed; inset:0; top:var(--topbar); background:rgba(16,24,40,0.38); z-index:39; backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+      .mob-nav { display:flex; position:fixed; left:0; right:0; bottom:0; z-index:45; height:calc(var(--mobnav) + var(--safe-b)); padding:6px 6px calc(6px + var(--safe-b)); gap:2px; background:rgba(255,255,255,0.92); backdrop-filter:saturate(180%) blur(18px); -webkit-backdrop-filter:saturate(180%) blur(18px); border-top:1px solid rgba(17,24,39,0.08); }
+      .mob-nav-item { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border:none; background:transparent; color:#8E8E93; font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600; letter-spacing:.01em; border-radius:12px; cursor:pointer; padding:5px 2px; transition:color .15s, background .15s; }
+      .mob-nav-item span { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .mob-nav-item svg { width:21px; height:21px; }
+      .mob-nav-item.active { color:#0077B6; }
+      .mob-nav-item.active svg { filter:drop-shadow(0 4px 8px rgba(0,180,216,0.35)); }
+      .mob-nav-item:active { background:#F2F2F7; }
+      .nav-item, .sidebar-proj { padding:12px 12px; font-size:14px; min-height:44px; }
+      .notif { bottom:calc(var(--mobnav) + var(--safe-b) + 14px); right:12px; left:12px; font-size:13px; }
+      .modal-overlay { align-items:flex-end; padding:0; }
+      .modal { max-width:100% !important; border-radius:20px 20px 0 0; max-height:92vh; max-height:92dvh; animation:sheetUp .32s cubic-bezier(.16,1,.3,1); padding-bottom:var(--safe-b); }
+      .btn { min-height:40px; padding:8px 14px; }
+      .tab { padding:8px 12px; }
+      .ai-fab { bottom:calc(var(--mobnav) + var(--safe-b) + 14px) !important; right:14px !important; }
+      .ai-panel { bottom:calc(var(--mobnav) + var(--safe-b) + 10px) !important; right:10px !important; left:10px !important; width:auto !important; height:min(560px, calc(100dvh - var(--topbar) - var(--mobnav) - 30px)) !important; }
+      table { font-size:12px; }
     }
-    @media (max-width:480px) {
-      .app-main { padding:12px 12px 110px; }
-      .btn { font-size:12px;padding:7px 12px; }
-      .input { font-size:13px;padding:9px 12px; }
+    @media (max-width:600px) {
+      .input, select.input, textarea.input, .admin-input, .time-cell { font-size:16px; } /* évite le zoom iOS à la saisie */
+      .input { padding:10px 12px; min-height:44px; }
+      /* grilles inline à colonnes fixes → 1 ou 2 colonnes */
+      [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns:1fr !important; }
+      [style*="grid-template-columns: repeat(3, 1fr)"], [style*="grid-template-columns: repeat(3,1fr)"] { grid-template-columns:1fr !important; }
+      [style*="grid-template-columns: repeat(4, 1fr)"], [style*="grid-template-columns: repeat(4,1fr)"], [style*="grid-template-columns: repeat(5, 1fr)"], [style*="grid-template-columns: repeat(5,1fr)"] { grid-template-columns:1fr 1fr !important; }
+      .card { border-radius:14px; }
     }
+    @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
   `}</style>
 );
 
@@ -190,6 +233,8 @@ const FontLoader = () => (
 // CONSTANTS & REFERENCE DATA
 // ─────────────────────────────────────────────────────────────────────────────
 const STATUS_STEPS   = ["Brief","Storyboard","Tournage","Montage","Livraison"];
+const MOBILE_NAV_PROD = ["dashboard","projets","calendrier","inbox"];
+const MOBILE_NAV_LABELS = {dashboard:"Dashboard",projets:"Projets",calendrier:"Agenda",inbox:"Inbox",accueil:"Accueil",cm:"Contenus",estimation:"Estimation",shortone:"Shortone"};
 const STATUS_INDEX   = { brief:0, storyboard:1, tournage:2, montage:3, livraison:4 };
 const ALLOWED_DOMAINS=/^https:\/\/(www\.)?(youtu\.be|youtube\.com|vimeo\.com|player\.vimeo\.com|dropbox\.com|replay\.dropbox\.com|drive\.google\.com|docs\.google\.com|wetransfer\.com|we\.tl|frame\.io|app\.frame\.io|frameio\.com|notion\.so|1drv\.ms|onedrive\.live\.com|thirdone\.studio)(\/|$)/i;
 const isSafeUrl=(url)=>{if(!url)return false;try{return ALLOWED_DOMAINS.test(new URL(url).href);}catch{return false;}};
@@ -7912,6 +7957,7 @@ const ProjectsKanbanMemo    = memo(ProjectsKanban);
 function AppMain() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [recovery, setRecovery] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => setAuthLoading(false), 8000);
@@ -7923,6 +7969,7 @@ function AppMain() {
       .catch(() => { setUser(null); setAuthLoading(false); })
       .finally(() => clearTimeout(timeout));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === "PASSWORD_RECOVERY") setRecovery(true);
       setUser(session?.user || null);
     });
     return () => subscription.unsubscribe();
@@ -8131,11 +8178,13 @@ function AppMain() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appView, clientProjects, selectedProjectId]);
 
-  if (authLoading || dataLoading) return <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
-    <img src="/logo192.png" alt="Third-One Studio" style={{height:50,filter:"invert(1) brightness(0.9)",opacity:0.8}}/>
-    <p style={{color:"#0090B3",fontFamily:"Bebas Neue",fontSize:18,letterSpacing:"0.15em"}}>CHARGEMENT...</p>
-  </div>;
+  if (authLoading || dataLoading) return <><FontLoader/><div className="app-loader" role="status" aria-live="polite">
+    <div className="app-loader-mark">31</div>
+    <div className="app-loader-bar"><i/></div>
+    <p>Chargement de votre espace…</p>
+  </div></>;
   if (!user) return <Login onLogin={setUser} />;
+  if (recovery) return <Login recovery onLogin={setUser} onRecoveryDone={()=>setRecovery(false)} />;
   if (user && userProfile === null && userRole !== null) return (
     <div style={{minHeight:"100vh",background:"#FFFFFF",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <p style={{color:"#D70015",fontFamily:"'Urbanist'",fontSize:20,letterSpacing:"0.1em"}}>COMPTE SUPPRIMÉ</p>
@@ -8489,9 +8538,11 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
       <div style={{minHeight:"100vh",background:"#FFFFFF",color:"#1D1D1F",display:"flex",flexDirection:"column"}}>
 
         {/* ── TOP BAR ── */}
-        <div style={{background:"#F5F5F7",borderBottom:"1px solid #E5E5EA",padding:"0 16px",height:54,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50,flexShrink:0}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <button className="mob-only" onClick={()=>setSidebarOpen(o=>!o)} style={{background:"none",border:"none",color:"#6E6E73",cursor:"pointer",fontSize:18,padding:"4px",lineHeight:1,flexShrink:0}}>☰</button>
+        <div className="app-topbar">
+          <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
+            <button className="app-burger" aria-label="Menu" onClick={()=>setSidebarOpen(o=>!o)}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg>
+            </button>
             <img src="/logo-wordmark.svg" alt="ThirdOne Studio" style={{height:24,display:"block"}}/>
             <span className="desk-only" style={{color:"#E5E5EA",alignItems:"center"}}>|</span>
             <span className="desk-only" style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",alignItems:"center"}}>
@@ -8792,6 +8843,21 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
             </div>
           </div>
         </div>
+
+        {/* ── NAV MOBILE (barre basse) ── */}
+        <nav className="mob-nav" aria-label="Navigation principale">
+          {(appView==="prod"?prodNav.filter(n=>MOBILE_NAV_PROD.includes(n.k)):clientNav.slice(0,4)).map(n=>{
+            const active=!sidebarOpen&&(appView==="prod"?prodSection:clientSection)===n.k;
+            return (
+              <button key={n.k} className={`mob-nav-item${active?" active":""}`} onClick={()=>{appView==="prod"?setProdSection(n.k):setClientSection(n.k);if(appView==="client"&&n.k==="projets")setClientProjectsView("liste");setSidebarOpen(false);}}>
+                <NavIcon k={n.k}/><span>{MOBILE_NAV_LABELS[n.k]||n.l}</span>
+              </button>
+            );
+          })}
+          <button className={`mob-nav-item${sidebarOpen?" active":""}`} onClick={()=>setSidebarOpen(o=>!o)} aria-expanded={sidebarOpen}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg><span>Menu</span>
+          </button>
+        </nav>
 
         {notif&&<Notif msg={notif} onDone={()=>setNotif(null)}/>}
         {showCreateModal&&<CreateProjectModal isAdmin={userRole==="admin"} clients={clients} teamMembers={teamMembers} planningSlots={planningSlots} initialClientId={createForClientId} onClose={()=>{setShowCreateModal(false);setCreateForClientId(null);}} onCreate={createProject}/>}
