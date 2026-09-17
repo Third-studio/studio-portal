@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo, useCallback, memo, Fragment } fro
 import QRCode from "qrcode";
 import { supabase } from "./supabase";
 import Login from "./Login";
+import Landing from "./Landing";
 import Inbox from "./Inbox";
 import TasksReminders from "./TasksReminders";
 import Assistant from "./Assistant";
@@ -8220,7 +8221,7 @@ function AppMain() {
     <div className="app-loader-bar"><i/></div>
     <p>Chargement de votre espace…</p>
   </div></>;
-  if (!user) return <Login onLogin={setUser} />;
+  if (!user) return <Login onLogin={u=>{ if(window.location.pathname.startsWith("/login")) window.history.replaceState(null,"","/"); setUser(u); }} />;
   if (recovery) return <Login recovery onLogin={setUser} onRecoveryDone={()=>setRecovery(false)} />;
   if (user && userProfile === null && userRole !== null) return (
     <AccessScreen tone="error" title="Compte introuvable" text="Ce compte n'existe plus sur la plateforme. Contactez Third-One Studio si vous pensez qu'il s'agit d'une erreur." email={user?.email} onLogout={()=>supabase.auth.signOut()}/>
@@ -8906,8 +8907,14 @@ ${extra ? `<p style="margin:0 0 14px;color:#6E6E73;">${extra}</p>` : ""}`;
     </>
   );
 }
+// Session Supabase déjà présente en localStorage ? (évite un flash de vitrine pour un client connecté)
+function hasStoredSession(){
+  try{ return Object.keys(window.localStorage).some(k=>k.startsWith("sb-")&&k.endsWith("-auth-token")); }catch(_){ return false; }
+}
 export default function App(){
   const params=new URLSearchParams(window.location.search);
+  const path=window.location.pathname.replace(/\/+$/,"")||"/";
+  if(path==="/"&&params.toString()===""&&!hasStoredSession())return <Landing/>;
   if(params.has("guest"))return <GuestView/>;
   if(params.has("prestataire"))return <PrestaireResponsePage token={params.get("prestataire")}/>;
   if(params.has("monteur"))return <MonteurEspacePage token={params.get("monteur")}/>;
