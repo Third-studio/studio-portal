@@ -9,7 +9,7 @@
 //   Body JSON : { action: "recovery" | "magiclink" | "invite", email, redirectTo?, nom?, role? }
 //   - recovery  : lien « nouveau mot de passe ». Sans JWT. Répond {ok:true} même si
 //                 l'email est inconnu (aucune énumération), sauf rate limit. Envoyé seulement
-//                 si un profil équipe actif (admin / collaborateur) existe : les clients n'ont
+//                 si un profil équipe actif (admin / collaborateur / monteur) existe : les clients n'ont
 //                 pas de compte /studio et un accès désactivé ne reçoit rien.
 //   - magiclink : lien de connexion sans mot de passe. Sans JWT. Même garde que recovery ;
 //                 sinon {ok:true} silencieux, sans jamais appeler generateLink (qui créerait
@@ -51,14 +51,14 @@ const CORS = {
 };
 
 type Action = "recovery" | "magiclink" | "invite";
-type Role = "admin" | "collaborateur";
+type Role = "admin" | "collaborateur" | "monteur";
 type Profile = { id: string; email: string | null; nom: string | null; role: string | null; is_active: boolean | null };
 type Body = { action?: unknown; email?: unknown; redirectTo?: unknown; nom?: unknown; role?: unknown };
 type Mail = { subject: string; html: string; text: string };
 
 const ACTIONS: readonly string[] = ["recovery", "magiclink", "invite"];
-const ROLES: readonly string[] = ["admin", "collaborateur"];
-const ROLE_LABEL: Record<Role, string> = { admin: "administrateur", collaborateur: "collaborateur" };
+const ROLES: readonly string[] = ["admin", "collaborateur", "monteur"];
+const ROLE_LABEL: Record<Role, string> = { admin: "administrateur", collaborateur: "collaborateur", monteur: "monteur" };
 
 const ALLOWED_ORIGINS = ["https://www.thirdone.studio", "https://thirdone.studio", "http://localhost:5173"];
 const DEFAULT_REDIRECT = "https://www.thirdone.studio/studio";
