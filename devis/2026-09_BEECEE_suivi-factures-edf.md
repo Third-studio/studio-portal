@@ -81,7 +81,8 @@ pratiques déjà avec la SARA.
 
 ## 5. À vérifier de ton côté
 
-- [ ] **FPROD202606-4 (7 745 €) : relancer Beecee** — 96 jours, même schéma que la facture de février.
+- [x] **FPROD202606-4 (7 745 €) : relevé envoyé** le 21/09/2026 à compta@beecee.fr, Gaëlle en copie.
+- [ ] Sans date de règlement communiquée sous quelques jours, passer à la mise en demeure (le levier « droits d'exploitation non libérés » a fonctionné en février).
 - [ ] Indy → client BEECEE → filtre « impayées » : c'est la liste qui fait foi.
 - [ ] Encaissement de FPROD202605-8 (1 100 €) sur le relevé bancaire.
 - [ ] Identifier la facture de **529,50 €** soldée le 03/02/2026 (elle apparaît dans le relevé

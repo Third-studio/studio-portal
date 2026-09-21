@@ -124,5 +124,6 @@ pas de document à envoyer en l'état.
 - [ ] Mention « Annule et remplace la facture n° FAC-2026-09-001 du 21/09/2026 » bien présente.
 - [ ] N° de commande **4200017185** visible sur le PDF.
 - [ ] Photos retouchées effectivement livrées (échéance annoncée : mardi 22/09).
-- [ ] SIRET, n° de TVA intracommunautaire, IBAN et BIC renseignés.
+- [x] SIRET renseigné (89953337600013).
+- [ ] IBAN et BIC renseignés.
 - [ ] Envoi à fournisseurs@sara-ag.fr **avec Lydia Bertholo en copie**.
