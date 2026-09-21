@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Facture — SARA · Journées du Patrimoine 2026</title>
+<style>
+  @page { size: A4; margin: 10mm 14mm 9mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Urbanist", "Inter", "Liberation Sans", "DejaVu Sans", Arial, sans-serif;
+    font-size: 9.8pt;
+    line-height: 1.4;
+    color: #1D1D1F;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .wordmark { font-size: 24pt; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .wordmark .t { color: #162040; }
+  .wordmark .o { color: #00B4D8; }
+  .muted { color: #6E6E73; }
+  .small { font-size: 8.5pt; }
+  .xsmall { font-size: 7.6pt; }
+  .fill { color: #8E8E93; }
+
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  header .issuer { font-size: 8.1pt; color: #6E6E73; margin-top: 7px; line-height: 1.5; }
+  .doc-badge {
+    text-align: right; border: 1.5px solid #00B4D8; border-radius: 10px;
+    padding: 9px 13px; min-width: 186px;
+  }
+  .doc-badge .kind {
+    font-size: 12.4pt; font-weight: 800; letter-spacing: 1.5px; color: #0077B6; text-transform: uppercase;
+  }
+  .doc-badge .num { font-size: 10pt; font-weight: 700; color: #162040; margin-top: 2px; }
+  .doc-badge .meta { font-size: 8pt; color: #6E6E73; margin-top: 5px; line-height: 1.45; }
+
+  .rule { height: 3px; background: linear-gradient(90deg, #00B4D8, #0077B6 55%, #162040); border-radius: 2px; margin: 10px 0 11px; }
+
+  .blocks { display: flex; gap: 14px; }
+  .block { flex: 1; border: 1px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; break-inside: avoid; }
+  .block.client { background: #F7FBFD; border-color: #CFEAF3; }
+  .block h3 {
+    margin: 0 0 6px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .block .name { font-weight: 700; font-size: 10.4pt; color: #162040; }
+  .block p { margin: 2px 0 0; font-size: 8.5pt; color: #3A3A3C; line-height: 1.45; }
+
+  .object { margin: 10px 0 6px; }
+  .object h2 {
+    margin: 0 0 4px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .object p { margin: 0; font-size: 9.8pt; font-weight: 600; color: #162040; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  thead th {
+    background: #162040; color: #FFFFFF; font-size: 7.8pt; letter-spacing: 0.9px; text-transform: uppercase;
+    font-weight: 700; padding: 6.5px 10px; text-align: left;
+  }
+  thead th.num, tbody td.num { text-align: right; white-space: nowrap; }
+  tbody td { padding: 7px 10px; border-bottom: 1px solid #E5E5EA; vertical-align: top; font-size: 8.9pt; break-inside: avoid; }
+  tbody td .lbl { font-weight: 700; color: #162040; font-size: 9.2pt; }
+  tbody td .det { color: #6E6E73; font-size: 8.05pt; margin-top: 2px; line-height: 1.38; }
+
+  .totals { display: flex; justify-content: flex-end; margin-top: 9px; break-inside: avoid; }
+  .totals table { width: 262px; margin: 0; }
+  .totals td { padding: 4px 10px; border: none; font-size: 9.1pt; }
+  .totals td.lab { color: #6E6E73; }
+  .totals td.val { text-align: right; font-weight: 600; white-space: nowrap; }
+  .totals tr.ttc td { background: #162040; color: #FFFFFF; font-size: 10.4pt; font-weight: 800; padding: 7.5px 10px; }
+  .totals tr.ttc td.lab { color: #9FD9EA; font-weight: 700; border-radius: 8px 0 0 8px; }
+  .totals tr.ttc td.val { border-radius: 0 8px 8px 0; }
+
+  .included { margin-top: 9px; border: 1px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; break-inside: avoid; }
+  .included h3 {
+    margin: 0 0 6px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .included ul { margin: 0; padding-left: 15px; }
+  .included li { font-size: 8.25pt; color: #3A3A3C; margin-bottom: 1.5px; line-height: 1.4; }
+
+  .conditions { margin-top: 9px; break-inside: avoid; }
+  .conditions h3 {
+    margin: 0 0 5px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .conditions p { margin: 0 0 2px; font-size: 7.8pt; color: #6E6E73; line-height: 1.42; }
+
+  .signature { display: flex; gap: 14px; margin-top: 9px; align-items: stretch; break-inside: avoid; }
+  .sign-box { flex: 1; border: 1.5px dashed #CFEAF3; border-radius: 10px; padding: 9px 12px; }
+  .sign-box h3 { margin: 0 0 2px; font-size: 8.3pt; color: #162040; font-weight: 800; }
+  .sign-box p { margin: 0; font-size: 7.7pt; color: #6E6E73; line-height: 1.42; }
+  .sign-space { height: 20px; }
+
+  footer { margin-top: 8px; border-top: 1px solid #E5E5EA; padding-top: 7px; text-align: center; }
+  footer p { margin: 0; font-size: 7.1pt; color: #8E8E93; line-height: 1.5; }
+  .refs {
+    display: flex; gap: 0; margin-top: 11px; border: 1.5px solid #00B4D8; border-radius: 10px;
+    overflow: hidden; break-inside: avoid;
+  }
+  .refs .cell { flex: 1; padding: 8px 12px; border-right: 1px solid #CFEAF3; }
+  .refs .cell:last-child { border-right: none; }
+  .refs .cell.hl { background: #EAF7FB; flex: 1.15; }
+  .refs h4 {
+    margin: 0 0 2px; font-size: 7.2pt; letter-spacing: 1px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .refs .v { font-size: 10.6pt; font-weight: 800; color: #162040; letter-spacing: 0.2px; }
+  .refs .v.sm { font-size: 9.2pt; font-weight: 700; }
+  .refs .sub { font-size: 7.6pt; color: #6E6E73; margin-top: 1px; }
+
+  .pay { display: flex; gap: 14px; margin-top: 11px; break-inside: avoid; }
+  .pay .box { flex: 1; border: 1px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; }
+  .pay .box.due { background: #F7FBFD; border-color: #CFEAF3; flex: 0 0 196px; text-align: right; }
+  .pay h3 {
+    margin: 0 0 5px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .pay p { margin: 0 0 2px; font-size: 8.4pt; color: #3A3A3C; line-height: 1.45; }
+  .pay .amount { font-size: 14pt; font-weight: 800; color: #162040; line-height: 1.15; }
+  .pay .date { font-size: 8.4pt; color: #6E6E73; margin-top: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="wordmark"><span class="t">Third</span><span class="o">One</span></div>
+    <div class="issuer">
+      Production audiovisuelle &amp; photographie · Fort-de-France, Martinique<br>
+      contact@thirdone.studio · www.thirdone.studio<br>
+      <span class="fill">SIRET : à compléter · N° TVA intracom. : à compléter</span>
+    </div>
+  </div>
+  <div class="doc-badge">
+    <div class="kind">Facture</div>
+    <div class="num">N° FAC-2026-09-001</div>
+    <div class="meta">
+      Émise le 21/09/2026<br>
+      Prestation réalisée les 18 et 19/09/2026<br>
+      <strong>Échéance : 21/10/2026</strong>
+    </div>
+  </div>
+</header>
+
+<div class="rule"></div>
+
+<div class="blocks">
+  <div class="block">
+    <h3>Prestataire</h3>
+    <div class="name">Third-One Studio</div>
+    <p>
+      Fort-de-France — Martinique<br>
+      contact@thirdone.studio
+    </p>
+  </div>
+  <div class="block client">
+    <h3>Facturé à</h3>
+    <div class="name">SARA</div>
+    <p>
+      Société Anonyme de la Raffinerie des Antilles<br>
+      97232 Le Lamentin — Martinique<br>
+      Suivi : Lydia Bertholo, chargée de mission RSE
+    </p>
+  </div>
+</div>
+
+<div class="refs">
+  <div class="cell hl">
+    <h4>N° de commande SARA</h4>
+    <div class="v">4200017185</div>
+    <div class="sub">Référence à rappeler pour le règlement</div>
+  </div>
+  <div class="cell">
+    <h4>Devis de référence</h4>
+    <div class="v sm">DEV-2026-09-001</div>
+    <div class="sub">Validé par la SARA le 16/09/2026</div>
+  </div>
+  <div class="cell">
+    <h4>Dates de prestation</h4>
+    <div class="v sm">18 et 19/09/2026</div>
+    <div class="sub">Créneau 8 h – 12 h, site SARA</div>
+  </div>
+</div>
+
+<div class="object">
+  <h2>Objet de la prestation</h2>
+  <p>Couverture photo des Journées européennes du Patrimoine 2026 sur le site SARA — exposition photo et visites de la raffinerie, vendredi 18 et samedi 19 septembre 2026.</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Désignation</th>
+      <th class="num">Qté</th>
+      <th class="num">P.U. HT</th>
+      <th class="num">Total HT</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <div class="lbl">Couverture photo — vendredi 18 septembre 2026</div>
+        <div class="det">
+          Journée « lycéens » : accueil des groupes, exposition photo et visite de la raffinerie. Présence sur le créneau 8 h – 12 h, matériel photo professionnel inclus.
+        </div>
+      </td>
+      <td class="num">1 j</td>
+      <td class="num">525,00 €</td>
+      <td class="num">525,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Couverture photo — samedi 19 septembre 2026</div>
+        <div class="det">
+          Journée « collaborateurs » : collaborateurs SARA, leurs familles et prestataires extérieurs. Présence sur le créneau 8 h – 12 h, matériel photo professionnel inclus.
+        </div>
+      </td>
+      <td class="num">1 j</td>
+      <td class="num">525,00 €</td>
+      <td class="num">525,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Post-production et livraison</div>
+        <div class="det">
+          Tri, sélection et retouche des images, livraison en HD et formats optimisés web via lien de téléchargement sécurisé — inclus au tarif journalier.
+        </div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">Inclus</td>
+      <td class="num">0,00 €</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="totals">
+  <table>
+    <tr><td class="lab">Total HT</td><td class="val">1 050,00 €</td></tr>
+    <tr><td class="lab">TVA 8,5 %</td><td class="val">89,25 €</td></tr>
+    <tr class="ttc"><td class="lab">Total TTC</td><td class="val">1 139,25 €</td></tr>
+  </table>
+</div>
+
+<div class="pay">
+  <div class="box">
+    <h3>Règlement</h3>
+    <p>Par virement bancaire, à 30 jours date de facture.</p>
+    <p><strong>IBAN</strong> <span class="fill">à compléter</span> · <strong>BIC</strong> <span class="fill">à compléter</span></p>
+    <p>Merci de rappeler le n° de commande <strong>4200017185</strong> et le n° de facture <strong>FAC-2026-09-001</strong> en référence du virement.</p>
+  </div>
+  <div class="box due">
+    <h3>Net à payer</h3>
+    <div class="amount">1 139,25 €</div>
+    <div class="date">Au plus tard le 21/10/2026</div>
+  </div>
+</div>
+
+<div class="conditions">
+  <h3>Mentions légales</h3>
+  <p><strong>Cession de droits —</strong> droits d'utilisation des photographies cédés à la SARA pour sa communication institutionnelle (interne, web, réseaux sociaux, presse, supports imprimés), 3 ans, territoire Antilles-Guyane. Toute utilisation publicitaire ou hors de ce cadre fera l'objet d'un avenant.</p>
+  <p><strong>Retard de paiement —</strong> pénalités au taux BCE majoré de 10 points, exigibles le jour suivant la date d'échéance, et indemnité forfaitaire de recouvrement de 40 € (art. L.441-10 et D.441-5 du Code de commerce). Pas d'escompte pour paiement anticipé.</p>
+  <p>Facture établie conformément au devis n° DEV-2026-09-001 validé par la SARA le 16/09/2026 et à la commande n° 4200017185.</p>
+</div>
+
+<footer>
+  <p>Third-One Studio · Fort-de-France, Martinique · contact@thirdone.studio · www.thirdone.studio — Facture n° FAC-2026-09-001 du 21/09/2026, échéance le 21/10/2026.</p>
+</footer>
+
+</body>
+</html>
