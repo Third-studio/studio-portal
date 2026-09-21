@@ -2,10 +2,10 @@
 
 Deux devis **séparés**, à envoyer ensemble pour que Beecee arbitre :
 
-| Devis | Formule | Total HT | TVA 8,5 % | Total TTC | Fichier |
-|---|---|---|---|---|---|
-| DEV-2026-09-002 | Essentielle | 1 800,00 € | 153,00 € | 1 953,00 € | `devis-essentiel.pdf` |
-| DEV-2026-09-003 | Premium | 2 500,00 € | 212,50 € | 2 712,50 € | `devis-premium.pdf` |
+| Devis | Formule | Total | TVA | Fichier |
+|---|---|---|---|---|
+| DEV-2026-09-002 | Essentielle | **1 800,00 €** | Non applicable (293 B) | `devis-essentiel.pdf` |
+| DEV-2026-09-003 | Premium | **2 500,00 €** | Non applicable (293 B) | `devis-premium.pdf` |
 
 Événement : **jeudi 8 octobre 2026, 15 h – 17 h**, Immeuble des Cascades, Fort-de-France.
 Livrable : film récapitulatif 45-60 s, approche institutionnelle et émotionnelle.
@@ -15,7 +15,8 @@ Livrable : film récapitulatif 45-60 s, approche institutionnelle et émotionnel
 | Champ | Valeur |
 |---|---|
 | Raison sociale | BEECEE |
-| Adresse | *(adresse de facturation à compléter — elle figure sur tes factures 2025)* |
+| Adresse | Habitation Genipa — 97224 Ducos, Martinique |
+| SIRET | 88117490800015 |
 | Contact projet | Gaëlle Honoré — gaelle.h@beecee.fr |
 | Facturation | compta@beecee.fr |
 | Client final | EDF Martinique |
@@ -28,7 +29,7 @@ Livrable : film récapitulatif 45-60 s, approche institutionnelle et émotionnel
 | 2 | Captation de l'inauguration — jeudi 8 octobre 2026, 15 h – 17 h. Un cadreur et captation son : arrivée des invités et de la presse, prises de parole, inauguration, découverte des espaces, parcours client et dispositifs digitaux, équipes EDF, plans d'ambiance. | 1 | 800,00 € | 800,00 € |
 | 3 | Montage du film récapitulatif 45-60 s — dérushage, montage, habillage charte EDF, étalonnage, mixage. Un aller-retour de retouches inclus. | 1 | 1 000,00 € | 1 000,00 € |
 
-**Total : 1 800,00 € HT — 1 953,00 € TTC**
+**Total : 1 800,00 €** (TVA non applicable, art. 293 B du CGI)
 
 ## 3. Devis DEV-2026-09-003 — Formule Premium
 
@@ -40,7 +41,7 @@ Livrable : film récapitulatif 45-60 s, approche institutionnelle et émotionnel
 | 4 | Sound design, mixage et sous-titrage — habillage sonore et musical, sous-titres incrustés. | 1 | 200,00 € | 200,00 € |
 | 5 | Déclinaison réseaux sociaux — version verticale 9:16 pour Instagram et LinkedIn. | 1 | 200,00 € | 200,00 € |
 
-**Total : 2 500,00 € HT — 2 712,50 € TTC**
+**Total : 2 500,00 €** (TVA non applicable, art. 293 B du CGI)
 
 ## 4. Conditions communes (à coller dans les notes Indy)
 
@@ -107,9 +108,13 @@ déclinaison 9:16 200 €.
 
 ## 7. Points à valider
 
-- Régime de TVA : 8,5 % appliqué comme sur les autres devis. Si franchise en base →
-  « TVA non applicable, art. 293 B du CGI », totaux ramenés à 1 800 € / 2 500 €.
-- Adresse de facturation Beecee à compléter dans Indy.
+- TVA : franchise en base confirmée (la facture FPROD202606-4 affiche 0,00 %). Les deux devis
+  portent la mention « TVA non applicable, art. 293 B du CGI ». Totaux nets : 1 800 € / 2 500 €.
+- ⚠️ **Tarif cadreur à rediscuter** : sur FPROD202606-4 (Pub TV EDF), ton *forfait cadreur* est
+  facturé **1 300 €**, et ton *forfait montage pub TV premium délais* **1 900 €**. Mes devis sont
+  en dessous : captation 800 € (1 caméra) et 1 100 € (2 caméras), montage 1 000 €. Pour l'événement
+  du 8 octobre, passer la captation Premium de 1 100 € à **1 300 €** alignerait exactement sur ton
+  forfait cadreur habituel chez EDF, et porterait le Premium à **2 700 €**. Dis-moi si je le fais.
 - Vu l'historique de paiement de Beecee (cf. `../2026-09_BEECEE_suivi-factures-edf.md`) :
   envisager un acompte de 40 % à la commande, comme tu le fais avec la SARA.
 - Délai de livraison : V1 sous 5 jours ouvrés après l'événement. À raccourcir si la

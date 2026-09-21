@@ -18,25 +18,41 @@
 « déjà réglées » que je n'avais pas notées sont très probablement celles absorbées par ce
 virement de solde.
 
-⚠️ **Mais cette liste est incomplète — voir le § 2.**
+⚠️ **Cette liste était incomplète — voir le § 2, qui est désormais le sujet principal.**
 
-## 2. Facture EDF d'environ 7 000 € — signalée, introuvable dans Gmail
+## 2. 🔴 FPROD202606-4 — 7 745,00 € — « Pub tv EDF » — IMPAYÉE
 
-Tu m'indiques qu'il manque une facture EDF de **7 000 € et quelques**. Je ne la retrouve dans
-aucune recherche Gmail (expéditeur Indy, courriers à Beecee, pièces jointes, notifications
-de virement). Cela n'a rien d'étonnant, et **ne prouve pas qu'elle n'existe pas** :
+Relevée sur Indy (capture du 21/09/2026). C'est **de loin le premier poste en souffrance**.
 
-- Les notifications Indy des factures **Beecee ne passent pas par ta boîte**. Preuve : ni
-  FPROD202510-14 (2 700 €) ni FPROD202605-8 (1 100 €) n'ont de notification Indy dans Gmail,
-  alors que les deux factures existent bel et bien. Celles qui apparaissent concernent
-  d'autres clients (SARA, Netflix, RISE, McDonald's…).
-- La seule facture proche de ce montant dans Gmail est **FPROD202603-4 — 6 980,00 €** du
-  19/03/2026, mais elle est adressée à **NETFLIX SERVICES FRANCE SAS** (« Interview 18 +
-  image AVP 19 »), pas à EDF. À ne pas confondre.
+| | |
+|---|---|
+| Facture | **FPROD202606-4** |
+| Objet | Pub tv EDF |
+| Client | BEECEE — Habitation Genipa, 97224 Ducos — SIRET 88117490800015 |
+| Émise le | **17/06/2026** |
+| Montant | **7 745,00 €** (TVA non applicable) |
+| Statut Indy | **En attente de paiement** |
+| Ancienneté | **96 jours** au 21/09/2026 |
 
-**Il me faut son numéro, sa date et son montant exact** (ou une capture depuis Indy) pour
-l'intégrer correctement. En l'état, le § 1 est à lire comme **incomplet** : si cette facture
-est ouverte, c'est de loin le premier poste en souffrance, et il change tout le tableau.
+Lignes visibles sur la capture : forfait cadreur 1 300 € · forfait organisation et frais de
+production (casting grand-mère + gestion équipes) 750 € · forfait montage pub TV premium
+délais 1 900 € — le reste des lignes est masqué, pour un total de 7 745 €.
+
+**Pourquoi elle n'apparaissait pas** : aucune notification Indy des factures Beecee n'arrive
+dans ta boîte Gmail. Mon § 1 était donc structurellement aveugle sur ce client — et sa
+conclusion, fausse. À ne pas confondre avec FPROD202603-4 (6 980 €), qui est une facture
+Netflix.
+
+### Ce que ça implique
+
+- **96 jours d'ancienneté.** Sur FPROD202510-14, Beecee avait payé au bout de 104 jours, et
+  seulement après une mise en demeure sous 48 h. Tu es exactement sur la même trajectoire, à
+  un montant presque trois fois supérieur.
+- Tu as déjà relancé FPROD202605-8 (1 100 €) le 07/07/2026 sans passer par la mise en demeure.
+  Pour 7 745 €, la relance simple a montré ses limites avec ce client.
+- Le levier qui a fonctionné en février : rappeler que les **droits d'exploitation des
+  contenus EDF ne sont pas libérés** tant que la facture n'est pas réglée. Une pub TV diffusée
+  rend cet argument encore plus fort.
 
 ## 3. Prestations livrées, aucune facture retrouvée
 
@@ -65,7 +81,7 @@ pratiques déjà avec la SARA.
 
 ## 5. À vérifier de ton côté
 
-- [ ] **Facture EDF d'environ 7 000 € : numéro, date, montant et statut** — la retrouver dans Indy et me les transmettre.
+- [ ] **FPROD202606-4 (7 745 €) : relancer Beecee** — 96 jours, même schéma que la facture de février.
 - [ ] Indy → client BEECEE → filtre « impayées » : c'est la liste qui fait foi.
 - [ ] Encaissement de FPROD202605-8 (1 100 €) sur le relevé bancaire.
 - [ ] Identifier la facture de **529,50 €** soldée le 03/02/2026 (elle apparaît dans le relevé

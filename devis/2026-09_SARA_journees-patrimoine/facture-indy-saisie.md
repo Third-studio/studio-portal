@@ -59,15 +59,14 @@ ventilation par journée qui n'y figure pas.
 
 | | |
 |---|---|
-| Total HT | **700,00 €** |
-| TVA 8,5 % | 59,50 € |
-| **Net à payer TTC** | **759,50 €** |
+| Total | **700,00 €** |
+| TVA | Non applicable — art. 293 B du CGI |
+| **Net à payer** | **700,00 €** |
 
-> ⚠️ **À contrôler sur le PDF du devis D202609-11** : le mail annonce « 700 € HT », donc le HT
-> est certain. En revanche je n'ai pas pu ouvrir la pièce jointe pour vérifier le taux de TVA
-> appliqué. Si tu es en franchise en base, la facture doit porter « TVA non applicable,
-> art. 293 B du CGI » et le net à payer devient **700,00 €**. Le régime doit être **identique à
-> celui du devis validé**.
+> ✅ **TVA tranchée** : la facture Indy FPROD202606-4 affiche **TVA 0,00 %**, tu es donc en
+> franchise en base. Plus de TVA sur les documents : le net à payer est de **700,00 €**, avec la
+> mention « TVA non applicable, art. 293 B du CGI ». J'avais appliqué 8,5 % par défaut — c'était
+> faux, c'est corrigé partout.
 
 ## 5. Le plus simple dans Indy
 
@@ -99,7 +98,7 @@ Patrimoine, réalisée sur le site de la SARA les vendredi 18 et samedi 19 septe
 2026, conformément au devis D202609-11 validé le 16 septembre.
 
 Numéro de commande : 4200017185
-Montant : 700,00 € HT, soit 759,50 € TTC
+Montant : 700,00 € (TVA non applicable, art. 293 B du CGI)
 Échéance : 21 octobre 2026
 
 Les photos retouchées ont été livrées dans le délai annoncé.
@@ -120,7 +119,8 @@ pas de document à envoyer en l'état.
 
 ## 7. À vérifier avant envoi
 
-- [ ] Montant et taux de TVA identiques à ceux du devis D202609-11 (ouvrir le PDF).
+- [x] TVA : franchise en base confirmée (0 %) — mention art. 293 B sur la facture.
+- [ ] Montant identique à celui du devis D202609-11 (ouvrir le PDF).
 - [ ] Mention « Annule et remplace la facture n° FAC-2026-09-001 du 21/09/2026 » bien présente.
 - [ ] N° de commande **4200017185** visible sur le PDF.
 - [ ] Photos retouchées effectivement livrées (échéance annoncée : mardi 22/09).
