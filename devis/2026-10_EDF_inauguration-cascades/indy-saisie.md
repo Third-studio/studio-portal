@@ -4,11 +4,24 @@ Deux devis **séparés**, à envoyer ensemble pour que Beecee arbitre :
 
 | Devis | Formule | Total | TVA | Fichier |
 |---|---|---|---|---|
-| DEV-2026-09-002 | Essentielle | **1 800,00 €** | Non applicable (293 B) | `devis-essentiel.pdf` |
-| DEV-2026-09-003 | Premium | **2 500,00 €** | Non applicable (293 B) | `devis-premium.pdf` |
+| DEV-2026-09-002 | Essentielle | **1 440,00 €** | Non applicable (293 B) | `devis-essentiel.pdf` |
+| DEV-2026-09-003 | Premium | **2 090,00 €** | Non applicable (293 B) | `devis-premium.pdf` |
 
 Événement : **jeudi 8 octobre 2026, 15 h – 17 h**, Immeuble des Cascades, Fort-de-France.
 Livrable : film récapitulatif 45-60 s, approche institutionnelle et émotionnelle.
+
+Structure retenue : un opérateur, une caméra et un micro sur 2 h — pas de dispositif lumière,
+contrairement aux tournages EDF habituels. D'où un chiffrage nettement sous le forfait cadreur
+de 1 300 € pratiqué sur la pub TV.
+
+| | Essentielle | Premium |
+|---|---|---|
+| Captation (forfait) | 540,00 € | 740,00 € (+200 € : 2ᵉ caméra en plan fixe + son dédié) |
+| Montage | 2 j × 450,00 € = 900,00 € | 3 j × 450,00 € = 1 350,00 € |
+| **Total** | **1 440,00 €** | **2 090,00 €** |
+
+Le 3ᵉ jour de montage du Premium couvre le sound design, les sous-titres incrustés et la
+déclinaison verticale 9:16 — ils ne font plus l'objet de lignes séparées.
 
 ## 1. Client (Indy → Clients)
 
@@ -23,25 +36,23 @@ Livrable : film récapitulatif 45-60 s, approche institutionnelle et émotionnel
 
 ## 2. Devis DEV-2026-09-002 — Formule Essentielle
 
-| # | Désignation | Qté | P.U. HT | Total HT |
+| # | Désignation | Qté | P.U. | Total |
 |---|---|---|---|---|
 | 1 | Préparation, repérage et découpage — échange de cadrage avec Beecee, repérage du site des Cascades et découpage de la captation. | 1 | Inclus | 0,00 € |
-| 2 | Captation de l'inauguration — jeudi 8 octobre 2026, 15 h – 17 h. Un cadreur et captation son : arrivée des invités et de la presse, prises de parole, inauguration, découverte des espaces, parcours client et dispositifs digitaux, équipes EDF, plans d'ambiance. | 1 | 800,00 € | 800,00 € |
-| 3 | Montage du film récapitulatif 45-60 s — dérushage, montage, habillage charte EDF, étalonnage, mixage. Un aller-retour de retouches inclus. | 1 | 1 000,00 € | 1 000,00 € |
+| 2 | Captation de l'inauguration — jeudi 8 octobre 2026, 15 h – 17 h. Un opérateur, une caméra et un micro : arrivée des invités et de la presse, prises de parole, inauguration, découverte des espaces, parcours client et dispositifs digitaux, équipes EDF, plans d'ambiance. | 1 | 540,00 € | 540,00 € |
+| 3 | Montage du film récapitulatif 45-60 s — dérushage, montage, habillage charte EDF, étalonnage, mixage. Un aller-retour de retouches inclus. | 2 j | 450,00 € | 900,00 € |
 
-**Total : 1 800,00 €** (TVA non applicable, art. 293 B du CGI)
+**Total : 1 440,00 €** (TVA non applicable, art. 293 B du CGI)
 
 ## 3. Devis DEV-2026-09-003 — Formule Premium
 
-| # | Désignation | Qté | P.U. HT | Total HT |
+| # | Désignation | Qté | P.U. | Total |
 |---|---|---|---|---|
 | 1 | Préparation, repérage et découpage. | 1 | Inclus | 0,00 € |
-| 2 | Captation de l'inauguration — 2 caméras — jeudi 8 octobre 2026, 15 h – 17 h. Deux cadreurs et captation son dédiée : plan large permanent et contrechamps sur les prises de parole, interviews courtes des équipes EDF, de la direction et des invités cadrées à part du flux, arrivée de la presse, découverte des espaces, parcours client et dispositifs digitaux, plans d'ambiance. | 1 | 1 100,00 € | 1 100,00 € |
-| 3 | Montage du film récapitulatif 45-60 s — dérushage, montage, habillage charte EDF, étalonnage, mixage. Un aller-retour de retouches inclus. | 1 | 1 000,00 € | 1 000,00 € |
-| 4 | Sound design, mixage et sous-titrage — habillage sonore et musical, sous-titres incrustés. | 1 | 200,00 € | 200,00 € |
-| 5 | Déclinaison réseaux sociaux — version verticale 9:16 pour Instagram et LinkedIn. | 1 | 200,00 € | 200,00 € |
+| 2 | Captation de l'inauguration — dispositif renforcé — jeudi 8 octobre 2026, 15 h – 17 h. Un opérateur, avec une seconde caméra en plan large fixe sur les prises de parole et une captation son dédiée ; interviews courtes des équipes EDF et de la direction. | 1 | 740,00 € | 740,00 € |
+| 3 | Montage du film récapitulatif 45-60 s — dérushage, montage, habillage charte EDF, étalonnage, sound design, mixage, sous-titres incrustés, déclinaison verticale 9:16. Un aller-retour de retouches inclus. | 3 j | 450,00 € | 1 350,00 € |
 
-**Total : 2 500,00 €** (TVA non applicable, art. 293 B du CGI)
+**Total : 2 090,00 €** (TVA non applicable, art. 293 B du CGI)
 
 ## 4. Conditions communes (à coller dans les notes Indy)
 
@@ -76,14 +87,14 @@ Je t'envoie deux devis séparés pour que vous puissiez arbitrer avec le client 
 - Formule Essentielle (DEV-2026-09-002) — 1 800 € HT : captation 1 caméra sur les 2 h,
   montage du film 45-60 s, habillage charte EDF, master 16:9.
 
-- Formule Premium (DEV-2026-09-003) — 2 500 € HT : captation 2 caméras (plan large
-  permanent sur les prises de parole + contrechamps), interviews cadrées des équipes EDF
-  et de la direction, sound design et sous-titrage, plus une déclinaison verticale 9:16
-  pour les réseaux.
+- Formule Premium (DEV-2026-09-003) — 2 090 € : captation renforcée (seconde caméra en plan
+  large fixe sur les prises de parole, captation son dédiée, interviews courtes des équipes
+  EDF et de la direction), 3 jours de montage incluant sound design, sous-titrage et
+  déclinaison verticale 9:16 pour les réseaux.
 
-Sur un événement à une seule prise, la deuxième caméra est ce qui change vraiment la
-sécurité du montage : si la première a un souci pendant les prises de parole, il n'y a
-pas de rattrapage possible. C'est pour ça que je te recommande la Premium.
+Sur un événement à une seule prise, la seconde caméra en plan fixe est ce qui sécurise
+vraiment le montage : si la caméra principale a un souci pendant les prises de parole, il
+n'y a pas de rattrapage possible. C'est pour ça que je te recommande la Premium.
 
 Pour caler la date, il me faudrait un retour avant le 1er octobre. Et si vous avez déjà le
 conducteur de l'événement, je suis preneur.
@@ -94,27 +105,19 @@ Idriss
 
 ## 6. Calage tarifaire
 
-Les deux devis sont alignés sur ce que tu factures réellement à EDF via Beecee :
+Chiffrage construit sur ta structure, pas sur une extrapolation : forfait captation 540 €
+(hors montage), montage à 450 € la journée, +200 € sur la captation pour le dispositif
+renforcé du Premium.
 
-| Référence | Montant | Prestation | Ce que j'en tire |
-|---|---|---|---|
-| FPROD202605-8 (26/05/2026) | 1 100,00 € | Cadrage EDF « brasseur d'air », forfait cadreur ITW, tournage 2 caméras | Ton forfait captation EDF → repris tel quel pour la captation 2 caméras du Premium |
-| FPROD202510-14 (22/10/2025) | 2 700,00 € | Projet vidéo EDF complet : tournage, interviews, montage, animations, pictos, sous-titres, nombreux A/R | Plafond de ce que Beecee accepte sur EDF → le Premium reste **en dessous**, pour un périmètre plus court |
-| D202508-4 (18/08/2025) | 990,00 € | « Octobre rose » | Plancher des petites prods Beecee |
+Repère utile pour la négociation : sur la pub TV EDF (FPROD202606-4), ton forfait cadreur est
+à 1 300 € et ton forfait montage premium à 1 900 €. Ici on est très en dessous, ce qui se
+justifie — pas de lumière, pas de casting, pas de gestion d'équipes — mais c'est un argument
+si Beecee trouve le devis cher.
 
-Décomposition retenue : captation 1 caméra 800 € / captation 2 caméras 1 100 € (= ton
-forfait), montage d'un film 45-60 s 1 000 €, sound design + sous-titrage 200 €,
-déclinaison 9:16 200 €.
-
-## 7. Points à valider
+## 7. Points à valider## 7. Points à valider
 
 - TVA : franchise en base confirmée (la facture FPROD202606-4 affiche 0,00 %). Les deux devis
-  portent la mention « TVA non applicable, art. 293 B du CGI ». Totaux nets : 1 800 € / 2 500 €.
-- ⚠️ **Tarif cadreur à rediscuter** : sur FPROD202606-4 (Pub TV EDF), ton *forfait cadreur* est
-  facturé **1 300 €**, et ton *forfait montage pub TV premium délais* **1 900 €**. Mes devis sont
-  en dessous : captation 800 € (1 caméra) et 1 100 € (2 caméras), montage 1 000 €. Pour l'événement
-  du 8 octobre, passer la captation Premium de 1 100 € à **1 300 €** alignerait exactement sur ton
-  forfait cadreur habituel chez EDF, et porterait le Premium à **2 700 €**. Dis-moi si je le fais.
+  portent la mention « TVA non applicable, art. 293 B du CGI ». Totaux nets : 1 440 € / 2 090 €.
 - Vu l'historique de paiement de Beecee (cf. `../2026-09_BEECEE_suivi-factures-edf.md`) :
   envisager un acompte de 40 % à la commande, comme tu le fais avec la SARA.
 - Délai de livraison : V1 sous 5 jours ouvrés après l'événement. À raccourcir si la
