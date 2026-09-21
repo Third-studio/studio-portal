@@ -1,27 +1,35 @@
 # Facture SARA — Journées du Patrimoine 2026 (rectificative)
 
-## ⚠️ Correction
+## ⚠️ Correction — et vérification faite depuis
 
-La facture **FAC-2026-09-001 (1 050,00 € HT)** produite le 21/09/2026 était **fausse**.
-Elle avait été chiffrée à partir du tarif de 525 €/jour évoqué le 14 septembre, sans reprendre
-le devis réellement envoyé et validé.
+La facture **FAC-2026-09-001 (1 050,00 € HT)** produite le 21/09/2026 était **fausse** :
+chiffrée sur le tarif de 525 €/jour évoqué le 14 septembre, sans reprendre le devis réellement
+transmis. Le document de référence est le **devis D202609-11, version du 16/09/2026, à
+700,00 € HT** (livraison des photos retouchées sous 72 h), **validé par Jade Louis-Louisy le
+16/09/2026 à 14 h 34**.
 
-Le document de référence est le **devis D202609-11, version du 16/09/2026, à 700,00 € HT**
-(livraison des photos retouchées sous 72 h), **validé par Jade Louis-Louisy le 16/09/2026 à
-14 h 34**. La version du 14/09 a été remplacée par celle du 16/09 — c'est cette dernière qui fait foi.
+**Vérification Gmail : aucun envoi vers `fournisseurs@sara-ag.fr` depuis 10 jours.** La facture
+erronée n'a donc jamais atteint la SARA — elle n'est jamais sortie de ce dossier. Deux
+conséquences :
 
-Les fichiers erronés (`facture.pdf`, ainsi que le devis `devis.pdf` que j'avais rédigé à
-1 050 € et qui n'a jamais été le devis officiel) ont été retirés du dossier pour éviter tout
-envoi par mégarde. Ils restent consultables dans l'historique Git.
+1. **Pas d'excuses à présenter à la SARA** pour une facture qu'elle n'a jamais reçue : cela ne
+   ferait qu'introduire de la confusion dans leur circuit fournisseur.
+2. **Pas de mention « annule et remplace »** : elle renverrait à un document inexistant côté
+   SARA, et polluerait leur comptabilité.
 
-**À envoyer : `facture-rectificative.pdf` — FAC-2026-09-002, 700,00 € HT.**
+| Fichier | Quand l'utiliser |
+|---|---|
+| **`facture.pdf`** — FAC-2026-09-001, 700 € HT, sans mention | **Par défaut.** C'est la version à envoyer. |
+| `facture-rectificative.pdf` — FAC-2026-09-002, 700 € HT, mention « annule et remplace » | Seulement si tu as transmis la facture à 1 050 € par un autre canal (WhatsApp, autre adresse, remise en main propre). |
+
+Si c'est le cas, dis-le moi : je bascule le brouillon sur la version rectificative et j'y ajoute
+les excuses.
 
 ## 1. En-tête
 
 | Champ | Valeur |
 |---|---|
-| Numéro | FAC-2026-09-002 (numérotation auto Indy) |
-| Mention obligatoire | **Annule et remplace la facture n° FAC-2026-09-001 du 21/09/2026** |
+| Numéro | FAC-2026-09-001 (numérotation auto Indy) |
 | Objet | Couverture photo — Journées du Patrimoine 2026, site SARA |
 | Date d'émission | 21/09/2026 |
 | Dates de prestation | 18 et 19/09/2026 |
@@ -72,36 +80,43 @@ le montant validés. Il reste à :
 ne suffit pas : il faut émettre en plus un **avoir** du même montant pour solder la première
 facture. Dis-moi et je te le génère.
 
-## 6. Mail d'envoi, avec les excuses
+## 6. Mail d'envoi — brouillon déjà créé dans Gmail
 
-**À :** fournisseurs@sara-ag.fr
-**Cc :** Lydia.BERTHOLO@sara-ag.fr, jade.louis-louisy@sara-ag.fr
-**Objet :** Facture rectificative FAC-2026-09-002 — Commande 4200017185 — annule et remplace la FAC-2026-09-001
+Un brouillon est prêt dans ta boîte, en réponse au fil « Couverture photos SARA - Journée du
+patrimoine », donc avec tout l'historique et le mail de Lydia sous les yeux.
+
+- **À :** fournisseurs@sara-ag.fr
+- **Cc :** Lydia.BERTHOLO@sara-ag.fr, jade.louis-louisy@sara-ag.fr
+- **Objet :** Facture FAC-2026-09-001 - Commande 4200017185 - Couverture photo Journées du Patrimoine
 
 ```
 Bonjour Madame Bertholo,
 
-Je vous prie de bien vouloir m'excuser : la facture FAC-2026-09-001 que je vous ai
-transmise comportait un montant erroné. Elle ne correspondait pas au devis D202609-11
-validé le 16 septembre.
+Merci pour le numéro de commande.
 
-Veuillez trouver ci-joint la facture rectificative FAC-2026-09-002, qui annule et
-remplace la précédente. Seule celle-ci est à prendre en compte ; je vous remercie de
-ne pas donner suite à la première.
+Vous trouverez ci-joint la facture relative à la couverture photo des Journées du
+Patrimoine, réalisée sur le site de la SARA les vendredi 18 et samedi 19 septembre
+2026, conformément au devis D202609-11 validé le 16 septembre.
 
 Numéro de commande : 4200017185
-Prestation : couverture photo des Journées du Patrimoine, les 18 et 19 septembre 2026
-Montant : 700,00 € HT — 759,50 € TTC, conformément au devis D202609-11
-Échéance : 21/10/2026
+Montant : 700,00 € HT, soit 759,50 € TTC
+Échéance : 21 octobre 2026
 
-Je suis désolé pour la confusion et le travail supplémentaire que cela occasionne à
-vos équipes.
+Les photos retouchées ont été livrées dans le délai annoncé.
 
-Je reste à votre disposition.
+Je reste à votre disposition pour toute information complémentaire.
 
 Bien cordialement,
-Idriss Duleme — Third-One Studio
+
+Idriss Duleme
+Third-One Studio
+contact@thirdone.studio
 ```
+
+**Le brouillon est sans pièce jointe, volontairement** : la facture à joindre est celle que tu
+génères depuis Indy, avec ton vrai SIRET, ton n° de TVA et ton IBAN. Mon `facture.pdf` porte
+encore « à compléter » sur ces trois champs — il sert de modèle et de contrôle des montants,
+pas de document à envoyer en l'état.
 
 ## 7. À vérifier avant envoi
 
