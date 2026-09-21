@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Devis Premium — Beecee · Inauguration EDF Les Cascades</title>
+<style>
+  @page { size: A4; margin: 9mm 13mm 8mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Urbanist", "Inter", "Liberation Sans", "DejaVu Sans", Arial, sans-serif;
+    font-size: 9.4pt;
+    line-height: 1.38;
+    color: #1D1D1F;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .wordmark { font-size: 24pt; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .wordmark .t { color: #162040; }
+  .wordmark .o { color: #00B4D8; }
+  .muted { color: #6E6E73; }
+  .small { font-size: 8.5pt; }
+  .xsmall { font-size: 7.6pt; }
+  .fill { color: #8E8E93; }
+
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  header .issuer { font-size: 8.1pt; color: #6E6E73; margin-top: 7px; line-height: 1.5; }
+  .doc-badge {
+    text-align: right; border: 1.5px solid #00B4D8; border-radius: 10px;
+    padding: 9px 13px; min-width: 186px;
+  }
+  .doc-badge .kind {
+    font-size: 12.4pt; font-weight: 800; letter-spacing: 1.5px; color: #0077B6; text-transform: uppercase;
+  }
+  .doc-badge .num { font-size: 10pt; font-weight: 700; color: #162040; margin-top: 2px; }
+  .doc-badge .meta { font-size: 8pt; color: #6E6E73; margin-top: 5px; line-height: 1.45; }
+
+  .rule { height: 3px; background: linear-gradient(90deg, #00B4D8, #0077B6 55%, #162040); border-radius: 2px; margin: 10px 0 11px; }
+
+  .blocks { display: flex; gap: 14px; }
+  .block { flex: 1; border: 1px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; break-inside: avoid; }
+  .block.client { background: #F7FBFD; border-color: #CFEAF3; }
+  .block h3 {
+    margin: 0 0 6px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .block .name { font-weight: 700; font-size: 10.4pt; color: #162040; }
+  .block p { margin: 2px 0 0; font-size: 8.5pt; color: #3A3A3C; line-height: 1.45; }
+
+  .object { margin: 10px 0 6px; }
+  .object h2 {
+    margin: 0 0 4px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .object p { margin: 0; font-size: 9.8pt; font-weight: 600; color: #162040; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  thead th {
+    background: #162040; color: #FFFFFF; font-size: 7.8pt; letter-spacing: 0.9px; text-transform: uppercase;
+    font-weight: 700; padding: 6.5px 10px; text-align: left;
+  }
+  thead th.num, tbody td.num { text-align: right; white-space: nowrap; }
+  tbody td { padding: 7px 10px; border-bottom: 1px solid #E5E5EA; vertical-align: top; font-size: 8.9pt; break-inside: avoid; }
+  tbody td .lbl { font-weight: 700; color: #162040; font-size: 9.2pt; }
+  tbody td .det { color: #6E6E73; font-size: 8.05pt; margin-top: 2px; line-height: 1.38; }
+
+  .totals { display: flex; justify-content: flex-end; margin-top: 9px; break-inside: avoid; }
+  .totals table { width: 262px; margin: 0; }
+  .totals td { padding: 4px 10px; border: none; font-size: 9.1pt; }
+  .totals td.lab { color: #6E6E73; }
+  .totals td.val { text-align: right; font-weight: 600; white-space: nowrap; }
+  .totals tr.ttc td { background: #162040; color: #FFFFFF; font-size: 10.4pt; font-weight: 800; padding: 7.5px 10px; }
+  .totals tr.ttc td.lab { color: #9FD9EA; font-weight: 700; border-radius: 8px 0 0 8px; }
+  .totals tr.ttc td.val { border-radius: 0 8px 8px 0; }
+
+  .included { margin-top: 9px; border: 1px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; break-inside: avoid; }
+  .included h3 {
+    margin: 0 0 6px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .included ul { margin: 0; padding-left: 15px; }
+  .included li { font-size: 8.25pt; color: #3A3A3C; margin-bottom: 1.5px; line-height: 1.4; }
+
+  .conditions { margin-top: 9px; break-inside: avoid; break-before: page; }
+  .conditions h3 {
+    margin: 0 0 5px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .conditions p { margin: 0 0 2px; font-size: 7.8pt; color: #6E6E73; line-height: 1.42; }
+
+  .signature { display: flex; gap: 14px; margin-top: 9px; align-items: stretch; break-inside: avoid; }
+  .sign-box { flex: 1; border: 1.5px dashed #CFEAF3; border-radius: 10px; padding: 9px 12px; }
+  .sign-box h3 { margin: 0 0 2px; font-size: 8.3pt; color: #162040; font-weight: 800; }
+  .sign-box p { margin: 0; font-size: 7.7pt; color: #6E6E73; line-height: 1.42; }
+  .sign-space { height: 16px; }
+
+  footer { margin-top: 8px; border-top: 1px solid #E5E5EA; padding-top: 7px; text-align: center; }
+  footer p { margin: 0; font-size: 7.1pt; color: #8E8E93; line-height: 1.5; }
+
+  .formule {
+    display: inline-block; margin-top: 6px; padding: 3px 11px; border-radius: 999px;
+    background: #EAF7FB; border: 1px solid #00B4D8; color: #0077B6;
+    font-size: 8pt; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase;
+  }
+  .altnote {
+    margin-top: 9px; border: 1px dashed #CFEAF3; border-radius: 9px; padding: 7px 11px;
+    background: #F7FBFD; break-inside: avoid;
+  }
+  .altnote p { margin: 0; font-size: 8pt; color: #3A3A3C; line-height: 1.45; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="wordmark"><span class="t">Third</span><span class="o">One</span></div>
+    <div class="issuer">
+      Production audiovisuelle &amp; photographie · Fort-de-France, Martinique<br>
+      contact@thirdone.studio · www.thirdone.studio<br>
+      <span class="fill">SIRET : à compléter · N° TVA intracom. : à compléter</span>
+    </div>
+  </div>
+  <div class="doc-badge">
+    <div class="kind">Devis</div>
+    <div class="num">N° DEV-2026-09-003</div>
+    <div class="meta">
+      Émis le 21/09/2026<br>
+      Valable 30 jours — jusqu'au 21/10/2026<br>
+      <strong>Accord souhaité avant le 01/10/2026</strong>
+    </div>
+  </div>
+</header>
+
+<div class="rule"></div>
+
+<div class="blocks">
+  <div class="block">
+    <h3>Prestataire</h3>
+    <div class="name">Third-One Studio</div>
+    <p>
+      Fort-de-France — Martinique<br>
+      contact@thirdone.studio
+    </p>
+  </div>
+  <div class="block client">
+    <h3>Client</h3>
+    <div class="name">BEECEE</div>
+    <p>
+      Martinique <span class="fill">— adresse de facturation à compléter</span><br>
+      Suivi : Gaëlle Honoré · Facturation : compta@beecee.fr<br>
+      Client final : EDF Martinique
+    </p>
+  </div>
+</div>
+
+<div class="object">
+  <h2>Objet de la prestation</h2>
+  <p>Captation de l'inauguration du nouvel accueil EDF Martinique — Immeuble des Cascades, Fort-de-France — le jeudi 8 octobre 2026, et film récapitulatif de 45 à 60 secondes.</p>
+  <span class="formule">Formule Premium</span>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Désignation</th>
+      <th class="num">Qté</th>
+      <th class="num">P.U. HT</th>
+      <th class="num">Total HT</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <div class="lbl">Préparation, repérage et découpage</div>
+        <div class="det">Échange de cadrage avec Beecee, repérage du site des Cascades et découpage de la captation.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">Inclus</td>
+      <td class="num">0,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Captation de l'inauguration — 2 caméras — jeudi 8 octobre 2026</div>
+        <div class="det">Créneau 15 h – 17 h, Immeuble des Cascades. Deux cadreurs et captation son dédiée : plan large permanent et contrechamps sur les prises de parole, interviews courtes des équipes EDF, de la direction et des invités cadrées à part du flux, arrivée de la presse, découverte des espaces, parcours client et dispositifs digitaux, plans d'ambiance.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">1 100,00 €</td>
+      <td class="num">1 100,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Montage du film récapitulatif 45 – 60 s</div>
+        <div class="det">Dérushage, montage, habillage graphique à la charte EDF, étalonnage et mixage. Écriture institutionnelle et émotionnelle. Un aller-retour de retouches inclus.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">1 000,00 €</td>
+      <td class="num">1 000,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Sound design, mixage et sous-titrage</div>
+        <div class="det">Habillage sonore et musical, mixage, sous-titres incrustés pour l'accessibilité et la lecture sans son.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">200,00 €</td>
+      <td class="num">200,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Déclinaison réseaux sociaux</div>
+        <div class="det">Version verticale 9:16 recadrée pour Instagram et LinkedIn, en complément du master 16:9.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">200,00 €</td>
+      <td class="num">200,00 €</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="totals">
+  <table>
+    <tr><td class="lab">Total HT</td><td class="val">2 500,00 €</td></tr>
+    <tr><td class="lab">TVA 8,5 %</td><td class="val">212,50 €</td></tr>
+    <tr class="ttc"><td class="lab">Total TTC</td><td class="val">2 712,50 €</td></tr>
+  </table>
+</div>
+
+<div class="included">
+  <h3>Livrables</h3>
+  <ul>
+    <li>1 film récapitulatif de 45 à 60 s, master 16:9 en haute définition.</li>
+    <li>1 déclinaison verticale 9:16 pour les réseaux sociaux.</li>
+    <li>Habillage charte EDF, étalonnage, sound design, mixage et sous-titres incrustés.</li>
+    <li>Un aller-retour de retouches inclus après la V1.</li>
+    <li>Livraison sous 5 jours ouvrés après l'événement, via lien de téléchargement sécurisé.</li>
+  </ul>
+</div>
+
+<div class="conditions">
+  <h3>Conditions</h3>
+  <p><strong>Déroulé —</strong> présence sur toute la durée du créneau 15 h – 17 h. Le conducteur de l'événement (prises de parole, ruban, parcours de visite) est transmis par Beecee au plus tard 48 h avant.</p>
+  <p><strong>Droit à l'image —</strong> le recueil des autorisations des personnes filmées (invités, presse, collaborateurs EDF) est à la charge de Beecee et d'EDF.</p>
+  <p><strong>Cession de droits —</strong> droits cédés à Beecee et à EDF pour la communication institutionnelle (interne, web, réseaux sociaux, presse, écrans d'accueil), 3 ans, Antilles-Guyane. Toute utilisation publicitaire ou hors de ce cadre fera l'objet d'un avenant.</p>
+  <p><strong>Retouches —</strong> un aller-retour inclus après la V1 ; les demandes suivantes sont facturées 90,00 € HT de l'heure.</p>
+  <p><strong>Règlement —</strong> par virement à 30 jours date de facture. Musiques libres de droits incluses.</p>
+  <p><strong>Annulation —</strong> événement annulé à moins de 48 h : la captation est due à 50 %.</p>
+  <p><strong>Retard de paiement —</strong> pénalités au taux BCE majoré de 10 points et indemnité forfaitaire de 40 € (art. L.441-10 du Code de commerce). Pas d'escompte pour paiement anticipé.</p>
+</div>
+
+<div class="signature">
+  <div class="sign-box">
+    <h3>Bon pour accord</h3>
+    <p>Date, cachet et signature du client, précédés de la mention manuscrite « Bon pour accord ».</p>
+    <div class="sign-space"></div>
+  </div>
+  <div class="sign-box" style="border-style:solid;border-color:#E5E5EA;">
+    <h3>Le prestataire</h3>
+    <p>Third-One Studio — Fort-de-France, Martinique<br>Fait le 21/09/2026.</p>
+    <div class="sign-space"></div>
+  </div>
+</div>
+
+<footer>
+  <p>Third-One Studio · Fort-de-France, Martinique · contact@thirdone.studio · www.thirdone.studio — Devis n° DEV-2026-09-003, valable jusqu'au 21/10/2026.</p>
+</footer>
+
+</body>
+</html>
