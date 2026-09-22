@@ -64,8 +64,8 @@ serve(async (req) => {
 
     const body = await req.json().catch(() => null);
     if (!body) return json({ error: "Invalid JSON" }, 400);
-    const { to, subject, html, text, replyTo, kicker, title, cta, wrap, project_id, link_id, kind } = body as {
-      to: string | string[]; subject: string; html?: string; text?: string; replyTo?: string;
+    const { to, subject, html, text, replyTo, bcc, kicker, title, cta, wrap, project_id, link_id, kind } = body as {
+      to: string | string[]; subject: string; html?: string; text?: string; replyTo?: string; bcc?: string | string[];
       kicker?: string; title?: string; cta?: { label: string; url: string }; wrap?: boolean;
       project_id?: number; link_id?: string; kind?: string;
     };
@@ -107,7 +107,7 @@ serve(async (req) => {
     }
 
     try {
-      await sendMail({ to, subject, html: finalHtml, text, replyTo });
+      await sendMail({ to, subject, html: finalHtml, text, replyTo, bcc });
     } catch (e) {
       if (logId) await admin.from("email_log").update({ status: "echec", error: String((e as Error).message || e).slice(0, 300) }).eq("id", logId);
       throw e;

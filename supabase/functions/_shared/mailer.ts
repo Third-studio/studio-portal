@@ -33,12 +33,13 @@ const stripHtml = (html: string) =>
   html.replace(/<style[\s\S]*?<\/style>/gi, "").replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ").trim();
 
-export async function sendMail({ to, subject, html, text, replyTo }: {
+export async function sendMail({ to, subject, html, text, replyTo, bcc }: {
   to: string | string[];
   subject: string;
   html?: string;
   text?: string;
   replyTo?: string;
+  bcc?: string | string[];
 }) {
   const client = new SMTPClient({
     connection: {
@@ -60,6 +61,7 @@ export async function sendMail({ to, subject, html, text, replyTo }: {
     await client.send({
       from: `${fromName} <${fromUser}>`,
       to: Array.isArray(to) ? to : [to],
+      ...(bcc && bcc.length ? { bcc: Array.isArray(bcc) ? bcc : [bcc] } : {}),
       replyTo: replyTo || fromUser,
       subject: asciiSubject(subject),
       // Parties MIME construites nous-mêmes en base64 → zéro corruption
