@@ -1,0 +1,172 @@
+<title>Animatic — Air Caraïbes × Martinique</title>
+<style>
+  :root{
+    --navy:#0B2447; --navy2:#081A33; --turq:#12A5C6; --turq-d:#0B7A94;
+    --gold:#F2B33D; --coral:#E8654F; --ink:#EAF2F8; --muted:#8FA6BC;
+    --green:#2C7A4B;
+  }
+  html,body{margin:0;padding:0;background:var(--navy2);color:var(--ink);
+    font-family:Georgia,'Times New Roman',serif;}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 20px 60px;}
+  .eyebrow{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.28em;
+    text-transform:uppercase;color:var(--turq);margin:0 0 10px;}
+  h1{font-size:clamp(26px,4.5vw,40px);margin:0 0 6px;line-height:1.15;text-wrap:balance;}
+  .sub{color:var(--muted);font-family:Arial,Helvetica,sans-serif;font-size:14px;margin:0 0 26px;line-height:1.5;}
+  .madras{display:inline-grid;grid-template-columns:10px 10px;gap:2px;vertical-align:middle;margin-right:10px;}
+  .madras i{width:10px;height:10px;display:block;}
+  .madras i:nth-child(1){background:var(--gold);} .madras i:nth-child(2){background:var(--turq);}
+  .madras i:nth-child(3){background:var(--coral);} .madras i:nth-child(4){background:#1c4a7e;}
+
+  /* Screen */
+  .screen{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;
+    background:#000;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .scene{position:absolute;inset:0;opacity:0;transition:opacity .9s ease;display:flex;
+    align-items:center;justify-content:center;}
+  .scene.on{opacity:1;}
+  .scene .label{position:absolute;top:18px;left:22px;font-family:Arial,sans-serif;
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.85);
+    background:rgba(0,0,0,.35);padding:6px 10px;border-radius:4px;}
+  .scene .title{font-size:clamp(22px,4vw,42px);font-style:italic;color:#fff;
+    text-shadow:0 2px 20px rgba(0,0,0,.5);text-align:center;padding:0 8%;text-wrap:balance;}
+  /* subtitle band */
+  .vo{position:absolute;left:0;right:0;bottom:52px;text-align:center;padding:0 10%;
+    font-size:clamp(14px,2.2vw,20px);font-style:italic;color:#fff;
+    text-shadow:0 1px 8px rgba(0,0,0,.8);min-height:1.5em;}
+  .note{position:absolute;left:0;right:0;bottom:20px;text-align:center;
+    font-family:Arial,sans-serif;font-size:11px;color:rgba(255,255,255,.6);}
+  /* timecode */
+  .tc{position:absolute;top:18px;right:22px;font-family:'Courier New',monospace;
+    font-size:13px;color:#fff;background:rgba(0,0,0,.35);padding:6px 10px;border-radius:4px;
+    font-variant-numeric:tabular-nums;}
+
+  /* per-scene backgrounds — abstract light fields evoking each sequence */
+  .s1{background:linear-gradient(160deg,#0a1f3d 0%,#123c6b 45%,#2f6ea6 100%);}
+  .s1::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 60% 30% at 70% 25%,rgba(255,255,255,.25),transparent 70%);}
+  .s2{background:linear-gradient(180deg,#f7e9c4 0%,#f2b33d 55%,#e8654f 100%);}
+  .s3{background:repeating-linear-gradient(45deg,#f2b33d 0 26px,#e8654f 26px 52px,#12507a 52px 78px,#12a5c6 78px 104px);}
+  .s3::after{content:"";position:absolute;inset:0;background:rgba(6,20,38,.35);}
+  .s4{background:linear-gradient(140deg,#c0392b 0%,#e8654f 40%,#f2b33d 100%);}
+  .s5{background:linear-gradient(180deg,#9fd8cf 0%,#2c7a4b 60%,#123a24 100%);}
+  .s6{background:linear-gradient(180deg,#bfeef7 0%,#12a5c6 55%,#0b4c74 100%);}
+  .s7{background:linear-gradient(200deg,#3a1d3f 0%,#8a3a4e 45%,#f2913d 100%);}
+  .s8{background:linear-gradient(160deg,#081a33 0%,#0b2447 60%,#1c4a7e 100%);}
+  .s8::after{content:"";position:absolute;width:120px;height:120px;border-radius:50%;
+    background:var(--gold);right:12%;bottom:18%;filter:blur(2px);opacity:.9;}
+
+  /* Controls + timeline */
+  .bar{display:flex;align-items:center;gap:14px;margin-top:18px;font-family:Arial,sans-serif;}
+  button.play{background:var(--turq);border:none;color:#04222b;font-weight:bold;
+    font-size:14px;padding:10px 22px;border-radius:999px;cursor:pointer;font-family:Arial,sans-serif;}
+  button.play:focus-visible{outline:3px solid var(--gold);outline-offset:2px;}
+  .track{flex:1;height:8px;background:#123253;border-radius:4px;position:relative;cursor:pointer;}
+  .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--turq),var(--gold));border-radius:4px;width:0%;}
+  .time{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);min-width:84px;text-align:right;}
+
+  /* Sequence chips */
+  .chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-top:16px;}
+  .chip{border:1px solid #1c3a5e;border-radius:8px;padding:8px 10px;cursor:pointer;
+    background:transparent;text-align:left;color:var(--ink);font-family:Arial,sans-serif;}
+  .chip:focus-visible{outline:2px solid var(--gold);}
+  .chip.on{border-color:var(--turq);background:#0e2f52;}
+  .chip b{display:block;font-size:11px;color:var(--turq);letter-spacing:.08em;}
+  .chip span{font-size:12px;color:var(--muted);}
+  .chip.on span{color:var(--ink);}
+  .legend{margin-top:28px;color:var(--muted);font-family:Arial,sans-serif;font-size:13px;line-height:1.6;}
+  @media (prefers-reduced-motion: reduce){.scene{transition:none;}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow"><span class="madras"><i></i><i></i><i></i><i></i></span>Air Caraïbes · Vidéo destination Martinique — maquette test (animatic)</p>
+  <h1>« Bienvenue chez moi » — prévisualisation 90 s</h1>
+  <p class="sub">Version test du déroulé : chaque séquence défile à sa durée réelle, avec la voix off et les intentions son. Les fonds colorés remplacent les images à tourner. Clique sur ▶ ou sur une séquence.</p>
+
+  <div class="screen" id="screen">
+    <div class="tc" id="tc">00:00 / 01:30</div>
+    <div class="vo" id="vo"></div>
+    <div class="note" id="note"></div>
+  </div>
+
+  <div class="bar">
+    <button class="play" id="btn">▶ Lecture</button>
+    <div class="track" id="track"><div class="fill" id="fill"></div></div>
+    <div class="time" id="time">00:00 / 01:30</div>
+  </div>
+  <div class="chips" id="chips"></div>
+
+  <p class="legend"><strong style="color:var(--gold)">Séq. 3 — le match cut bakoua &amp; madras</strong> est la bascule identitaire du film : casquette d'uniforme → chapeau bakoua dans le même geste, foulard → madras dans le même mouvement. C'est aussi le hook des formats 9:16.<br>
+  Maquette d'intention — durées, VO et transitions indicatives, à affiner au storyboard illustré.</p>
+</div>
+
+<script>
+const SEQ = [
+ {t0:0,  t1:8,  cls:"s1", label:"Séq. 1 · Ouverture ciel", title:"L'aile au-dessus de l'arc antillais",
+  vo:"« On me demande souvent ce qu'il y a au bout de la ligne… »", note:"Son : nappe + souffle du vent · hublot, reflet du visage"},
+ {t0:8,  t1:15, cls:"s2", label:"Séq. 2 · Match cut porte", title:"Porte d'avion → porte de case créole",
+  vo:"", note:"Le son cabine bascule d'un coup : oiseaux, alizés"},
+ {t0:15, t1:22, cls:"s3", label:"Séq. 3 · Match cut bakoua & madras", title:"Casquette → bakoua · foulard → madras",
+  vo:"", note:"Tambour bèlè — la bascule : le/la PNC est « d'ici »"},
+ {t0:22, t1:35, cls:"s4", label:"Séq. 4 · Marché de Fort-de-France", title:"Épices, fruits, mains, rires",
+  vo:"« Ici, tout commence par le goût. »", note:"Plans serrés sensoriels · créole en incrustation"},
+ {t0:35, t1:50, cls:"s5", label:"Séq. 5 · Nature", title:"Montagne Pelée · Caravelle · Balata",
+  vo:"", note:"Drone parcimonieux puis hauteur d'homme · montée musicale"},
+ {t0:50, t1:65, cls:"s6", label:"Séq. 6 · Mer", title:"Fonds blancs · yole ronde au couchant",
+  vo:"", note:"Chœurs créoles · le madras réapparaît sur la voile"},
+ {t0:65, t1:78, cls:"s7", label:"Séq. 7 · Le soir", title:"Ti-punch, table partagée, danse",
+  vo:"« Ce que j'aime dans mon métier, c'est ramener un peu de tout ça à bord. »", note:"Lumière chaude · gestes précis"},
+ {t0:78, t1:90, cls:"s8", label:"Séq. 8 · Boucle finale", title:"La Martinique. Avec ceux qui en viennent.",
+  vo:"« À bord, je vous emmène. Ici, je vous accueille. »", note:"Retour cabine · regard caméra · logo Air Caraïbes"},
+];
+const DUR=90;
+const screen=document.getElementById('screen'), vo=document.getElementById('vo'),
+ note=document.getElementById('note'), tc=document.getElementById('tc'),
+ fill=document.getElementById('fill'), timeEl=document.getElementById('time'),
+ btn=document.getElementById('btn'), chipsEl=document.getElementById('chips'),
+ track=document.getElementById('track');
+const scenes = SEQ.map((s)=>{
+  const d=document.createElement('div');
+  d.className='scene '+s.cls;
+  d.innerHTML='<div class="label">'+s.label+'</div><div class="title">'+s.title+'</div>';
+  screen.insertBefore(d, tc);
+  return d;
+});
+const chips = SEQ.map((s,i)=>{
+  const c=document.createElement('button');
+  c.className='chip';
+  c.innerHTML='<b>SÉQ. '+(i+1)+' · '+s.t0+'–'+s.t1+' s</b><span>'+s.label.split('· ')[1]+'</span>';
+  c.addEventListener('click',()=>{t=s.t0;render();if(!playing)toggle();});
+  chipsEl.appendChild(c);
+  return c;
+});
+let t=0, playing=false, raf=null, last=null;
+function fmt(x){const m=Math.floor(x/60),s=Math.floor(x%60);return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
+function render(){
+  const i=SEQ.findIndex(s=>t>=s.t0&&t<s.t1), k=i<0?SEQ.length-1:i;
+  scenes.forEach((sc,j)=>sc.classList.toggle('on',j===k));
+  chips.forEach((c,j)=>c.classList.toggle('on',j===k));
+  const s=SEQ[k];
+  vo.textContent=s.vo; note.textContent=s.note;
+  const label=fmt(t)+' / '+fmt(DUR);
+  tc.textContent=label; timeEl.textContent=label;
+  fill.style.width=(t/DUR*100)+'%';
+}
+function step(ts){
+  if(!playing)return;
+  if(last==null)last=ts;
+  t+=(ts-last)/1000; last=ts;
+  if(t>=DUR){t=DUR;playing=false;btn.textContent='↺ Revoir';render();t=0;return;}
+  render(); raf=requestAnimationFrame(step);
+}
+function toggle(){
+  playing=!playing;
+  btn.textContent=playing?'❚❚ Pause':'▶ Lecture';
+  last=null;
+  if(playing)raf=requestAnimationFrame(step); else cancelAnimationFrame(raf);
+}
+btn.addEventListener('click',toggle);
+track.addEventListener('click',e=>{
+  const r=track.getBoundingClientRect();
+  t=Math.max(0,Math.min(DUR,(e.clientX-r.left)/r.width*DUR));
+  render();
+});
+render();
+</script>
