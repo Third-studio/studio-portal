@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Devis D202609-19 — Universal Music France · Clip « Paname » Jahlys</title>
+<style>
+  @page { size: A4; margin: 9mm 13mm 8mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Urbanist", "Inter", "Liberation Sans", "DejaVu Sans", Arial, sans-serif;
+    font-size: 9.4pt;
+    line-height: 1.38;
+    color: #1D1D1F;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .wordmark { font-size: 24pt; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .wordmark .t { color: #162040; }
+  .wordmark .o { color: #00B4D8; }
+  .muted { color: #6E6E73; }
+  .small { font-size: 8.5pt; }
+  .xsmall { font-size: 7.6pt; }
+  .fill { color: #8E8E93; }
+
+  header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; }
+  header .issuer { font-size: 8.1pt; color: #6E6E73; margin-top: 7px; line-height: 1.5; }
+  .doc-badge {
+    text-align: right; border: 1.5px solid #00B4D8; border-radius: 10px;
+    padding: 9px 13px; min-width: 186px;
+  }
+  .doc-badge .kind {
+    font-size: 12.4pt; font-weight: 800; letter-spacing: 1.5px; color: #0077B6; text-transform: uppercase;
+  }
+  .doc-badge .num { font-size: 10pt; font-weight: 700; color: #162040; margin-top: 2px; }
+  .doc-badge .meta { font-size: 8pt; color: #6E6E73; margin-top: 5px; line-height: 1.45; }
+
+  .rule { height: 3px; background: linear-gradient(90deg, #00B4D8, #0077B6 55%, #162040); border-radius: 2px; margin: 10px 0 11px; }
+
+  .blocks { display: flex; gap: 14px; }
+  .block { flex: 1; border: 1px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; break-inside: avoid; }
+  .block.client { background: #F7FBFD; border-color: #CFEAF3; }
+  .block h3 {
+    margin: 0 0 6px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .block .name { font-weight: 700; font-size: 10.4pt; color: #162040; }
+  .block p { margin: 2px 0 0; font-size: 8.5pt; color: #3A3A3C; line-height: 1.45; }
+
+  .object { margin: 10px 0 6px; }
+  .object h2 {
+    margin: 0 0 4px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .object p { margin: 0; font-size: 9.8pt; font-weight: 600; color: #162040; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  thead th {
+    background: #162040; color: #FFFFFF; font-size: 7.8pt; letter-spacing: 0.9px; text-transform: uppercase;
+    font-weight: 700; padding: 6.5px 10px; text-align: left;
+  }
+  thead th.num, tbody td.num { text-align: right; white-space: nowrap; }
+  tbody td { padding: 7px 10px; border-bottom: 1px solid #E5E5EA; vertical-align: top; font-size: 8.9pt; break-inside: avoid; }
+  tbody td .lbl { font-weight: 700; color: #162040; font-size: 9.2pt; }
+  tbody td .det { color: #6E6E73; font-size: 8.05pt; margin-top: 2px; line-height: 1.38; }
+
+  .totals { display: flex; justify-content: flex-end; margin-top: 9px; break-inside: avoid; }
+  .totals table { width: 262px; margin: 0; }
+  .totals td { padding: 4px 10px; border: none; font-size: 9.1pt; }
+  .totals td.lab { color: #6E6E73; }
+  .totals td.val { text-align: right; font-weight: 600; white-space: nowrap; }
+  .totals tr.ttc td { background: #162040; color: #FFFFFF; font-size: 10.4pt; font-weight: 800; padding: 7.5px 10px; }
+  .totals tr.ttc td.lab { color: #9FD9EA; font-weight: 700; border-radius: 8px 0 0 8px; }
+  .totals tr.ttc td.val { border-radius: 0 8px 8px 0; }
+
+  .included { margin-top: 9px; border: 1px solid #E5E5EA; border-radius: 10px; padding: 9px 12px; break-inside: avoid; }
+  .included h3 {
+    margin: 0 0 6px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .included ul { margin: 0; padding-left: 15px; }
+  .included li { font-size: 8.25pt; color: #3A3A3C; margin-bottom: 1.5px; line-height: 1.4; }
+
+  .conditions { margin-top: 9px; break-inside: avoid; }
+  .conditions h3 {
+    margin: 0 0 5px; font-size: 7.6pt; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #0077B6; font-weight: 700;
+  }
+  .conditions p { margin: 0 0 2px; font-size: 7.6pt; color: #6E6E73; line-height: 1.36; }
+
+  .signature { display: flex; gap: 14px; margin-top: 9px; align-items: stretch; break-inside: avoid; }
+  .sign-box { flex: 1; border: 1.5px dashed #CFEAF3; border-radius: 10px; padding: 9px 12px; }
+  .sign-box h3 { margin: 0 0 2px; font-size: 8.3pt; color: #162040; font-weight: 800; }
+  .sign-box p { margin: 0; font-size: 7.7pt; color: #6E6E73; line-height: 1.42; }
+  .sign-space { height: 10px; }
+
+  footer { margin-top: 8px; border-top: 1px solid #E5E5EA; padding-top: 7px; text-align: center; }
+  footer p { margin: 0; font-size: 7.1pt; color: #8E8E93; line-height: 1.5; }
+
+  .formule {
+    display: inline-block; margin-top: 6px; padding: 3px 11px; border-radius: 999px;
+    background: #EAF7FB; border: 1px solid #00B4D8; color: #0077B6;
+    font-size: 8pt; font-weight: 800; letter-spacing: 1.1px; text-transform: uppercase;
+  }
+  .altnote {
+    margin-top: 9px; border: 1px dashed #CFEAF3; border-radius: 9px; padding: 7px 11px;
+    background: #F7FBFD; break-inside: avoid;
+  }
+  .altnote p { margin: 0; font-size: 8pt; color: #3A3A3C; line-height: 1.45; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="wordmark"><span class="t">Third</span><span class="o">One</span></div>
+    <div class="issuer">
+      Production audiovisuelle &amp; photographie · Le Lamentin, Martinique<br>
+      contact@thirdone.studio · www.thirdone.studio<br>
+      Idriss Duleme — entreprise individuelle · <strong>TVA non applicable, art. 293 B du CGI</strong><br>
+      SIRET : 89953337600013
+    </div>
+  </div>
+  <div class="doc-badge">
+    <div class="kind">Devis</div>
+    <div class="num">N° D202609-19 — version 2</div>
+    <div class="meta">
+      Émis le 30/09/2026 · mis à jour le 07/10/2026<br>
+      Valable jusqu'au 06/11/2026<br>
+      Annexe 2 du contrat de prestation UMF261170
+    </div>
+  </div>
+</header>
+
+<div class="rule"></div>
+
+<div class="blocks">
+  <div class="block">
+    <h3>Prestataire</h3>
+    <div class="name">Idriss Duleme — Third-One Studio</div>
+    <p>
+      Palmiste 1, lot Le Clos de Palmiste — 97232 Le Lamentin, Martinique<br>
+      contact@thirdone.studio
+    </p>
+  </div>
+  <div class="block client">
+    <h3>Client</h3>
+    <div class="name">UNIVERSAL MUSIC FRANCE — division Phonogram</div>
+    <p>
+      20/22 rue des Fossés Saint-Jacques — 75005 Paris<br>
+      SIRET 41494518800038 · TVA intra. FR44414945188<br>
+      Suivi : Ema Tartaglia (Business Affairs) · Ellie Estelle (Marketing)
+    </p>
+  </div>
+</div>
+
+<div class="object">
+  <h2>Objet de la prestation</h2>
+  <p>Production du clip musical « Paname » de Jahlys : 2 jours de tournage à Paris (J1 intérieur club, J2 extérieur nuit). Budget global forfaitaire incluant image, réalisation, matériel, lieu, véhicule, HMC et figuration.</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Désignation</th>
+      <th class="num">Qté</th>
+      <th class="num">P.U. HT</th>
+      <th class="num">Total HT</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <div class="lbl">Direction de la photographie &amp; cadrage</div>
+        <div class="det">Chef opérateur / cadreur sur les 2 jours de tournage (J1 intérieur club, J2 extérieur nuit), essais caméra inclus.</div>
+      </td>
+      <td class="num">2</td>
+      <td class="num">270,00 €</td>
+      <td class="num">540,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Salaire réalisateur</div>
+        <div class="det">Salaire brut du réalisateur, Jiovan Couteperoumal, engagé en qualité de technicien salarié (contrat distinct).</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">1 000,00 €</td>
+      <td class="num">1 000,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Assistant de production</div>
+        <div class="det">Régie et coordination plateau.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">150,00 €</td>
+      <td class="num">150,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Matériel &amp; location technique</div>
+        <div class="det">Caméras Sony FX6 et A7S III, optiques, stabilisation, transmission vidéo HF, caméra 360, accessoires, acheminement du matériel.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">460,00 €</td>
+      <td class="num">460,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Lieu de tournage</div>
+        <div class="det">Club parisien, décor intérieur du J1 (accès, mise à disposition).</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">800,00 €</td>
+      <td class="num">800,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Véhicule de tournage</div>
+        <div class="det">Location du véhicule de jeu et de régie sur la période de tournage, rachat de franchise inclus.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">550,00 €</td>
+      <td class="num">550,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Coiffure</div>
+        <div class="det">Coiffure artiste sur le tournage.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">300,00 €</td>
+      <td class="num">300,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Maquillage</div>
+        <div class="det">Maquillage artiste sur le tournage.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">450,00 €</td>
+      <td class="num">450,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Stylisme</div>
+        <div class="det">Stylisme et tenues artiste.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">350,00 €</td>
+      <td class="num">350,00 €</td>
+    </tr>
+    <tr>
+      <td>
+        <div class="lbl">Figuration</div>
+        <div class="det">3 figurantes principales.</div>
+      </td>
+      <td class="num">1</td>
+      <td class="num">400,00 €</td>
+      <td class="num">400,00 €</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="totals">
+  <table>
+    <tr><td class="lab">Total HT</td><td class="val">5 000,00 €</td></tr>
+    <tr><td class="lab">TVA</td><td class="val">Non applicable</td></tr>
+    <tr class="ttc"><td class="lab">Net à payer</td><td class="val">5 000,00 €</td></tr>
+  </table>
+</div>
+
+<div class="conditions">
+  <h3>Conditions</h3>
+  <p><strong>Budget —</strong> budget global forfaitaire de 5 000,00 € HT, conformément à l'article 8 du contrat de prestation. Le salaire du réalisateur y est inclus.</p>
+  <p><strong>Règlement —</strong> par virement, dans les conditions prévues au contrat de prestation. Le numéro de bon de commande UniPort d'Universal Music France sera reporté sur la facture.</p>
+  <p><strong>Coordonnées bancaires —</strong> IBAN FR19 2004 1000 0169 5133 6F02 055 · BIC PSSTFRPPPAR.</p>
+  <p><strong>Retard de paiement —</strong> conformément au Code de commerce, pénalités calculées sur la base de trois fois le taux de l'intérêt légal en vigueur et indemnité forfaitaire pour frais de recouvrement de 40 €. Pas d'escompte en cas de paiement anticipé.</p>
+  <p><strong>TVA —</strong> TVA non applicable, art. 293 B du CGI.</p>
+</div>
+
+<div class="signature">
+  <div class="sign-box">
+    <h3>Bon pour accord</h3>
+    <p>Date, cachet et signature du client, précédés de la mention « Bon pour accord ».</p>
+    <div class="sign-space"></div>
+  </div>
+  <div class="sign-box" style="border-style:solid;border-color:#E5E5EA;">
+    <h3>Le prestataire</h3>
+    <p>Idriss Duleme — Third-One Studio<br>Fait le 07/10/2026.</p>
+    <div class="sign-space"></div>
+  </div>
+</div>
+
+<footer>
+  <p>Third-One Studio · Le Lamentin, Martinique · contact@thirdone.studio · www.thirdone.studio — Devis n° D202609-19 (version 2), valable jusqu'au 06/11/2026.</p>
+</footer>
+
+</body>
+</html>
