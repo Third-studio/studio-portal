@@ -1,5 +1,7 @@
 # Devis Tchokers — Forfait after movie (à saisir dans Indy)
 
+> **Statut au 09/10/2026 : devis refusé par Tchokers.** Rien à saisir dans Indy.
+
 Remplace le PDF `devis-DEV-2026-10-001-after-movie.pdf` envoyé le 08/10/2026 à Luana et Vanessa.
 Une fois créé dans Indy, envoie-le pour signature électronique (comme le D202609-15 du 25/09).
 
