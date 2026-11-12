@@ -1,13 +1,50 @@
 {
-  "title": "Sundream — pub fraîche v1",
+  "title": "Sundream — pub fraîche v3 (Martinique)",
   "frames": [
-    { "id": 1, "visual": "🚁", "desc": "Ouverture en top shot drone : le Sundream vu du ciel, coque blanche sur l'eau turquoise, sillage net. Montée lente ou tilt vers l'horizon. Le nom Sundream peut déjà apparaître en incrustation légère." },
-    { "id": 2, "visual": "🛥️", "desc": "Sur le quai, les filles traversent le cadre d'un bord à l'autre, sacs de plage et lunettes, rires, le bateau en fond. Alternative cam 360 : elles enjambent la caméra et l'enjambée suivante atterrit sur le sable, déjà en maillot." },
-    { "id": 3, "visual": "🏖️", "desc": "Sur la plage, en maillot, elles courent, s'éclaboussent et se poussent dans l'eau. Gimbal en légère contre-plongée, le Sundream mouillé reste visible en arrière-plan. Lumière de fin de matinée, esprit pub crème solaire." },
-    { "id": 4, "visual": "🌊", "desc": "Retour à bord en top shot drone : le bateau avance, les filles sont sur le pont avant, bras levés. Deux secondes, un plan de respiration avant la série de jump cuts." },
-    { "id": 5, "visual": "🎬", "desc": "Caméra fixe dans la cabine, axe vers la proue, même cadre pour toute la série. Six jump cuts calés sur la musique : elles se changent, selfie, elles bronzent, elles mangent, fou rire, l'une pointe la mer. Le cadre ne bouge jamais." },
-    { "id": 6, "visual": "🤿", "desc": "Caméra à fleur d'eau face au bateau, caisson ou GoPro en demi-niveau. Une ou deux filles plongent depuis le bord, l'éclaboussure vient vers l'objectif. Le Sundream occupe tout le fond du cadre. Drop musical sur ce plan." },
-    { "id": 7, "visual": "☀️", "desc": "Contrechamp depuis le pont, en plongée vers l'eau : les filles nagent et rient, une main tendue vers la caméra. Le logo Sundream s'affiche en surimpression sur le fond turquoise." },
-    { "id": 8, "visual": "🏷️", "desc": "Packshot enchaîné sans transition : logo Sundream, baseline et informations pratiques (site, réseaux, réservation). Le logo du plan précédent reste en place, seul le fond change." }
+    {
+      "id": 1,
+      "visual": "🚁",
+      "desc": "Ouverture en top shot drone : le Sundream en navigation au large de la Martinique, coque vert d'eau, sillage blanc sur le bleu profond. Montée lente ou tilt vers l'horizon, titre en incrustation légère possible."
+    },
+    {
+      "id": 2,
+      "visual": "🛥️",
+      "desc": "Ponton des Anses-d'Arlet, bourg et église en fond. Les filles traversent le cadre d'un bord à l'autre, sacs de plage, lunettes, rires, le Sundream amarré au bout du ponton. Variante cam 360 : enjambée de la caméra, raccord mouvement vers la plage."
+    },
+    {
+      "id": 3,
+      "visual": "⚓",
+      "desc": "Top shot drone du Sundream au mouillage dans l'anse : herbiers sombres, yoles colorées, sable doré. Deux secondes de respiration, le bateau est arrivé."
+    },
+    {
+      "id": 4,
+      "visual": "🏖️",
+      "desc": "Plage de sable doré, cocotiers et mornes verts. En maillot, elles courent, s'éclaboussent et se poussent dans l'eau. Le Sundream mouillé reste visible en arrière-plan. Esprit pub crème solaire."
+    },
+    {
+      "id": 5,
+      "visual": "🎯",
+      "desc": "Top shot fixe à bord : caméra verrouillée en plongée verticale au-dessus des banquettes avant, décor net. Les filles changent de place entre les cuts sur le beat, traînées de flou de mouvement sur les corps. Référence AJ Tracey « Wifey Riddim 4 », jump cut + overhead."
+    },
+    {
+      "id": 6,
+      "visual": "🎬",
+      "desc": "Caméra sur clamp au bord avant du T-top, axe vers la proue, même cadre. Rocher du Diamant et côte en fond. La série de jump cuts continue : selfie, mangent, fou rire, « on y va »."
+    },
+    {
+      "id": 7,
+      "visual": "🤿",
+      "desc": "Caméra à fleur d'eau face au bateau, mornes verts derrière. Une ou deux filles plongent, éclaboussure vers l'objectif, le Sundream plein cadre, moteurs coupés. Drop musical."
+    },
+    {
+      "id": 8,
+      "visual": "☀️",
+      "desc": "Contrechamp depuis la plage arrière, liston vert d'eau et moteur en amorce : elles nagent et rient, une main tendue vers la caméra. Logo Sundream en surimpression."
+    },
+    {
+      "id": 9,
+      "visual": "🏷️",
+      "desc": "Packshot enchaîné sans transition : logo Sundream, baseline et informations pratiques. Le logo du plan précédent reste en place, seul le fond change."
+    }
   ]
 }
