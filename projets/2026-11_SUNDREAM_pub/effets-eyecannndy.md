@@ -9,7 +9,8 @@ enregistrer l'image), ou on envoie simplement les liens.
 
 | Plan | Effet / transition | Page eyecannndy | Statut du lien |
 |------|--------------------|-----------------|----------------|
-| 1 · Ouverture | Top shot drone, montée verticale | *pas de page dédiée trouvée* ; référence la plus proche : [fpv-drone](https://eyecannndy.com/technique/fpv-drone) | vérifié |
+| 1 · Ouverture | Top shot drone, montée verticale | [overhead](https://eyecannndy.com/technique/overhead) · [fpv-drone](https://eyecannndy.com/technique/fpv-drone) | vérifié (overhead vu sur le site) |
+| 4 · Top shot fixe à bord | **Jump cuts en plongée verticale, caméra verrouillée, traînées de flou de mouvement** | [jump-cut](https://eyecannndy.com/technique/jump-cut) + [overhead](https://eyecannndy.com/technique/overhead) | vérifié |
 | 1 → 2 | Cut franc avec changement d'échelle (ciel → sol) | [match-cut](https://eyecannndy.com/technique/match-cut) pour le principe du raccord entre deux échelles | vérifié |
 | 2 → 3 · Quai → plage | Raccord mouvement sur l'enjambée (cam 360, ou caméra au sol) | [match-cut](https://eyecannndy.com/technique/match-cut) | vérifié |
 | 2 → 3 · variante | Whip pan quai → plage si on ne fait pas la cam 360 | [whip-pan](https://eyecannndy.com/technique/whip-pan) | vérifié |
@@ -20,6 +21,21 @@ enregistrer l'image), ou on envoie simplement les liens.
 | 6 | Speed ramp sur le drop musical (ralenti à l'impact, retour vitesse réelle) | [speed-ramping](https://eyecannndy.com/technique/speed-ramping) | vérifié |
 | 6 → 7 | Contrechamp exact eau ↔ bateau | [match-cut](https://eyecannndy.com/technique/match-cut) | vérifié |
 | 7 → 8 · Logo → packshot | Le logo reste en place, le fond change (split image continue) | [match-split](https://eyecannndy.com/technique/match-split) | vérifié |
+
+## La référence clé : plan 4 (jump cut + top shot)
+
+Exemple repéré sur eyecannndy par Idriss : **AJ Tracey – « Wifey Riddim 4 » (2024)**, réal. Late Milk,
+DOP Mike Koziel, techniques « Jump cut, Overhead », tags night / taxi / interior.
+Ce qu'on reprend :
+
+- caméra **fixe en plongée verticale à 90°**, le décor reste parfaitement net d'un cut à l'autre ;
+- les personnages **changent de place entre les cuts**, le montage calé sur le beat ;
+- **traînées de flou de mouvement** sur les corps et les cheveux (obturation lente, 1/25 à 1/12 s,
+  ou flou de mouvement ajouté au montage), le décor reste sec.
+
+Transposé au Sundream : caméra verrouillée au-dessus des banquettes avant (drone en stationnaire,
+ou perche / bras fixé au T-top visant vers le bas), les filles se déplacent, se changent, mangent,
+rient, entre chaque cut. Même cadre du début à la fin de la série.
 
 **Vérifié** = la page existe (confirmée via les résultats de recherche). Les slugs pour le top shot
 vertical pur et la cam 360 n'ont pas été trouvés ; à chercher directement dans la barre de
