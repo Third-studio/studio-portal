@@ -77,7 +77,7 @@ Le top shot verrouillé (plan 5) et la cam T-top (plan 6) supposent un cadre str
 d'un cut à l'autre. Avec le roulis, l'horizon bouge, les banquettes se décalent et la pose longue
 pour le flou de mouvement devient aléatoire. Plan B : on couvre le même moment en **plans
 classiques au gimbal**, coupés sur le beat (1 à 1,5 s par plan), sans contrainte de raccord de cadre.
-Le gimbal absorbe le roulis, on tourne au mouillage ou à petite vitesse dans une zone abritée.
+Les plans 5 et 6 se tournent bateau à l'arrêt, au mouillage, moteurs coupés ; même ainsi la houle fait rouler le bateau. Le gimbal absorbe ce roulis.
 
 | # | Durée | Plan | Cadrage / matériel | Action |
 |---|-------|------|--------------------|--------|
