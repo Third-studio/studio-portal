@@ -1,50 +1,128 @@
 {
-  "title": "Sundream — pub fraîche v3 (Martinique)",
+  "title": "Sundream — pub fraîche · storyboard v3 (Martinique)",
   "frames": [
     {
       "id": 1,
       "visual": "🚁",
-      "desc": "Ouverture en top shot drone : le Sundream en navigation au large de la Martinique, la skipper seule à la barre, coque vert d'eau, sillage blanc sur le bleu profond. Montée lente ou tilt vers l'horizon, titre en incrustation légère possible."
+      "title": "OUVERTURE · BATEAU EN NAVIGATION",
+      "duration": "0:00 – 0:03",
+      "camera": "Drone · ND · bateau en navigation",
+      "image": "/storyboards/sundream/plan-1-navigation.jpg",
+      "desc": "Le Sundream file sur le bleu profond au large de la Martinique, la skipper seule à la barre, sillage blanc, sun glitter. Montée lente ou tilt vers l'horizon. Titre en incrust léger possible.",
+      "refs": []
     },
     {
       "id": 2,
       "visual": "🛥️",
-      "desc": "Ponton des Anses-d'Arlet, bourg et église en fond. Les filles traversent le cadre d'un bord à l'autre, sacs de plage, lunettes, rires, le Sundream amarré au bout du ponton. Variante cam 360 : enjambée de la caméra, raccord mouvement vers la plage."
+      "title": "LE QUAI · TRAVERSÉE",
+      "duration": "0:03 – 0:06",
+      "camera": "Gimbal hauteur de hanches · 35-50 mm · ou cam 360",
+      "image": "/storyboards/sundream/plan-2-quai.jpg",
+      "desc": "Ponton des Anses-d'Arlet, bourg et église en fond. Les filles traversent le cadre d'un bord à l'autre, sacs de plage, lunettes, rires, le Sundream amarré au bout du ponton. Variante cam 360 : enjambée de la caméra, raccord mouvement vers la plage.",
+      "refs": [
+        {
+          "label": "Raccord mouvement (match cut)",
+          "url": "https://eyecannndy.com/technique/match-cut"
+        }
+      ]
     },
     {
       "id": 3,
       "visual": "⚓",
-      "desc": "Top shot drone du Sundream au mouillage dans l'anse : herbiers sombres, yoles colorées, sable doré. Deux secondes de respiration, le bateau est arrivé."
+      "title": "LE MOUILLAGE · TOP SHOT",
+      "duration": "0:06 – 0:08",
+      "camera": "Drone · verticale 90° · bateau à l'ancre",
+      "image": "/storyboards/sundream/plan-3-mouillage.jpg",
+      "desc": "Le Sundream au mouillage dans l'anse, herbiers sombres, yoles colorées, sable doré. Deux secondes de respiration entre le quai et la plage : le bateau est arrivé.",
+      "refs": []
     },
     {
       "id": 4,
       "visual": "🏖️",
-      "desc": "Plage de sable doré, cocotiers et mornes verts. En maillot, elles courent, s'éclaboussent et se poussent dans l'eau. Le Sundream mouillé reste visible en arrière-plan. Esprit pub crème solaire."
+      "title": "LA PLAGE · EN MAILLOT",
+      "duration": "0:08 – 0:11",
+      "camera": "Gimbal · légère contre-plongée · 24-35 mm · polarisant",
+      "image": "/storyboards/sundream/plan-4-plage.jpg",
+      "desc": "Plage de sable doré, cocotiers et mornes verts. Elles courent, s'éclaboussent, se poussent dans l'eau. Le Sundream mouillé reste visible en arrière-plan. Esprit pub crème solaire.",
+      "refs": []
     },
     {
       "id": 5,
       "visual": "🎯",
-      "desc": "Plongée arrière fixe, bateau à l'arrêt au mouillage : caméra haute au bord avant du T-top, toit hors champ, qui regarde vers l'avant à 45°, le cadre part du pare-brise, le bateau dans la longueur, proue en haut, décor net. Les filles changent de place entre les cuts sur le beat, traînées de flou de mouvement sur les corps. Référence AJ Tracey « Wifey Riddim 4 », jump cut + overhead."
+      "title": "PLONGÉE ARRIÈRE FIXE · JUMP CUTS",
+      "duration": "0:11 – 0:15",
+      "camera": "Clamp ou bras au bord avant du T-top, toit hors champ · 16-20 mm · obturation lente 1/25–1/12 s · au mouillage",
+      "image": "/storyboards/sundream/plan-5-plongee-jumpcuts.jpg",
+      "desc": "Bateau à l'arrêt, au mouillage, moteurs coupés. Caméra haute au bord avant du T-top, toit hors champ, en plongée à 45° : le cadre part du pare-brise, le bateau remplit l'image dans la longueur, proue en haut, comme un couloir. Cadre verrouillé, les filles changent de place entre les cuts sur le beat, traînées de flou de mouvement.",
+      "refs": [
+        {
+          "label": "Jump cuts · AJ Tracey « Wifey Riddim 4 »",
+          "url": "https://www.youtube.com/watch?v=wMwcjYHbxn8"
+        },
+        {
+          "label": "Plongée en couloir (high angle)",
+          "url": "https://eyecannndy.com/technique/high-angle"
+        }
+      ]
     },
     {
       "id": 6,
       "visual": "🎬",
-      "desc": "Bateau toujours à l'arrêt. Même clamp au bord avant du T-top, toit hors champ, axe horizontal vers la proue, même cadre. Rocher du Diamant et côte en fond. La série de jump cuts continue : selfie, mangent, fou rire, « on y va »."
+      "title": "CAM T-TOP VERS L'AVANT · JUMP CUTS",
+      "duration": "0:15 – 0:20",
+      "camera": "Même clamp au bord avant du T-top, toit hors champ · action cam ou boîtier 16-20 mm · expo manuelle fixe",
+      "image": "/storyboards/sundream/plan-6-ttop.jpg",
+      "desc": "Bateau toujours à l'arrêt. Axe horizontal vers la proue, même cadre. Rocher du Diamant et côte en fond. La série de jump cuts continue dans ce second cadre : selfie, mangent, fou rire, « on y va ».",
+      "refs": [
+        {
+          "label": "Jump cuts · AJ Tracey « Wifey Riddim 4 »",
+          "url": "https://www.youtube.com/watch?v=wMwcjYHbxn8"
+        }
+      ]
     },
     {
       "id": 7,
       "visual": "🤿",
-      "desc": "Caméra à fleur d'eau face au bateau, mornes verts derrière. Une ou deux filles plongent, éclaboussure vers l'objectif, le Sundream plein cadre, moteurs coupés. Drop musical."
+      "title": "LE PLONGEON · DEPUIS L'EAU",
+      "duration": "0:20 – 0:23",
+      "camera": "Caisson / GoPro dôme · demi-niveau",
+      "image": "/storyboards/sundream/plan-7-plongeon.jpg",
+      "desc": "Caméra à fleur d'eau face au bateau, mornes verts derrière. Une ou deux filles plongent, éclaboussure vers l'objectif, le Sundream plein cadre, moteurs coupés. Drop musical.",
+      "refs": [
+        {
+          "label": "Caméra à fleur d'eau (underwater)",
+          "url": "https://eyecannndy.com/technique/underwater"
+        },
+        {
+          "label": "Speed ramp sur le drop",
+          "url": "https://eyecannndy.com/technique/speed-ramping"
+        }
+      ]
     },
     {
       "id": 8,
       "visual": "☀️",
-      "desc": "Contrechamp depuis la plage arrière, liston vert d'eau et moteur en amorce : elles nagent et rient, une main tendue vers la caméra. Logo Sundream en surimpression."
+      "title": "DU BATEAU VERS L'EAU · LOGO",
+      "duration": "0:23 – 0:27",
+      "camera": "Gimbal à la plage arrière · plongée · 24-35 mm",
+      "image": "/storyboards/sundream/plan-8-logo.jpg",
+      "desc": "Contrechamp depuis la plage arrière, liston vert d'eau et moteur en amorce : elles nagent et rient, une main tendue vers la caméra. Logo Sundream en surimpression.",
+      "refs": []
     },
     {
       "id": 9,
       "visual": "🏷️",
-      "desc": "Packshot enchaîné sans transition : logo Sundream, baseline et informations pratiques. Le logo du plan précédent reste en place, seul le fond change."
+      "title": "PACKSHOT",
+      "duration": "0:27 – 0:30",
+      "camera": "Fond fixe ou dernier plan drone figé",
+      "image": "/storyboards/sundream/plan-9-packshot.jpg",
+      "desc": "Enchaîné sans transition : logo, baseline, infos pratiques (site, réseaux, réservation). Le logo du plan 8 reste en place, seul le fond change.",
+      "refs": [
+        {
+          "label": "Logo fixe, fond qui change (match split)",
+          "url": "https://eyecannndy.com/technique/match-split"
+        }
+      ]
     }
   ]
 }

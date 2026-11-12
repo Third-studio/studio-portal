@@ -557,15 +557,103 @@ function CommentThread({comments,onAdd,role="prod"}){
 // ─────────────────────────────────────────────────────────────────────────────
 // MODULE A — CLIENT PORTAL
 // ─────────────────────────────────────────────────────────────────────────────
-function FrameCard({frame,index}){
+// URL d'image/réf acceptée : https/http, ou chemin relatif au portail ("/storyboards/…").
+const safeMediaUrl=(u)=>{if(!u)return null;const t=String(u).trim();if(t.startsWith("/")&&!t.startsWith("//"))return t;return safePortfolioUrl(t);};
+
+// Carte d'un plan. Format frame : {id, visual, title, desc, duration, camera, image, refs:[{label,url}]}.
+// comments : commentaires de CE plan ; onComment(frameId,texte) ; onUpload(frameId,file,kind,label) ;
+// onAddRef(frameId,{label,url}). Sans ces callbacks la carte est en lecture seule.
+function FrameCard({frame,index,comments=[],onComment,onUpload,onAddRef,commentPlaceholder}){
   const colors=["#00B4D822","#4ECDC422","#7B9CFF22","#FF9F4322","#FF3B3022"];
+  const[txt,setTxt]=useState("");
+  const[sending,setSending]=useState(false);
+  const[showRef,setShowRef]=useState(false);
+  const[refLabel,setRefLabel]=useState("");
+  const[refUrl,setRefUrl]=useState("");
+  const img=safeMediaUrl(frame.image);
+  const refs=(frame.refs||[]).map(r=>({label:r?.label||"Référence",url:safeMediaUrl(r?.url)})).filter(r=>r.url);
+  const wide=!!img||!!onComment||comments.length>0;
+  const send=async()=>{if(!txt.trim()||!onComment)return;setSending(true);await onComment(frame.id,txt.trim());setTxt("");setSending(false);};
+  const addRef=async()=>{if(!refUrl.trim()||!onAddRef)return;await onAddRef(frame.id,{label:refLabel.trim()||"Référence",url:refUrl.trim()});setRefLabel("");setRefUrl("");setShowRef(false);};
+  const pickFile=(e,kind)=>{const f=e.target.files?.[0];e.target.value="";if(f&&onUpload){onUpload(frame.id,f,kind,refLabel.trim()||f.name);if(kind==="ref")setShowRef(false);}};
   return(
-    <div style={{flex:"0 0 auto",width:150,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,overflow:"hidden",transition:"all .2s"}}>
-      <div style={{height:90,background:colors[index%colors.length],display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,position:"relative"}}>
-        {frame.visual}
-        <span style={{position:"absolute",top:5,left:7,fontFamily:"'Urbanist'",fontSize:10,color:"#6E6E73",letterSpacing:1}}>PLAN {index+1}</span>
+    <div style={{flex:"0 0 auto",width:wide?270:150,background:"#F5F5F7",border:"1px solid #E5E5EA",borderRadius:8,overflow:"hidden",transition:"all .2s"}}>
+      <div style={{height:wide?152:90,background:colors[index%colors.length],display:"flex",alignItems:"center",justifyContent:"center",fontSize:32,position:"relative"}}>
+        {img?<img src={img} alt={`Plan ${index+1}`} style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>:(frame.visual||"🎬")}
+        <span style={{position:"absolute",top:5,left:7,fontFamily:"'Urbanist'",fontSize:10,color:img?"#fff":"#6E6E73",letterSpacing:1,textShadow:img?"0 1px 3px rgba(0,0,0,.6)":"none"}}>PLAN {index+1}</span>
+        {frame.duration&&<span style={{position:"absolute",top:5,right:7,fontFamily:"'Inter'",fontSize:10,color:img?"#fff":"#6E6E73",textShadow:img?"0 1px 3px rgba(0,0,0,.6)":"none"}}>{frame.duration}</span>}
       </div>
-      <div style={{padding:"7px 9px"}}><p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",lineHeight:1.4}}>{frame.desc}</p></div>
+      <div style={{padding:"7px 9px"}}>
+        {frame.title&&<p style={{fontFamily:"'Urbanist'",fontSize:11,fontWeight:700,color:"#1D1D1F",letterSpacing:.5,marginBottom:3}}>{frame.title}</p>}
+        <p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",lineHeight:1.4}}>{frame.desc}</p>
+        {frame.camera&&<p style={{fontFamily:"'Inter'",fontSize:10,color:"#B45309",marginTop:4}}>{frame.camera}</p>}
+        {refs.length>0&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+            {refs.map((r,i)=><a key={i} href={r.url} target="_blank" rel="noreferrer" className="btn btn-ghost" style={{fontSize:10,padding:"2px 8px",textDecoration:"none"}}>▶ {r.label}</a>)}
+          </div>
+        )}
+        {(onUpload||onAddRef)&&(
+          <div style={{display:"flex",flexWrap:"wrap",gap:4,marginTop:6}}>
+            {onUpload&&<label className="btn btn-ghost" style={{fontSize:10,padding:"2px 8px",cursor:"pointer"}}>🖼 {img?"Changer l'image":"Image du plan"}<input type="file" accept="image/*" style={{display:"none"}} onChange={e=>pickFile(e,"image")}/></label>}
+            {onAddRef&&<button className="btn btn-ghost" style={{fontSize:10,padding:"2px 8px"}} onClick={()=>setShowRef(!showRef)}>{showRef?"✕":"＋ Réf (lien ou GIF)"}</button>}
+          </div>
+        )}
+        {showRef&&(
+          <div style={{display:"flex",flexDirection:"column",gap:4,marginTop:6,padding:8,background:"#fff",border:"1px solid #E5E5EA",borderRadius:6}}>
+            <input className="input" style={{fontSize:11}} placeholder="Libellé (ex : jump cut AJ Tracey)" value={refLabel} onChange={e=>setRefLabel(e.target.value)}/>
+            <input className="input" style={{fontSize:11}} placeholder="https://… (vidéo, page eyecannndy…)" value={refUrl} onChange={e=>setRefUrl(e.target.value)}/>
+            <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+              <button className="btn btn-primary" style={{fontSize:10,padding:"2px 10px"}} onClick={addRef} disabled={!refUrl.trim()}>Ajouter le lien</button>
+              {onUpload&&<label className="btn btn-ghost" style={{fontSize:10,padding:"2px 8px",cursor:"pointer"}}>⬆ GIF / image<input type="file" accept="image/*,.gif" style={{display:"none"}} onChange={e=>pickFile(e,"ref")}/></label>}
+            </div>
+          </div>
+        )}
+        {(comments.length>0||onComment)&&(
+          <div style={{marginTop:8,borderTop:"1px solid #E5E5EA",paddingTop:6,display:"flex",flexDirection:"column",gap:5}}>
+            {comments.map(c=>(
+              <div key={c.id} style={{background:c.role==="prod"?"#00B4D810":"#fff",border:"1px solid #E5E5EA",borderRadius:6,padding:"5px 7px"}}>
+                <p style={{fontFamily:"'Inter'",fontSize:10,color:"#6E6E73"}}><b style={{color:"#1D1D1F"}}>{c.author||(c.role==="prod"?"Équipe":"Client")}</b>{c.date?` · ${fmtS(String(c.date).split("T")[0])}`:""}</p>
+                <p style={{fontFamily:"'Inter'",fontSize:11,color:"#1D1D1F",lineHeight:1.4,whiteSpace:"pre-wrap"}}>{c.text}</p>
+              </div>
+            ))}
+            {onComment&&(
+              <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                <textarea className="input" rows={2} style={{fontSize:11}} placeholder={commentPlaceholder||"Un commentaire sur ce plan ?"} value={txt} onChange={e=>setTxt(e.target.value)}/>
+                <button className="btn btn-primary" style={{fontSize:10,padding:"3px 10px",alignSelf:"flex-end"}} onClick={send} disabled={sending||!txt.trim()}>{sending?"…":"Envoyer"}</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Import d'un storyboard préparé hors portail (JSON : {title, frames:[…]}), par collage ou fichier.
+function StoryboardImport({onImport}){
+  const[raw,setRaw]=useState("");
+  const[err,setErr]=useState(null);
+  const parse=(text)=>{
+    try{
+      const j=JSON.parse(text);
+      if(!Array.isArray(j.frames)||j.frames.length===0)throw new Error("aucun plan dans « frames »");
+      const frames=j.frames.map((f,i)=>({
+        id:Number(f.id)||i+1,visual:f.visual||"🎬",title:String(f.title||""),desc:String(f.desc||""),
+        duration:String(f.duration||""),camera:String(f.camera||""),image:safeMediaUrl(f.image)||"",
+        refs:Array.isArray(f.refs)?f.refs.filter(r=>r&&safeMediaUrl(r.url)).map(r=>({label:String(r.label||"Référence"),url:String(r.url)})):[],
+      }));
+      setErr(null);onImport({title:j.title||"Storyboard",frames});
+    }catch(e){setErr("JSON invalide : "+e.message);}
+  };
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:8}}>
+      <p style={{fontFamily:"'Inter'",fontSize:12,color:"#6E6E73",lineHeight:1.5}}>Colle le JSON du storyboard ou charge un fichier .json. Format : {"{"}"title", "frames":[{"{"}"id","title","desc","duration","camera","image","refs":[{"{"}"label","url"{"}"}]{"}"}]{"}"}. Les images et GIF peuvent ensuite être ajoutés plan par plan.</p>
+      <textarea className="input" rows={5} style={{fontFamily:"'JetBrains Mono'",fontSize:11}} placeholder='{"title":"…","frames":[…]}' value={raw} onChange={e=>setRaw(e.target.value)}/>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <button className="btn btn-primary" onClick={()=>parse(raw)} disabled={!raw.trim()}>⬆ Importer</button>
+        <label className="btn btn-ghost" style={{cursor:"pointer"}}>📄 Fichier .json<input type="file" accept=".json,application/json" style={{display:"none"}} onChange={e=>{const f=e.target.files?.[0];e.target.value="";if(f)f.text().then(parse);}}/></label>
+      </div>
+      {err&&<p style={{fontFamily:"'Inter'",fontSize:12,color:"#D70015"}}>{err}</p>}
     </div>
   );
 }
@@ -926,13 +1014,40 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
     if(error){onNotif("Erreur storyboard : "+error.message);return;}
     const saved={id:data.id,title:data.title,frames:data.frames||[],validationStatus:data.validation_status||"pending",createdAt:data.created_at?.split("T")[0]||sb.createdAt};
     onUpdate({...project,storyboards:[...project.storyboards,saved]});
-    setShowGen(false);onNotif("Storyboard généré !");
+    setShowGen(false);onNotif(sb.frames?.some(f=>f.image||f.title)?"Storyboard importé !":"Storyboard généré !");
   };
   const updSB=async(id,st)=>{
     const{error}=await supabase.from("storyboards").update({validation_status:st}).eq("id",id);
     if(error){onNotif("Erreur : "+error.message);return;}
     onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});
     onNotif("Statut mis à jour");
+  };
+  const saveFrames=async(sbId,frames)=>{
+    const{error}=await supabase.from("storyboards").update({frames}).eq("id",sbId);
+    if(error){onNotif("Erreur : "+error.message);return false;}
+    onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===sbId?{...s,frames}:s)});
+    return true;
+  };
+  // Image du plan (kind "image") ou GIF/image de référence (kind "ref") → bucket public "storyboards".
+  const uploadFrameFile=async(sb,frameId,file,kind,label)=>{
+    const ext=(file.name.split(".").pop()||"jpg").toLowerCase();
+    const path=`${project.id}/${sb.id}/plan-${frameId}-${Date.now()}.${ext}`;
+    const{error}=await supabase.storage.from("storyboards").upload(path,file,{upsert:true,contentType:file.type||undefined});
+    if(error){onNotif("Erreur upload : "+error.message);return;}
+    const{data}=supabase.storage.from("storyboards").getPublicUrl(path);
+    const frames=sb.frames.map(f=>f.id!==frameId?f:(kind==="ref"?{...f,refs:[...(f.refs||[]),{label:label||file.name,url:data.publicUrl}]}:{...f,image:data.publicUrl}));
+    if(await saveFrames(sb.id,frames))onNotif(kind==="ref"?"Référence ajoutée au plan":"Image du plan mise à jour");
+  };
+  const addFrameRef=async(sb,frameId,ref)=>{
+    const frames=sb.frames.map(f=>f.id===frameId?{...f,refs:[...(f.refs||[]),ref]}:f);
+    if(await saveFrames(sb.id,frames))onNotif("Référence ajoutée au plan");
+  };
+  const addSBComment=async(sb,frameId,text)=>{
+    const author=fmtProdAuthor(userProfile);
+    const{data,error}=await supabase.from("storyboard_comments").insert({storyboard_id:sb.id,frame_id:frameId,author,role:"prod",content:text}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    const c={id:data.id,frameId:data.frame_id,author:data.author,role:data.role,text:data.content,date:data.created_at};
+    onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===sb.id?{...s,comments:[...(s.comments||[]),c]}:s)});
   };
   const addMsg=async(text,role)=>{
     const author=role==="prod"?fmtProdAuthor(userProfile):fmtClientAuthor(userProfile);
@@ -1266,9 +1381,13 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <h3 style={{fontFamily:"'Urbanist'",fontSize:17,color:"#1D1D1F",letterSpacing:"0.05em"}}>STORYBOARDS</h3>
-            <button className="btn btn-primary" onClick={()=>setShowGen(!showGen)}>{showGen?"✕ Fermer":"✦ Générer avec IA"}</button>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              <button className="btn btn-ghost" onClick={()=>setShowGen(showGen==="import"?false:"import")}>{showGen==="import"?"✕ Fermer":"⬆ Importer un JSON"}</button>
+              <button className="btn btn-primary" onClick={()=>setShowGen(showGen==="ia"?false:"ia")}>{showGen==="ia"?"✕ Fermer":"✦ Générer avec IA"}</button>
+            </div>
           </div>
-          {showGen&&<div className="card fadeUp" style={{padding:16}}><AIGenerator project={project} onGenerated={addSB}/></div>}
+          {showGen==="ia"&&<div className="card fadeUp" style={{padding:16}}><AIGenerator project={project} onGenerated={addSB}/></div>}
+          {showGen==="import"&&<div className="card fadeUp" style={{padding:16}}><StoryboardImport onImport={addSB}/></div>}
           {project.storyboards.map(sb=>(
             <div key={sb.id} className="card fadeUp" style={{padding:16}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
@@ -1280,7 +1399,8 @@ function ProdProjectView({project,onUpdate,onNotif,teamMembers,assignments,onUpd
                   {sb.validationStatus!=="approved"&&<button className="btn btn-green" style={{fontSize:11}} onClick={()=>updSB(sb.id,"approved")}>Valider</button>}
                 </div>
               </div>
-              <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4}}>{sb.frames.map((f,i)=><FrameCard key={f.id} frame={f} index={i}/>)}</div>
+              <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:4}}>{sb.frames.map((f,i)=><FrameCard key={f.id} frame={f} index={i} comments={(sb.comments||[]).filter(c=>c.frameId===f.id)} onComment={(fid,t)=>addSBComment(sb,fid,t)} onUpload={(fid,file,kind,label)=>uploadFrameFile(sb,fid,file,kind,label)} onAddRef={(fid,ref)=>addFrameRef(sb,fid,ref)} commentPlaceholder="Répondre sur ce plan…"/>)}</div>
+              {(sb.comments||[]).length>0&&<p style={{fontFamily:"'Inter'",fontSize:11,color:"#6E6E73",marginTop:8}}>💬 {(sb.comments||[]).length} commentaire{(sb.comments||[]).length>1?"s":""} du client sur ce storyboard.</p>}
             </div>
           ))}
         </div>
@@ -1640,6 +1760,14 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
     onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===id?{...s,validationStatus:st}:s)});
     onNotif(st==="approved"?"Storyboard approuvé !":"Révision demandée");
   };
+  const addSBComment=async(sb,frameId,text)=>{
+    const author=fmtClientAuthor(clientData?.name, clientData?.company);
+    const{data,error}=await supabase.from("storyboard_comments").insert({storyboard_id:sb.id,frame_id:frameId,author,role:"client",content:text}).select().single();
+    if(error){onNotif("Erreur : "+error.message);return;}
+    const c={id:data.id,frameId:data.frame_id,author:data.author,role:data.role,text:data.content,date:data.created_at};
+    onUpdate({...project,storyboards:project.storyboards.map(s=>s.id===sb.id?{...s,comments:[...(s.comments||[]),c]}:s)});
+    onNotif("Commentaire envoyé à l'équipe");
+  };
   const addMsg=async(text)=>{
     const author=fmtClientAuthor(clientData?.name, clientData?.company);
     const date=new Date().toISOString().split("T")[0];
@@ -1931,7 +2059,7 @@ function ClientProjectView({project,clientData,onUpdate,onNotif,pricing,serviceT
                 {sb.validationStatus==="approved"&&<span className="tag" style={{background:"#4ECDC422",color:"#0F766E"}}>✓ Approuvé</span>}
                 {sb.validationStatus==="revision"&&<span className="tag" style={{background:"#FF3B3022",color:"#D70015"}}>↩ Révision en cours</span>}
               </div>
-              <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>{sb.frames.map((f,i)=><FrameCard key={f.id} frame={f} index={i}/>)}</div>
+              <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:6}}>{sb.frames.map((f,i)=><FrameCard key={f.id} frame={f} index={i} comments={(sb.comments||[]).filter(c=>c.frameId===f.id)} onComment={(fid,t)=>addSBComment(sb,fid,t)} commentPlaceholder="Votre avis sur ce plan…"/>)}</div>
               {sb.validationStatus==="pending"&&(
                 <div style={{marginTop:12,padding:"12px 14px",background:"#00B4D810",border:"1px solid #00B4D820",borderRadius:8,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
                   <p style={{fontFamily:"'Inter'",fontSize:13,fontWeight:600,color:"#1D1D1F"}}>Votre avis nous est précieux — que pensez-vous de ce storyboard ?</p>
@@ -8080,6 +8208,12 @@ function AppMain() {
       }
       const results = await Promise.all(queries);
       const projectsData  = results[0]?.data;
+      // Commentaires par plan des storyboards (table ajoutée le 2026-11-12 ; silencieux si la migration n'est pas passée).
+      const sbCommentsByStoryboard = {};
+      try{
+        const{data:sbc}=await supabase.from("storyboard_comments").select("*").order("created_at",{ascending:true});
+        (sbc||[]).forEach(c=>{(sbCommentsByStoryboard[c.storyboard_id]=sbCommentsByStoryboard[c.storyboard_id]||[]).push({id:c.id,frameId:c.frame_id,author:c.author,role:c.role,text:c.content,date:c.created_at});});
+      }catch(_){ /* table absente */ }
       const postsData     = results[1]?.data;
       const bookingsData  = results[2]?.data;
       const stData        = results[3]?.data;
@@ -8115,6 +8249,7 @@ function AppMain() {
             frames: s.frames || [],
             validationStatus: s.validation_status || "pending",
             createdAt: s.created_at?.split("T")[0],
+            comments: sbCommentsByStoryboard[s.id] || [],
           })),
           comments: (p.messages || []).map(m => ({
             id: m.id,

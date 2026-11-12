@@ -1,0 +1,35 @@
+{
+  "title": "Sundream — plan B classique (plans 5 et 6, si roulis)",
+  "frames": [
+    {
+      "id": 51,
+      "visual": "😄",
+      "title": "PLAN B · 5B · PLAN LARGE DEPUIS L'ARRIÈRE",
+      "duration": "1,5 s",
+      "camera": "Gimbal · 24 mm · au mouillage",
+      "image": "/storyboards/sundream/alt-5b-large.jpg",
+      "desc": "Si le roulis gêne les cadres fixes des plans 5 et 6 : couverture classique au gimbal, coupée sur le beat. Les trois filles sur les banquettes se retournent vers la caméra, sourires larges, bras levés, cheveux au vent.",
+      "refs": []
+    },
+    {
+      "id": 52,
+      "visual": "😄",
+      "title": "PLAN B · 5C · GROS PLAN SOURIRE",
+      "duration": "1 s × 2",
+      "camera": "50 mm · faible profondeur de champ",
+      "image": "/storyboards/sundream/alt-5c-sourire.jpg",
+      "desc": "Une fille rit à la caméra, lunettes relevées, mer floue derrière. Un gros plan par fille, on garde les deux meilleurs. Sert aussi à la déclinaison 15 s.",
+      "refs": []
+    },
+    {
+      "id": 53,
+      "visual": "😄",
+      "title": "PLAN B · 5D · PLAN MOYEN · TRINQUER",
+      "duration": "1,5 s",
+      "camera": "Gimbal · 35 mm",
+      "image": "/storyboards/sundream/alt-5d-trinquer.jpg",
+      "desc": "Deux filles trinquent avec des jus de fruits frais, planche de mangue et ananas entre elles, la troisième floue derrière. Suivent les inserts mains/fruits, pieds dans l'eau, et un plan large contre-jour vers le plongeon.",
+      "refs": []
+    }
+  ]
+}
