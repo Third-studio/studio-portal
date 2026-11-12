@@ -35,9 +35,9 @@ Ce qu'on reprend :
 
 **L'angle, lui, vient d'une seconde référence** repérée par Idriss : **« Long Live Liborius » (2021)**,
 réal. Bruton Stroube, techniques « High Angle, Wide shot » (le couloir de l'église-skatepark filmé
-d'en haut, au bout du couloir). Transposé au Sundream : caméra haute à l'arrière, sur une perche ou
-un mât au-dessus du T-top, qui regarde vers l'avant en plongée à 45°. Le bateau remplit le cadre
-dans la longueur comme le couloir, la proue en haut de l'image, les banquettes avant au bout.
+d'en haut, au bout du couloir). Transposé au Sundream : caméra haute au bord avant du T-top, le toit
+hors champ, qui regarde vers l'avant en plongée à 45°. Le cadre part du pare-brise de la console,
+le bateau remplit l'image dans la longueur comme le couloir, la proue en haut, les banquettes au bout.
 Pas de plongée verticale, pas de drone. Les filles se déplacent, se changent, mangent, rient
 entre chaque cut. Même cadre du début à la fin de la série.
 
