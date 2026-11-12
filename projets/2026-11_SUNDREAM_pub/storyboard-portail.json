@@ -1,0 +1,13 @@
+{
+  "title": "Sundream — pub fraîche v1",
+  "frames": [
+    { "id": 1, "visual": "🚁", "desc": "Ouverture en top shot drone : le Sundream vu du ciel, coque blanche sur l'eau turquoise, sillage net. Montée lente ou tilt vers l'horizon. Le nom Sundream peut déjà apparaître en incrustation légère." },
+    { "id": 2, "visual": "🛥️", "desc": "Sur le quai, les filles traversent le cadre d'un bord à l'autre, sacs de plage et lunettes, rires, le bateau en fond. Alternative cam 360 : elles enjambent la caméra et l'enjambée suivante atterrit sur le sable, déjà en maillot." },
+    { "id": 3, "visual": "🏖️", "desc": "Sur la plage, en maillot, elles courent, s'éclaboussent et se poussent dans l'eau. Gimbal en légère contre-plongée, le Sundream mouillé reste visible en arrière-plan. Lumière de fin de matinée, esprit pub crème solaire." },
+    { "id": 4, "visual": "🌊", "desc": "Retour à bord en top shot drone : le bateau avance, les filles sont sur le pont avant, bras levés. Deux secondes, un plan de respiration avant la série de jump cuts." },
+    { "id": 5, "visual": "🎬", "desc": "Caméra fixe dans la cabine, axe vers la proue, même cadre pour toute la série. Six jump cuts calés sur la musique : elles se changent, selfie, elles bronzent, elles mangent, fou rire, l'une pointe la mer. Le cadre ne bouge jamais." },
+    { "id": 6, "visual": "🤿", "desc": "Caméra à fleur d'eau face au bateau, caisson ou GoPro en demi-niveau. Une ou deux filles plongent depuis le bord, l'éclaboussure vient vers l'objectif. Le Sundream occupe tout le fond du cadre. Drop musical sur ce plan." },
+    { "id": 7, "visual": "☀️", "desc": "Contrechamp depuis le pont, en plongée vers l'eau : les filles nagent et rient, une main tendue vers la caméra. Le logo Sundream s'affiche en surimpression sur le fond turquoise." },
+    { "id": 8, "visual": "🏷️", "desc": "Packshot enchaîné sans transition : logo Sundream, baseline et informations pratiques (site, réseaux, réservation). Le logo du plan précédent reste en place, seul le fond change." }
+  ]
+}
