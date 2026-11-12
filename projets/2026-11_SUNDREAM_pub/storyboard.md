@@ -68,3 +68,30 @@ le plan 3 si le client préfère l'eau à la plage.
 2. Charte Sundream disponible (logo vectoriel, couleurs, typo) ?
 3. Date et lieu : quel quai, quelle plage, quel mouillage ?
 4. Version cam 360 validée ou on garde la transition classique quai → plage ?
+
+---
+
+## Alternative classique pour les plans 5 et 6 (si le roulis gêne les cadres fixes)
+
+Le top shot verrouillé (plan 5) et la cam T-top (plan 6) supposent un cadre strictement identique
+d'un cut à l'autre. Avec le roulis, l'horizon bouge, les banquettes se décalent et la pose longue
+pour le flou de mouvement devient aléatoire. Plan B : on couvre le même moment en **plans
+classiques au gimbal**, coupés sur le beat (1 à 1,5 s par plan), sans contrainte de raccord de cadre.
+Le gimbal absorbe le roulis, on tourne au mouillage ou à petite vitesse dans une zone abritée.
+
+| # | Durée | Plan | Cadrage / matériel | Action |
+|---|-------|------|--------------------|--------|
+| 5B | 1,5 s | **Plan large depuis l'arrière** | Gimbal, 24 mm, depuis la plage arrière vers l'avant | Les trois filles sur les banquettes avant se retournent vers la caméra, sourires larges, bras levés, cheveux au vent. |
+| 5C | 1 s | **Gros plan sourire** | 50 mm, faible profondeur de champ | Une fille rit à la caméra, lunettes relevées sur la tête, mer floue derrière. Un gros plan par fille, on garde les deux meilleurs. |
+| 5D | 1,5 s | **Plan moyen trinquer** | Gimbal, 35 mm | Deux filles trinquent avec des jus de fruits frais, planche de mangue et ananas entre elles, la troisième floue derrière. |
+| 6B | 1 s | **Insert mains / fruits** | 50 mm macro-ish | Mains qui piochent dans la planche de fruits, bracelets, bague, gouttes d'eau. |
+| 6C | 1 s | **Insert pieds dans l'eau** | Gimbal au ras de la coque | Pieds qui pendent par-dessus le liston vert d'eau, l'eau turquoise en dessous. |
+| 6D | 1,5 s | **Plan large contre-jour** | Gimbal, 24 mm, soleil derrière les filles | Silhouettes lumineuses sur fond de mer, une fille pointe la mer : « on y va ». Sert de sortie vers le plongeon. |
+
+Total 7 à 8 s, soit la même durée que les plans 5 + 6 en version jump cuts. Les deux versions
+se tournent sur le même créneau : on fait d'abord la couverture classique (sécurité), puis on
+tente la version cadre fixe si la mer est plate.
+
+**Décision à prendre sur place** : mer plate et bateau stable au mouillage → version jump cuts.
+Houle ou clapot → version classique. Dans les deux cas, on garde les gros plans sourires 5C qui
+servent aussi à la déclinaison 15 s.

@@ -49,3 +49,10 @@ recherche du site (« overhead », « 360 »).
 3. **Speed ramp** sur le plongeon : rythme du drop musical.
 4. **Whip pan** : plan B de la transition quai → plage, sans cam 360.
 5. **Match split** logo → packshot : finition montage, pas d'impact tournage.
+
+## Plan B si le roulis gêne (plans 5 et 6)
+
+Suite de plans classiques au gimbal, coupés sur le beat, sans raccord de cadre : plan large
+sourires, gros plans sourire, plan moyen trinquer, inserts mains et pieds, plan large contre-jour.
+Pas de page eyecannndy nécessaire, c'est un montage cut classique. On peut garder le
+[speed-ramping](https://eyecannndy.com/technique/speed-ramping) sur un ou deux plans pour le rythme.
