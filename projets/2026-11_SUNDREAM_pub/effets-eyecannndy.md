@@ -1,4 +1,19 @@
-# Sundream — effets et transitions (références eyecannndy.com)
+# Sundream — effets et transitions
+
+## Liens directs (un clic = l'exemple)
+
+| Plan | Effet | Exemple |
+|------|-------|---------|
+| 5 · 6 | Jump cuts dans un cadre fixe, flou de mouvement (effet signature) | [AJ Tracey « Wifey Riddim 4 », réal. Late Milk](https://www.youtube.com/watch?v=wMwcjYHbxn8) |
+| 5 | Plongée en couloir, caméra haute dans la longueur | [page high angle d'eyecannndy](https://eyecannndy.com/technique/high-angle) · exemple « Long Live Liborius » (lien direct à coller) |
+| 2 → 4 | Raccord mouvement sur l'enjambée, quai → plage | [match cut](https://eyecannndy.com/technique/match-cut) |
+| 7 | Caméra à fleur d'eau, demi-niveau | [underwater](https://eyecannndy.com/technique/underwater) |
+| 7 | Speed ramp sur le drop musical | [speed ramping](https://eyecannndy.com/technique/speed-ramping) |
+| 8 → 9 | Logo fixe, le fond change vers le packshot | [match split](https://eyecannndy.com/technique/match-split) |
+
+---
+
+## Détail (références eyecannndy.com)
 
 Liens à partager avec la cliente pour qu'elle voie chaque effet en mouvement. Chaque page
 eyecannndy montre un GIF d'exemple de la technique.
