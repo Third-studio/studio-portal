@@ -10,7 +10,7 @@ enregistrer l'image), ou on envoie simplement les liens.
 | Plan | Effet / transition | Page eyecannndy | Statut du lien |
 |------|--------------------|-----------------|----------------|
 | 1 · Ouverture et 3 · Mouillage | Top shots drone | [overhead](https://eyecannndy.com/technique/overhead) · [fpv-drone](https://eyecannndy.com/technique/fpv-drone) | vérifié (overhead vu sur le site) |
-| 5 · Top shot fixe à bord | **Jump cuts en plongée verticale, caméra verrouillée, traînées de flou de mouvement** | [jump-cut](https://eyecannndy.com/technique/jump-cut) + [overhead](https://eyecannndy.com/technique/overhead) | vérifié |
+| 5 · Plongée arrière fixe | **Jump cuts en plongée à 45° depuis l'arrière, bateau dans la longueur, caméra verrouillée, traînées de flou de mouvement** | [jump-cut](https://eyecannndy.com/technique/jump-cut) + [high-angle](https://eyecannndy.com/technique/high-angle) + [wide-shot](https://eyecannndy.com/technique/wide-shot) | vérifié (pages vues sur le site) |
 | 1 → 2 | Cut franc avec changement d'échelle (ciel → sol) | [match-cut](https://eyecannndy.com/technique/match-cut) pour le principe du raccord entre deux échelles | vérifié |
 | 2 → 4 · Quai → plage | Raccord mouvement sur l'enjambée (cam 360, ou caméra au sol) | [match-cut](https://eyecannndy.com/technique/match-cut) | vérifié |
 | 2 → 4 · variante | Whip pan quai → plage si on ne fait pas la cam 360 | [whip-pan](https://eyecannndy.com/technique/whip-pan) | vérifié |
@@ -33,9 +33,13 @@ Ce qu'on reprend :
 - **traînées de flou de mouvement** sur les corps et les cheveux (obturation lente, 1/25 à 1/12 s,
   ou flou de mouvement ajouté au montage), le décor reste sec.
 
-Transposé au Sundream : caméra verrouillée au-dessus des banquettes avant (drone en stationnaire,
-ou perche / bras fixé au T-top visant vers le bas), les filles se déplacent, se changent, mangent,
-rient, entre chaque cut. Même cadre du début à la fin de la série.
+**L'angle, lui, vient d'une seconde référence** repérée par Idriss : **« Long Live Liborius » (2021)**,
+réal. Bruton Stroube, techniques « High Angle, Wide shot » (le couloir de l'église-skatepark filmé
+d'en haut, au bout du couloir). Transposé au Sundream : caméra haute à l'arrière, sur une perche ou
+un mât au-dessus du T-top, qui regarde vers l'avant en plongée à 45°. Le bateau remplit le cadre
+dans la longueur comme le couloir, la proue en haut de l'image, les banquettes avant au bout.
+Pas de plongée verticale, pas de drone. Les filles se déplacent, se changent, mangent, rient
+entre chaque cut. Même cadre du début à la fin de la série.
 
 **Vérifié** = la page existe (confirmée via les résultats de recherche). Les slugs pour le top shot
 vertical pur et la cam 360 n'ont pas été trouvés ; à chercher directement dans la barre de
