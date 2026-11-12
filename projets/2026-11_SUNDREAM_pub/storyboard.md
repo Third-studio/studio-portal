@@ -51,9 +51,9 @@ Musique : titre pop/tropical lumineux, tempo 110-125 BPM, drop calé sur le plon
 ## Notes de tournage
 
 - **Lumière** : plans quai et plage en fin de matinée (soleil haut mais pas encore dur), plans à bord et plongeon en début d'après-midi, packshot ou plan drone final en lumière dorée si le planning le permet.
-- **Casting** : trois filles, complices et à l'aise devant la caméra et dans l'eau. Prévoir deux tenues chacune (tenue quai + maillot), couleurs vives et cohérentes entre elles.
+- **Casting** : trois filles, complices et à l'aise devant la caméra et dans l'eau, plus la **skipper, une femme**, visible à la barre sur les plans en navigation (1, et à la console sur 5 si on la veut dans le cadre). Prévoir deux tenues chacune (tenue quai + maillot), couleurs vives et cohérentes entre elles.
 - **Accessoires** : sacs de plage, lunettes, paréos, serviettes, planche de fruits et boissons pour le jump cut « mange ». Vérifier avec le client quels produits ou couleurs de marque doivent apparaître.
-- **Bateau** : toujours dans le champ sur les plans 3, 6 et 7. Prévoir un marin pour positionner le bateau par rapport au soleil et à la caméra.
+- **Bateau** : toujours dans le champ sur les plans de plage, de plongeon et de logo. La skipper positionne le bateau par rapport au soleil et à la caméra.
 - **Sécurité** : plongeon uniquement moteur coupé, bateau mouillé, eau suffisamment profonde, une personne à l'eau en veille.
 - **Autorisations** : droit à l'image signé pour les trois filles, accord du port pour le quai, autorisation de vol drone selon la zone.
 
